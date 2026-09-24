@@ -1,0 +1,54 @@
+
+<dialog id="walletdlg" aria-labelledby="w-title"><div class="panel dlg">
+  <h3><span id="w-title">Your wallet</span> <button class="copy" data-close="walletdlg" aria-label="Close">✕</button></h3>
+
+  <section id="w-none">
+    <p class="note wintro">A small wallet that lives in this browser, for burning. The keys stay on this device, so fund it only with sats you plan to burn.</p>
+    <div class="field">
+      <label for="w-pass1"><span>Passphrase</span><span class="mono">optional</span></label>
+      <input id="w-pass1" type="password" autocomplete="new-password" placeholder="Leave empty for no passphrase" autofocus>
+      <p class="note" style="margin-top:6px">Encrypts the words in this browser (BIP39) and changes the address: you need it again to restore.</p>
+    </div>
+    <p class="note mono" id="w-newnet" style="margin:-4px 0 12px"></p>
+    <div class="field" id="w-restorebox" hidden>
+      <label for="w-restore"><span>12 or 24 words</span><span class="mono">any BIP39 wallet</span></label>
+      <textarea id="w-restore" rows="3" class="mono" autocomplete="off" spellcheck="false"></textarea>
+      <div class="qrow" style="margin-top:10px"><button type="button" class="btn primary" id="w-restoreok">Restore</button></div>
+    </div>
+    <div class="divider">or a hardware wallet</div>
+    <div class="qrow wledger"><button type="button" class="btn" id="w-ledger" aria-describedby="w-ledgerhint">Connect a Ledger</button><span class="note mono" id="w-ledgerhint"></span></div>
+    <p class="note err" id="w-ledgermsg" hidden role="alert"></p>
+    <p class="note err" id="w-createmsg" hidden></p>
+    <div class="dlgfoot" style="margin-top:14px"><button type="button" class="btn primary" id="w-create">Create wallet</button><button type="button" class="btn" id="w-restorebtn" aria-expanded="false" aria-controls="w-restorebox">I already have 12 words</button></div>
+  </section>
+
+  <section id="w-locked" hidden>
+    <p class="note wintro">Enter the passphrase to unlock this wallet and sign burns.</p>
+    <div class="field"><label for="w-pass2"><span>Passphrase</span></label><input id="w-pass2" type="password" autocomplete="current-password" autofocus></div>
+    <p class="note err" id="w-lockmsg" hidden role="alert">Wrong passphrase. Try again.</p>
+    <div class="dlgfoot"><button type="button" class="btn ghost" id="w-forget1">Forget wallet…</button><span style="margin-left:auto"></span><button type="button" class="btn primary" id="w-unlock">Unlock</button></div>
+  </section>
+
+  <section id="w-ready" hidden>
+    <div class="wgrid">
+      <div class="qrwrap"><img id="w-qr" alt="Wallet address as QR" width="184" height="184"></div>
+      <div>
+        <div class="kv" style="grid-template-columns:1fr auto"><code id="w-addr"></code><button class="copy" id="w-copy" aria-label="Copy address">copy</button></div>
+        <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span><button class="copy" id="w-refresh" aria-label="Refresh balance">refresh</button></div>
+        <p class="note" style="margin-top:6px" id="w-fundnote">Fund it by sending sats to this address.</p>
+        <p class="note" style="margin-top:4px" id="w-keysnote" hidden>Keys on your Ledger: every burn is confirmed on its screen, nothing secret is stored here.</p>
+        <p class="note mono" style="margin-top:2px;white-space:nowrap"><span id="w-netlabel"></span> · <span id="w-path">m/84'/…/0/0</span></p>
+      </div>
+    </div>
+    <div class="wbox" id="w-backupbox" hidden>
+      <div class="words-head"><p class="note err" style="margin:0">These 12 words are the wallet: anyone who has them can spend its sats. Write them on paper; do not screenshot or paste them anywhere.</p><div class="qrow"><button type="button" class="copy" id="w-wordscopy" aria-label="Copy words">copy words</button><button type="button" class="copy" id="w-wordshide" aria-label="Hide words">hide words</button></div></div>
+      <ol class="words" id="w-words"></ol>
+    </div>
+    <div class="dlgfoot" style="margin-top:14px"><button type="button" class="btn ghost" id="w-forget2">Forget wallet…</button><span style="margin-left:auto"></span><button type="button" class="btn" id="w-backup">Back up words</button><button type="button" class="btn primary" data-close="walletdlg">Done</button></div>
+  </section>
+
+  <div class="wbox" id="w-forgetbox" hidden>
+    <p class="note err" id="w-forgetnote" style="margin:0 0 8px">This removes the wallet from this browser. Its sats stay on the chain, reachable only with the 12 words. Type <b>FORGET</b> to confirm.</p>
+    <div class="qrow"><input id="w-forgetinput" class="mono" autocomplete="off" placeholder="type FORGET" aria-label="Type FORGET to confirm" aria-describedby="w-forgetnote"><button type="button" class="btn sm" id="w-forgetok" disabled>Forget wallet</button><button type="button" class="copy" id="w-forgetcancel">cancel</button></div>
+  </div>
+</div></dialog>

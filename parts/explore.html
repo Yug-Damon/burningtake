@@ -1,0 +1,165 @@
+<meta charset="utf-8">
+<title>Explore topics · Burning Take</title>
+<!--INC:head-->
+<!--CSS:base,explore-->
+
+<!--INC:nav-->
+
+<section id="explore"><div class="wrap">
+  <div class="sec-head">
+    <div><span class="eyebrow">Explore</span><h2>Find a topic</h2><div class="status" id="dirstatus"></div></div>
+    <div class="seg" role="group" aria-label="Time window" id="xseg">
+      <button aria-pressed="true" data-win="all"><span class="more">All time</span><span class="less">All</span></button>
+      <button aria-pressed="false" data-win="month"><span class="more">This month</span><span class="less">Month</span></button>
+      <button aria-pressed="false" data-win="week"><span class="more">This week</span><span class="less">Week</span></button>
+      <button aria-pressed="false" data-win="today">Today</button>
+    </div>
+  </div>
+  <div class="strip" id="watching" hidden>
+    <div class="striphead"><div class="divider">Watching<span class="more"> · topics this browser follows</span></div></div>
+    <div class="recent" id="watchline"></div>
+  </div>
+  <div class="searchrow"><input class="search" id="sq" placeholder="Search topics, or type a new name…" aria-label="Search topics"><button type="button" class="btn primary" id="newscope">+ New topic</button></div>
+  <div class="strip" id="featuredstrip" hidden>
+    <div class="striphead"><div class="divider">Spotlight</div></div>
+    <div class="cards" id="scopegrid"></div>
+  </div>
+  <div class="cols2" id="cols2">
+    <div class="col" id="colL"><div id="hotcol"></div><div class="board" id="scoperows"></div></div>
+    <div class="col" id="colR"><div id="featcol"></div><div id="recentcol"></div><div id="topburners"></div></div>
+  </div>
+  <div id="createrow" hidden class="createrow">
+    <p><b id="createname"></b> is not registered yet<span class="why">. You can open it now, or register it so others find it in Explore</span>.</p>
+    <div class="acts">
+      <a class="btn sm" id="openunreg" href="topic.html#">Open topic</a>
+      <button type="button" class="btn sm primary" id="regunreg">Register · 330 sats</button>
+    </div>
+  </div>
+
+</div></section>
+
+<dialog id="scopedlg"><div class="panel dlg">
+  <h3><span id="sqtitle">New topic</span> <button class="copy" data-close="scopedlg" aria-label="Close">✕</button></h3>
+
+  <ol class="stepper" id="sqsteps" aria-label="Steps">
+    <li data-state="current"><button type="button" data-step="1" aria-current="step"><i>1</i><span>Ask</span></button></li>
+    <li data-state="todo"><button type="button" data-step="2" aria-disabled="true" tabindex="-1"><i>2</i><span>Rules</span></button></li>
+    <li data-state="todo"><button type="button" data-step="3" aria-disabled="true" tabindex="-1"><i>3</i><span>Review</span></button></li>
+    <li data-state="todo"><button type="button" data-step="4" aria-disabled="true" tabindex="-1"><i>4</i><span>Transaction</span><em id="sqregtag">optional</em></button></li>
+  </ol>
+
+  <!-- 1 · Ask -->
+  <section class="wstep" id="sqstep-1">
+    <div class="field">
+      <label for="sqq"><span>Question</span><span class="mono cnt" id="sqqn">0 / 40</span></label>
+      <input id="sqq" placeholder="e.g. should paris ban cars" maxlength="40" autocomplete="off" spellcheck="false" aria-describedby="sqqhelp sqqn">
+      <p class="note" id="sqqhelp" style="margin-top:8px">lowercase · a slash makes a folder · <a href="spec.html#grammar" style="color:var(--ember2)">naming rules</a></p>
+    </div>
+    <p class="note" id="sqhint" hidden style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span id="sqhinttxt"></span><button type="button" class="copy" id="sqhintuse">use it</button></p>
+  </section>
+
+  <!-- 2 · Rules -->
+  <section class="wstep" id="sqstep-2" hidden>
+    <div class="field">
+      <label><span>Answers</span><span class="mono" id="sqkind">open</span></label>
+      <div class="seg" role="group" aria-label="Answer type">
+        <button type="button" aria-pressed="true" data-sqtype="open">Free text</button>
+        <button type="button" aria-pressed="false" data-sqtype="opts">Pick one</button>
+        <button type="button" aria-pressed="false" data-sqtype="range">Number</button>
+      </div>
+    </div>
+    <div class="field" id="sqoptsf" hidden>
+      <label for="sqopts"><span>Options</span><span class="mono">one per line<span class="more"> · two make a duel</span></span></label>
+      <textarea id="sqopts" rows="3" placeholder="yes&#10;no" class="mono"></textarea>
+    </div>
+    <div class="row" id="sqrangef" hidden>
+      <div class="field"><label for="sqlo"><span>Lowest</span></label><input id="sqlo" class="mono" type="number" step="any" placeholder="0"></div>
+      <div class="field"><label for="sqhi"><span>Highest</span></label><input id="sqhi" class="mono" type="number" step="any" placeholder="100"></div>
+    </div>
+    <details class="tech" id="sqadv">
+      <summary id="sqadvsum">Advanced · no deadline · no minimum</summary>
+      <div class="row">
+        <div class="field">
+          <label for="sqdl"><span>Closes</span><span class="mono" id="sqdlhint">never</span></label>
+          <select id="sqdl">
+            <option value="0">Never</option><option value="144">1 day</option><option value="1008">1 week</option><option value="4320">1 month</option><option value="12960">3 months</option><option value="52560">1 year</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sqmin"><span>Minimum burn</span><span class="mono">sats · optional</span></label>
+          <input id="sqmin" class="mono" type="number" min="0" step="1" placeholder="none">
+        </div>
+      </div>
+    </details>
+    <p class="note" id="sqtoolong2" hidden style="color:#ff8c5c"></p>
+    <p class="note">Answers and rules become part of the name, so they are as permanent as the topic itself. Free text with no deadline and no minimum is the default.</p>
+  </section>
+
+  <!-- 3 · Review -->
+  <section class="wstep" id="sqstep-3" hidden>
+    <dl class="review" id="sqreview">
+      <dt>Question</dt><dd class="q" id="sqrq">…</dd>
+      <dt>Answers</dt><dd id="sqrans">free text</dd>
+      <dt id="sqrclosesk" hidden>Closes</dt><dd id="sqrcloses" hidden></dd>
+      <dt id="sqrmink" hidden>Minimum burn</dt><dd id="sqrmin" hidden></dd>
+      <dt id="sqrfolderk" hidden>Folder</dt><dd id="sqrfolder" hidden></dd>
+    </dl>
+    <div class="actions">
+      <code id="sqlink" class="vh mono"></code><button type="button" class="btn sm" id="sharescope">Copy link</button>
+      <details class="tech">
+        <summary>Technical details</summary>
+        <div class="out">
+          <div class="kv"><span class="k">Name</span><code id="sqname"></code><button class="copy" id="copysqname">copy</button></div>
+          <div class="kv"><span class="k">Address</span><code id="saddr"></code><button class="copy" id="copysaddr">copy</button></div>
+        </div>
+      </details>
+    </div>
+    <p class="note">Opening costs nothing. Registering burns 330 sats so the topic appears in Explore. <a href="spec.html#registration" style="color:var(--ember2)">How registration works</a>.</p>
+  </section>
+
+  <!-- 4 · Transaction: the registration burn, a fixed 330 sats (the amount is chosen when sponsoring) -->
+  <section class="wstep" id="sqstep-4" hidden>
+    <input id="listname" type="hidden" value="general">
+    <p class="note" style="margin-top:0">One transaction: 330 sats burned to the root topic, with the topic name in OP_RETURN. Sponsor the topic later to rank it higher.</p>
+    <p class="note" id="sqtoolong" hidden style="color:#ff8c5c;margin-top:8px"></p>
+    <div id="regbox">
+        <div class="field" id="listtipf">
+          <label for="listtipon" class="ck"><input type="checkbox" id="listtipon" checked><span>Tip the project</span><span class="mono" id="listtipusd">≈ $1.00</span></label>
+          <input id="listtip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats">
+          <p class="minline mono" id="listtipoff" hidden>no tip</p>
+        </div>
+      <div class="pay" id="spay">
+        <div class="wtab" id="spay-wallet"></div>
+        <details class="tech">
+          <summary>Advanced · do it yourself</summary>
+          <div class="tabbox">
+            <div class="outs" id="spay-outputs">
+              <div class="kv"><span class="k">1 · burn</span><code id="rootaddr">…</code><button class="copy" id="copyroot">copy</button></div>
+              <div class="kv"><span class="k">2 · OP_RETURN</span><code id="listhex"></code><button class="copy" id="copylisthex">copy</button></div>
+              <div class="kv" id="listtiprow"><span class="k">3 · tip</span><code id="listtipaddr"></code><button class="copy" id="copylisttip" data-copy="">copy</button></div>
+            </div>
+            <div class="body"><span class="k">Raw transaction</span><pre id="spay-text">…</pre><button type="button" class="copy" id="spay-copy">copy</button></div>
+          </div>
+          <p class="note">Unsigned and without inputs. Paste it into any wallet: it adds the inputs, change and mining fee, then signs. Nothing on this page can move your coins.<span id="spay-tipnote" hidden> Tip left out: the project tip address is not set yet.</span></p>
+        </details>
+      </div>
+    </div>
+    <p class="note">The topic appears in Explore once the burn confirms. <a href="verify.html" style="color:var(--ember2)">How to verify a registration</a>.</p>
+  </section>
+
+  <div class="dlgfoot" id="sqfoot">
+    <button type="button" class="btn" id="sqback" hidden>← Back</button>
+    <span style="flex:1"></span>
+    <button type="button" class="btn" id="togglereg" hidden>Register on the root topic</button>
+    <a class="btn primary" id="openscope" href="topic.html#general" hidden>Open topic →</a>
+    <button type="button" class="btn primary" id="sqnext" disabled>Next →</button>
+    <button type="button" class="btn" id="sqballot" hidden title="Keep this registration aside and burn several in one transaction">Add to batch</button>
+    <button type="button" class="btn primary" id="sqsend" hidden>Connect a wallet</button>
+  </div>
+</div></dialog>
+
+<!--INC:tip-->
+<!--INC:walletdlg,ballotdlg-->
+<!--INC:foot-->
+
+<!--JS:shared,qr,wallet,ledger,walletui,db,ballotui,loader,explore,tip,foot-->

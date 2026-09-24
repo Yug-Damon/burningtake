@@ -1,0 +1,42 @@
+<section id="tipcard" style="padding-top:0" hidden><div class="wrap">
+  <div class="source" style="background:linear-gradient(135deg,rgba(255,106,26,.12),rgba(255,181,71,.04)),var(--bg2);border-color:rgba(255,181,71,.25)">
+    <div>
+      <span class="eyebrow">Keep the fire going</span>
+      <h2 style="font-size:20px;margin-top:6px">Tip the project</h2>
+      <p class="muted" style="margin:6px 0 0;font-size:14px;max-width:60ch">No token, no foundation, no ads. Explorer costs and hosting are paid out of pocket. Unlike a topic address, this one has a key behind it, so tips arrive instead of burning.</p>
+    </div>
+    <div style="display:flex;justify-content:flex-end;align-items:center"><button class="btn primary" id="tipbtn">Send a tip →</button></div>
+  </div>
+</div></section>
+
+
+
+<dialog id="tipdlg" hidden><div class="panel dlg">
+  <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close">✕</button></h3>
+  <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned. Pick an amount, then sign it with the wallet in this browser.</p>
+  <div class="field">
+    <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
+    <div class="seg amtseg" role="group" aria-label="Tip amount" id="tipseg">
+      <button type="button" data-sats="1000" aria-pressed="false">1,000 sats</button>
+      <button type="button" data-sats="5000" aria-pressed="true">5,000 sats</button>
+      <button type="button" data-sats="21000" aria-pressed="false">21,000 sats</button>
+      <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
+    </div>
+    <input id="tipdamt" class="mono" type="number" min="330" step="1" value="5000" aria-label="Tip amount in sats" hidden style="margin-top:10px">
+  </div>
+  <div class="pay" id="tpay">
+    <div class="wtab" id="tpay-wallet"></div>
+    <details class="tech">
+      <summary>Advanced · do it yourself</summary>
+      <div class="tabbox">
+        <div class="outs" id="tpay-outputs">
+          <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
+        </div>
+        <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
+      </div>
+      <p class="note">Unsigned and without inputs. Any wallet adds inputs, change and fee, then signs.<span id="tpay-tipnote" hidden></span></p>
+    </details>
+    <p class="note" id="tipdemo">Demo address on signet until the real tip address is set.</p>
+  </div>
+  <div class="dlgfoot"><button type="button" class="btn" data-close="tipdlg">Close</button><span style="flex:1"></span><button type="button" class="btn primary" id="tsend">Connect a wallet</button></div>
+</div></dialog>

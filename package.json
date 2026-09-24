@@ -1,0 +1,20 @@
+{
+  "name": "burningtake",
+  "version": "1.0.0",
+  "description": "Burning Take: say it like you mean it, a take is a Bitcoin burn",
+  "scripts": {
+    "build": "python3 build.py && python3 check-ids.py",
+    "test": "node wallet-test.js && node qr-test.js && node ledger-test.js && node regress-payload.js && python3 snapshot.py --verify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0",
+    "@scure/bip32": "^1.5.0",
+    "@scure/bip39": "^1.4.0"
+  },
+  "private": true
+}

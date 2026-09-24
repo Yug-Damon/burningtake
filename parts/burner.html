@@ -1,0 +1,45 @@
+<meta charset="utf-8">
+<title>Burner · Burning Take</title>
+<!--INC:head-->
+<!--CSS:base-->
+
+<!--INC:nav-->
+<section id="burnerpage"><div class="wrap">
+  <div class="thead" id="bhead">
+    <div class="thead-top">
+      <a class="btn sm" href="explore.html">← Explore</a>
+      <div class="hactions" role="group" aria-label="Burner actions">
+        <span class="netwrap"><button type="button" class="btn sm act" id="exportbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="exportmenu" title="Export these burns"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg><span class="lbl">Export</span></button>
+          <div class="netmenu" id="exportmenu" role="menu" aria-label="Export" hidden><button type="button" role="menuitem" id="expjson">JSON<span class="more"> · burns by topic</span></button><button type="button" role="menuitem" id="expcsv">CSV<span class="more"> · one burn per line</span></button><button type="button" role="menuitem" id="expcopy">Copy JSON</button></div></span>
+        <a class="btn sm act" id="explorerlink" target="_blank" rel="noopener" title="This address on a block explorer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span class="lbl">Explorer</span></a>
+      </div>
+    </div>
+    <div class="thead-main one">
+      <div class="thead-txt">
+        <span class="eyebrow">Burner</span>
+        <div class="titlerow"><h2 class="addrtitle mono" id="baddr">…</h2><button type="button" class="btn sm icon" id="bcopy" aria-label="Copy address" title="Copy address"><svg class="g-link" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><svg class="g-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button></div>
+        <div class="status" id="status"></div>
+        <div class="hmeta" id="bmeta">
+          <span class="badge" id="bmine" hidden><span class="fi sm burner" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>the wallet in this browser</span>
+          <span class="badge" id="bwrong" hidden>not an address on this network</span>
+        </div>
+      </div>
+    </div>
+    <div class="tiles" id="btiles">
+      <div><b id="tsats">…</b><span>sats burned</span></div>
+      <div><b id="tburns">…</b><span>burns</span></div>
+      <div><b id="ttopics">…</b><span>topics</span></div>
+    </div>
+  </div>
+  <div class="board" id="groups"></div>
+  <div class="empty" id="bempty" hidden>
+    <h3 id="bemptyt">No burns from this address yet on mainnet</h3>
+    <p class="muted" id="bemptyp">Burns show here once a topic they belong to has been opened in this browser or ships in a snapshot.</p>
+    <div class="qrow" id="bpaste"><input id="bq" class="mono" placeholder="paste a burner address…" aria-label="Burner address" autocomplete="off" spellcheck="false"><button type="button" class="btn primary" id="bgo">Look it up</button></div>
+  </div>
+</div></section>
+
+<!--INC:walletdlg,ballotdlg-->
+<!--INC:foot-->
+
+<!--JS:shared,qr,wallet,ledger,walletui,db,ballotui,loader,burner,foot-->

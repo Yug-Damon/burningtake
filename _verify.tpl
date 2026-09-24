@@ -1,0 +1,128 @@
+<meta charset="utf-8">
+<title>Verify the Burn</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/*CSS*/
+</style>
+
+<nav><div class="wrap">
+  <a class="logo" href="index.html"><i></i>Burning Take</a>
+  <div class="links"><a href="index.html">App</a><a href="verify.html" class="on">Verify</a><a href="spec.html">Spec</a><a href="node.html">Node</a></div>
+</div></nav>
+
+<main class="wrap" style="padding-block:56px 20px">
+  <span class="eyebrow">Don't trust, verify</span>
+  <h1>Is the bitcoin really gone?</h1>
+  <p class="lede">Every claim this app makes can be checked without it. This page shows how, from a one-line script check to your own node. No step needs our server, our code, or our word.</p>
+  <div class="toc"><a href="#why">Why it is unspendable</a><a href="#address">Recompute an address</a><a href="#node">Ask your node</a><a href="#balance">Check the balance</a><a href="#tally">Recount the votes</a><a href="#page">Audit this page</a><a href="#limits">What you cannot verify</a></div>
+
+  <h2 id="why">Why a topic address can never be spent</h2>
+  <p>A topic address is a <b>pay-to-witness-script-hash</b> (P2WSH) address. To spend coins sent to it, a transaction must reveal the script whose hash matches, then execute that script, and the script must finish with <code>true</code> on the stack.</p>
+  <p>The script behind every topic is <code>OP_RETURN &lt;topic name&gt;</code>. The Bitcoin script rules say that executing <code>OP_RETURN</code> marks the transaction as invalid, immediately, whatever comes after it. So the reveal is possible, the execution never succeeds, and no witness data anyone could ever construct will unlock the coins. Every full node on the network enforces this. It is not a lost key, it is a rule.</p>
+  <div class="box ok"><b>Compare with a "burn address" like <code>1111111111111111111114oLvT2</code>.</b> That one is a normal pay-to-pubkey-hash address whose hash nobody has found a key for. Its unspendability is a belief about preimages, and it silently mixes in every other project that used the same address. A topic address is unspendable by consensus, and it is unique to its name.</div>
+  <p class="muted" style="font-size:14px">Reference: BIP 141 (segregated witness, P2WSH), and the script interpreter in Bitcoin Core where <code>OP_RETURN</code> returns <code>SCRIPT_ERR_OP_RETURN</code>.</p>
+
+  <h2 id="address">Recompute a topic address yourself</h2>
+  <p>The address is a pure function of the name. Type any topic name below. Everything is computed in your browser from the name alone, with the same steps you can reproduce by hand.</p>
+  <div class="box">
+    <div class="field"><label for="name"><span>Topic name</span><span>empty name = root topic</span></label><input id="name" value="pizza" autocomplete="off" spellcheck="false"></div>
+    <div class="kv"><span class="k">1 · bytes</span><code id="bytes"></code><span></span></div>
+    <div class="kv"><span class="k">2 · script</span><code id="script"></code><button class="copy" data-for="script">copy</button></div>
+    <div class="kv"><span class="k">3 · sha256</span><code id="hash"></code><button class="copy" data-for="hash">copy</button></div>
+    <div class="kv"><span class="k">4 · address</span><code id="addr"></code><button class="copy" data-for="addr">copy</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><a class="btn" id="l1" target="_blank" rel="noopener">mempool.space ↗</a><a class="btn" id="l2" target="_blank" rel="noopener">blockstream.info ↗</a></div>
+  </div>
+  <div class="steps">
+    <div class="step"><div><h3>UTF-8 bytes of the name</h3><p>Lowercase, canonical spelling, exactly as the spec defines it. One byte off is a different address.</p></div></div>
+    <div class="step"><div><h3>Wrap it in a script</h3><p><code>6a</code> is <code>OP_RETURN</code>. Then a push: one length byte when the name is 75 bytes or shorter, <code>4c</code> plus a length byte otherwise. The root topic, whose name is empty, is the single byte <code>6a</code>.</p></div></div>
+    <div class="step"><div><h3>SHA-256 the script</h3><p>P2WSH commits to the plain SHA-256 of the witness script, not the double hash and not HASH160.</p></div></div>
+    <div class="step"><div><h3>Encode as bech32</h3><p>Witness version 0, the 32-byte hash as the program, prefix <code>bc</code> for mainnet. Bech32, not bech32m, because the version is 0.</p></div></div>
+  </div>
+
+  <h2 id="node">Ask your own node</h2>
+  <p>Bitcoin Core will decode the script and tell you the address itself, with no code from us involved. Paste the script hex from step 2 above.</p>
+<pre><code><span class="c"># the script for the topic "pizza"</span>
+bitcoin-cli decodescript <span class="e">6a0570697a7a61</span>
+
+<span class="c"># look at .segwit.address in the answer</span>
+{
+  "asm": "OP_RETURN 70697a7a61",
+  "type": "nulldata",
+  "segwit": {
+    "address": "<span class="g">bc1qzssvapwlcv4um44xqtqay7h04hkq3latjtrxedj7st5d0kv06mhqsxxzg7</span>",
+    "type": "witness_v0_scripthash"
+  }
+}</code></pre>
+  <p>If that address matches the one the app shows for the topic, the app is honest about where the burn goes. If it does not, stop using that copy of the app.</p>
+  <div class="box"><b>Go further: read everything through your node.</b> The app takes any Esplora-style API as its data source, so a node plus an indexer replaces the public explorer entirely. <a href="node.html">Run your own node</a> has a docker-compose file, what it costs in disk and time, and how to check the app really talks to it.</div>
+
+  <h2 id="balance">Check that nothing ever leaves</h2>
+  <p>Because the outputs can never be spent, every sat ever sent to a topic address is still sitting in the UTXO set. That gives a direct check that needs no history and no third party.</p>
+<pre><code><span class="c"># every output ever paid to the topic is still unspent</span>
+bitcoin-cli scantxoutset start '["addr(<span class="e">bc1qzssvapw…qsxxzg7</span>)"]'
+
+<span class="c"># total_amount is the burned total, unspents lists every burn</span>
+{
+  "success": true,
+  "total_amount": <span class="g">0.01200000</span>,
+  "unspents": [ … ]
+}</code></pre>
+  <p>On a block explorer the same fact shows as <b>received</b> equal to <b>balance</b> and <b>spent</b> equal to zero, for the whole life of the address. If a topic address ever shows an outgoing transaction, the protocol is broken and this page is wrong. It will not happen, and you do not have to take that on faith.</p>
+
+  <h2 id="tally">Recount the votes</h2>
+  <p>The leaderboard is a sum over public data. Any Esplora-compatible API returns the transactions of an address with their outputs decoded, so a recount is a short script. This one talks to mempool.space; swap the base URL for your own instance.</p>
+<pre><code><span class="c">// node recount.js bc1q…   (no dependencies)</span>
+const addr = process.argv[2], base = "https://mempool.space/api";
+const norm = t =&gt; t.trim().toLowerCase().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
+const tally = {}; let last = "";
+for (;;) {
+  const page = await (await fetch(`${base}/address/${addr}/txs/chain/${last}`)).json();
+  if (!page.length) break;
+  for (const tx of page) {
+    const burn = tx.vout.filter(o =&gt; o.scriptpubkey_address === addr).reduce((a, o) =&gt; a + o.value, 0);
+    const op = tx.vout.find(o =&gt; o.scriptpubkey_type === "op_return");
+    const text = op ? Buffer.from(op.scriptpubkey_asm.split(" ").pop(), "hex").toString("utf8") : "";
+    const k = norm(text); tally[k] = (tally[k] || 0) + burn;
+  }
+  last = page[page.length - 1].txid;
+}
+console.table(Object.entries(tally).sort((a, b) =&gt; b[1] - a[1]));</code></pre>
+  <p>Compare the numbers with the app. Differences can only come from three places: a different normalisation of the statement text, unconfirmed transactions the app shows and the script skips, or an explorer that is lying to one of you. The <a href="spec.html#counting">spec</a> fixes the first, the mempool explains the second, and your own node settles the third.</p>
+
+  <h2 id="page">Audit the page itself</h2>
+  <p>The app is a handful of static HTML files with no backend: each page is self-contained, and the only other files it serves are the snapshots, static JSON caches of already-scanned topics that the page treats like any explorer answer (<a href="spec.html#snapshots">spec</a>). View the source. The network requests a page makes go to the explorer endpoint you selected, to its own snapshots, and to the font and QR library; you can watch every one of them in your browser's network tab.</p>
+  <p>Nothing on a page can move your coins without a wallet. The <b>Advanced</b> block of every burn shows the outputs and an unsigned transaction with no inputs, for any wallet to fund and sign after you have read the address and the <code>OP_RETURN</code>. The optional <b>burner wallet</b> is a small BIP39 wallet whose keys stay in this browser, encrypted with your passphrase, meant to hold only sats you intend to burn; it signs and broadcasts through the same endpoint, and a hardware wallet confirms each burn on its own screen instead. The ballot and the watchlist are conveniences of the same browser: nothing about them reaches the chain.</p>
+  <p>If you do not trust the copy you are looking at, save it, read it, and open it from your disk. It works the same.</p>
+
+  <h2 id="limits">What you cannot verify, and what you should not trust</h2>
+  <div class="box warn">
+    <p style="margin:0 0 8px"><b>The tip address is spendable.</b> By design. It belongs to the people running this copy of the app, and a tip is a gift, not a burn. Untick it if you only want the burn.</p>
+    <p style="margin:0 0 8px"><b>An explorer can lie or lag.</b> Public APIs are a convenience. Anything that matters should be checked against your node, or at least against two independent explorers.</p>
+    <p style="margin:0 0 8px"><b>Unconfirmed is not final.</b> A burn in the mempool can be replaced or dropped. Treat anything under a few confirmations as pending.</p>
+    <p style="margin:0"><b>Nobody controls a topic.</b> That includes us. Anyone can burn anything into any topic. The page can only bucket and rank, never delete.</p>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>Burning Take · <a href="spec.html">protocol spec</a> · <a href="node.html">node</a> · <a href="index.html">app</a></span><span class="mono">everything above works with any full node</span></div></footer>
+
+<script>
+const $=id=>document.getElementById(id), enc=new TextEncoder();
+const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
+const CH="qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+function polymod(v){const G=[0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3];let c=1;for(const x of v){const b=c>>>25;c=((c&0x1ffffff)<<5)^x;for(let i=0;i<5;i++)if((b>>>i)&1)c^=G[i]}return c>>>0}
+function hrpExpand(h){const r=[];for(const ch of h)r.push(ch.charCodeAt(0)>>5);r.push(0);for(const ch of h)r.push(ch.charCodeAt(0)&31);return r}
+function toWords(bytes){let acc=0,bits=0,out=[];for(const b of bytes){acc=((acc<<8)|b)&0xfff;bits+=8;while(bits>=5){bits-=5;out.push((acc>>bits)&31)}}if(bits>0)out.push((acc<<(5-bits))&31);return out}
+function bech32(hrp,ver,prog){const data=[ver,...toWords(prog)];const pm=polymod([...hrpExpand(hrp),...data,0,0,0,0,0,0])^1;const chk=[];for(let i=0;i<6;i++)chk.push((pm>>>(5*(5-i)))&31);return hrp+"1"+[...data,...chk].map(d=>CH[d]).join("")}
+async function run(){
+  const nb=enc.encode($("name").value.trim().toLowerCase());
+  const script=new Uint8Array(nb.length?[0x6a,...(nb.length<=75?[nb.length]:[0x4c,nb.length]),...nb]:[0x6a]);
+  const hash=new Uint8Array(await crypto.subtle.digest("SHA-256",script));
+  const addr=bech32("bc",0,hash);
+  $("bytes").textContent=nb.length?toHex(nb)+`  (${nb.length} bytes)`:"(empty · root topic)";
+  $("script").textContent=toHex(script); $("hash").textContent=toHex(hash); $("addr").textContent=addr;
+  $("l1").href="https://mempool.space/address/"+addr; $("l2").href="https://blockstream.info/address/"+addr;
+}
+$("name").oninput=run; run();
+document.querySelectorAll(".copy").forEach(b=>b.onclick=()=>{const t=$(b.dataset.for).textContent;(navigator.clipboard?.writeText(t)||Promise.reject()).then(()=>{b.textContent="copied";setTimeout(()=>b.textContent="copy",1200)}).catch(()=>{const r=document.createRange();r.selectNodeContents($(b.dataset.for));const s=getSelection();s.removeAllRanges();s.addRange(r)})});
+</script>

@@ -1,0 +1,33 @@
+<meta charset="utf-8">
+<title>Receipt · Burning Take</title>
+<!--INC:head-->
+<!--CSS:base-->
+
+<!--INC:nav-->
+<section id="receiptpage"><div class="wrap rwrap">
+  <div class="thead-top" style="margin-bottom:14px"><a class="btn sm" href="explore.html">← Explore</a><div class="status" id="status" style="margin:0"></div></div>
+  <div class="rcard" id="rcard" hidden>
+    <div class="rtop"><span class="rkind"><span class="fi" id="ricon" aria-hidden="true"></span><span class="eyebrow">Receipt<span class="more"> · one burn on the bitcoin ledger</span></span></span><span class="badge" id="rnet">mainnet</span></div>
+    <p class="rstmt" id="rstmt">…</p>
+    <p class="rline">burned <b id="rsats">…</b> sats in <a id="rtopic" href="topic.html">#…</a></p>
+    <div class="rgrid">
+      <div><span class="k">Block</span><b id="rblock">…</b><small id="rconf"></small></div>
+      <div><span class="k">Burner<span class="more"> · first input</span></span><a class="mono" id="rfrom" href="burner.html">…</a><small>every burn from this address</small></div>
+      <div><span class="k">Transaction</span><code id="rtxid">…</code><span class="qrow"><button type="button" class="copy" id="rcopytx">copy</button><a class="copy" id="rexp" target="_blank" rel="noopener">explorer ↗</a></span></div>
+    </div>
+    <p class="ralso" id="ralso" hidden></p>
+    <div class="ractions"><a class="btn sm" href="verify.html#tally">Verify this burn</a><button type="button" class="btn sm" id="rshare">Copy link</button><button type="button" class="btn sm primary" id="rimg">Save as image</button></div>
+    <div class="rpreview" id="rpreview" hidden><img id="rpng" alt="The receipt as an image, 1200 by 630"><p class="note">If no download started (some hosts block them), <a id="rpnglink" target="_blank" rel="noopener" style="color:var(--ember2)">open the PNG in a new tab</a> and save it from there.</p></div>
+  </div>
+  <div class="empty" id="runknown" hidden>
+    <h3 id="runkt">Unknown here yet</h3>
+    <p class="muted" id="runkp">This app has not seen that transaction. Open its topic so it gets scanned, then come back to this link.</p>
+    <div class="qrow" id="rfind"><input id="rq" placeholder="topic name, e.g. pizza" aria-label="Topic name" autocomplete="off"><button type="button" class="btn primary" id="rgo">Open topic</button></div>
+    <p class="note" id="runkexpp"><a id="runkexp" target="_blank" rel="noopener" style="color:var(--ember2)">See the transaction on an explorer ↗</a></p>
+  </div>
+</div></section>
+
+<!--INC:walletdlg,ballotdlg-->
+<!--INC:foot-->
+
+<!--JS:shared,qr,wallet,ledger,walletui,db,ballotui,loader,receipt,foot-->

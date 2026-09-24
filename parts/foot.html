@@ -1,0 +1,13 @@
+<footer><div class="wrap">
+  <p class="footlinks"><b>Burning Take</b><a href="spec.html">protocol spec</a><a href="verify.html">verify</a><a href="node.html">run your own node</a></p>
+  <div class="footep">
+    <label for="ep">Reads the chain through</label>
+    <select id="ep" aria-describedby="epactive">
+      <option value="mempool">mempool.space</option>
+      <option value="blockstream">blockstream.info</option>
+      <option value="custom">your node…</option>
+    </select>
+    <input id="epurl" class="mono" type="url" placeholder="https://your-node.local/api" aria-label="Your node's Esplora API URL" spellcheck="false" hidden>
+    <span class="vh" id="epactive"></span>
+  </div>
+</div></footer>

@@ -1,0 +1,56 @@
+
+<dialog id="ballotdlg" aria-labelledby="b-title"><div class="panel dlg">
+  <h3><span id="b-title">Your batch</span> <button class="copy" data-close="ballotdlg" aria-label="Close">✕</button></h3>
+  <p class="note wintro">Burns kept aside, burned in one transaction: each burn is its own output, the takes share one OP_RETURN. One mining fee instead of several. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
+  <ol class="stepper compact" id="bsteps" aria-label="Steps">
+    <li data-state="current"><button type="button" data-bstep="1" aria-current="step"><i>1</i><span>Burns</span><em id="bstepn"></em></button></li>
+    <li data-state="todo"><button type="button" data-bstep="2" aria-disabled="true" tabindex="-1"><i>2</i><span>Review</span></button></li>
+    <li data-state="todo"><button type="button" data-bstep="3" aria-disabled="true" tabindex="-1"><i>3</i><span>Transaction</span></button></li>
+  </ol>
+
+  <!-- 1 · Burns: what the batch holds -->
+  <section class="wstep" id="bstep-1">
+    <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> in its Transaction step instead of signing right away.</p>
+    <div id="b-body">
+      <div class="blist" id="b-list" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- 2 · Review: what the batch costs together -->
+  <section class="wstep" id="bstep-2" hidden>
+    <div class="bsum" id="b-sum">
+        <div><b id="b-sats">…</b><span>burned</span></div>
+        <div><b id="b-fee">…</b><span>fee<span class="more"> · one transaction</span></span></div>
+        <div><b id="b-save">…</b><span>saved<span class="more"> vs separate burns</span></span></div>
+      </div>
+    <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
+    <div class="field" id="b-tipf">
+        <label for="b-tipck" class="ck"><input type="checkbox" id="b-tipck"><span>Tip the project</span><span class="mono" id="b-tipusd">≈ $1.00</span></label>
+        <input id="b-tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
+      </div>
+  </section>
+
+  <!-- 3 · Transaction: one transaction for the whole batch -->
+  <section class="wstep" id="bstep-3" hidden>
+    <div class="pay" id="bpay">
+        <div class="wtab" id="bpay-wallet"></div>
+        <details class="tech">
+          <summary>Advanced · do it yourself</summary>
+          <div class="tabbox">
+            <div class="outs" id="b-outs"></div>
+            <div class="body"><span class="k">Raw transaction</span><pre id="bpay-text">…</pre><button type="button" class="copy" id="bpay-copy">copy</button></div>
+          </div>
+          <p class="note">Unsigned and without inputs. Paste it into any wallet: it adds the inputs, change and mining fee, then signs.<span id="bpay-tipnote" hidden> Tip left out: the project tip address is not set yet.</span></p>
+        </details>
+      </div>
+  </section>
+
+  <div class="dlgfoot" id="bfoot">
+    <button type="button" class="btn ghost" id="b-clear">Clear</button>
+    <button type="button" class="btn" id="bback" hidden>← Back</button>
+    <span style="flex:1"></span>
+    <button type="button" class="btn" id="bclose" data-close="ballotdlg">Close</button>
+    <button type="button" class="btn primary" id="bnext">Next →</button>
+    <button type="button" class="btn primary" id="bsend" hidden>Burn the batch</button>
+  </div>
+</div></dialog>

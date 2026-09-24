@@ -1,0 +1,160 @@
+<meta charset="utf-8">
+<title>Topic · Burning Take</title>
+<!--INC:head-->
+<!--CSS:base-->
+
+<!--INC:nav-->
+
+<section id="board"><div class="wrap">
+  <div class="thead" id="thead">
+    <div class="thead-top">
+      <a class="btn sm" href="explore.html">← Explore</a>
+      <div class="hactions" role="group" aria-label="Topic actions">
+        <button type="button" class="btn sm act" id="watchbtn" aria-pressed="false" title="Watch this topic in this browser"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path class="star" d="m12 3 2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.4l-5.7 3.1 1.2-6.4L2.8 9.7l6.4-.8z"/></svg><span class="lbl" id="watchlbl">Watch</span></button>
+        <span class="netwrap"><button type="button" class="btn sm act" id="morebtn" aria-haspopup="menu" aria-expanded="false" aria-controls="moremenu" title="More actions"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg><span class="lbl">More</span></button>
+          <div class="netmenu" id="moremenu" role="menu" aria-label="More actions" hidden>
+            <button type="button" role="menuitem" id="expjson"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export JSON<span class="more"> · burns + buckets</span></button>
+            <button type="button" role="menuitem" id="expcsv"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Export CSV<span class="more"> · one burn per line</span></button>
+            <button type="button" role="menuitem" id="expcopy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>Copy JSON</button>
+            <hr role="separator">
+            <button type="button" role="menuitem" id="embedbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6"/></svg>Embed on a page…</button>
+          </div></span>
+      </div>
+    </div>
+    <div class="thead-main one">
+      <div class="thead-txt">
+        <span class="eyebrow"><span id="hkind">open</span></span>
+        <div class="titlerow"><h2 id="boardtitle">Hottest takes on #general</h2><button type="button" class="btn sm icon" id="copylink" aria-label="Copy link to this topic" title="Copy link to this topic"><svg class="g-link" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><svg class="g-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button></div>
+        <div class="tactions" id="tactions">
+          <button type="button" class="btn sm" id="featurebtn" title="Sponsor this topic: burn to the root topic with its name">✦ Sponsor</button>
+        </div>
+        <div class="status" id="status"></div>
+        <div class="hmeta" id="hmeta" hidden>
+          <span class="badge live" id="hcount" hidden><span id="hcounttxt"></span></span>
+          <span class="badge" id="hrange" hidden></span>
+          <span class="badge" id="hmin" hidden></span>
+          <span class="badge" id="hreg" hidden>not registered · not in Explore</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="standings" id="standings">
+    <div class="stand-head">
+      <span class="stand-sum" id="standsum"></span>
+        <div class="seg" role="group" aria-label="Time window" id="tseg">
+          <button aria-pressed="true" data-win="all"><span class="more">All time</span><span class="less">All</span></button>
+          <button aria-pressed="false" data-win="month"><span class="more">This month</span><span class="less">Month</span></button>
+          <button aria-pressed="false" data-win="week"><span class="more">This week</span><span class="less">Week</span></button>
+          <button aria-pressed="false" data-win="today">Today</button>
+        </div>
+    </div>
+  </div>
+  <div class="searchrow" id="qrow"><input class="search" id="q" placeholder="Search takes on this topic…" aria-label="Search takes"><button type="button" class="btn primary" id="burnbtn">+ New take</button></div>
+  <div id="numtop" hidden></div>
+  <div class="board" id="list"></div>
+  <div class="burners" id="burners" hidden></div>
+</div></section>
+
+<dialog id="votedlg"><div class="panel dlg" id="vote">
+      <h3><span id="votehead">Burn your take</span> <button class="copy" data-close="votedlg" aria-label="Close">✕</button></h3>
+      <p class="note" style="margin-top:4px;color:var(--ink2)" id="votesub"></p>
+
+      <ol class="stepper compact" id="vsteps" aria-label="Steps">
+        <li data-state="current"><button type="button" data-vstep="1" aria-current="step"><i>1</i><span id="vstep1">Your take</span></button></li>
+        <li data-state="todo"><button type="button" data-vstep="2" aria-disabled="true" tabindex="-1"><i>2</i><span>Amount</span></button></li>
+        <li data-state="todo"><button type="button" data-vstep="3" aria-disabled="true" tabindex="-1"><i>3</i><span>Review</span></button></li>
+        <li data-state="todo"><button type="button" data-vstep="4" aria-disabled="true" tabindex="-1"><i>4</i><span>Transaction</span></button></li>
+      </ol>
+
+      <!-- 1 · Your take -->
+      <section class="wstep" id="vstep-1">
+      <div class="field" id="optfield" hidden>
+        <label><span id="optlabel">Answer</span><span class="mono" id="opthint">pick one</span></label>
+        <div class="choice" id="opts" role="group" aria-labelledby="optlabel"></div>
+        <p class="note" style="margin-top:8px"><button type="button" class="linkbtn" id="otherans">Answer something else…</button></p>
+      </div>
+      <div class="field" id="numfield" hidden>
+        <label for="num"><span>Your number</span><span class="mono" id="numhint"></span></label>
+        <div class="numpick"><output id="numbig" for="numrange num" aria-live="polite">…</output><input id="num" class="mono" type="number" step="any" aria-label="Your number" aria-describedby="numhint"></div>
+        <input id="numrange" type="range" aria-label="Your number, slider">
+      </div>
+      <p class="note" id="closednote" hidden style="color:#ff8c5c">This question is closed. You can still burn, it will show in the late bucket and not count.</p>
+      <div class="field" id="stmtfield">
+        <label for="stmt"><span><span id="stmtlabel">Your take</span><button type="button" class="linkbtn" id="unlock" hidden>change</button></span><span id="byteshint"><span id="bytes" class="bytes mono">0</span> / 80 bytes</span></label>
+        <input id="stmt" value="Pizza is better than pasta" maxlength="120" autocomplete="off" placeholder="Say it in 80 bytes" aria-describedby="byteshint">
+      </div>
+      </section>
+
+      <!-- 2 · Amount -->
+      <section class="wstep" id="vstep-2" hidden>
+        <div class="field">
+          <label for="amt"><span id="amtlabel">Burn</span><span class="mono" id="usd">≈ $10.00</span></label>
+          <div class="seg amtseg" role="group" aria-label="Burn amount presets" id="vamtseg">
+            <button type="button" data-sats="1000" aria-pressed="false">1,000</button>
+            <button type="button" data-sats="5000" aria-pressed="false">5,000</button>
+            <button type="button" data-sats="10000" aria-pressed="false">10,000</button>
+            <button type="button" data-sats="21000" aria-pressed="false">21,000<span class="more"> sats</span></button>
+            <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
+          </div>
+          <input id="amt" class="mono" type="number" min="330" step="1" value="10000" aria-label="Burn amount in sats" hidden>
+        </div>
+        <div class="field" id="vtipf">
+          <label for="vtipck" class="ck"><input type="checkbox" id="vtipck"><span>Tip the project</span><span class="mono" id="tipusd">≈ $1.00</span></label>
+          <input id="tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
+          <p class="minline mono" id="tipoff">no tip</p>
+        </div>
+        <p class="note" id="vamtnote">The burn is your take's weight and is always sent, at least the topic minimum. <span id="vtipnote">The tip is a separate output to the project and can be skipped. </span>Mining fee is extra.</p>
+      </section>
+
+      <!-- 3 · Review: the burn in words, before any wallet shows up -->
+      <section class="wstep" id="vstep-3" hidden>
+        <dl class="review" id="vreview">
+          <dt>Topic</dt><dd class="q" id="vrtopic">…</dd>
+          <dt id="vrstmtk">Take</dt><dd id="vrstmt">…</dd>
+          <dt>Burn</dt><dd id="vrburn">…</dd>
+          <dt id="vrtipk">Tip</dt><dd id="vrtip">…</dd>
+        </dl>
+        <p class="note" id="vrnote" hidden></p>
+      </section>
+
+      <!-- 4 · Transaction -->
+      <section class="wstep" id="vstep-4" hidden>
+      <div class="pay" id="vpay">
+        <div class="wtab" id="vpay-wallet"></div>
+        <details class="tech">
+          <summary>Advanced · do it yourself</summary>
+          <div class="tabbox">
+            <div class="outs" id="vpay-outputs">
+              <div class="kv"><span class="k">1 · burn</span><code id="addr">…</code><button class="copy" id="copyaddr">copy</button></div>
+              <div class="kv"><span class="k">2 · OP_RETURN</span><code id="hex"></code><button class="copy" id="copyhex">copy</button></div>
+              <div class="kv" id="tiprow"><span class="k">3 · tip</span><code id="tipaddr"></code><button class="copy" id="copytip" data-copy="">copy</button></div>
+            </div>
+            <div class="body"><span class="k">Raw transaction</span><pre id="vpay-text">…</pre><button type="button" class="copy" id="vpay-copy">copy</button></div>
+          </div>
+          <p class="note">Unsigned and without inputs. Paste it into any wallet: it adds the inputs, change and mining fee, then signs. Nothing on this page can move your coins.<span id="vpay-tipnote" hidden> Tip left out: the project tip address is not set yet.</span></p>
+        </details>
+      </div>
+      <p class="note">Your burn shows on the board once the transaction confirms. <a href="verify.html" style="color:var(--ember2)">How to verify a burn</a>.</p>
+      </section>
+
+      <div class="dlgfoot" id="vfoot">
+        <button type="button" class="btn" id="vback" hidden>← Back</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn primary" id="vnext">Next →</button>
+        <button type="button" class="btn" id="vballot" hidden title="Keep this burn aside and burn several in one transaction">Add to batch</button>
+        <button type="button" class="btn primary" id="vsend" hidden>Connect a wallet</button>
+      </div>
+</div></dialog>
+
+<dialog id="embeddlg" aria-labelledby="em-title"><div class="panel dlg">
+  <h3><span id="em-title">Embed this topic</span> <button class="copy" data-close="embeddlg" aria-label="Close">✕</button></h3>
+  <p class="note wintro">A live card of this board for any page: the leader, the totals and a link back here. It reads the chain the way this page does, nothing is served from us.</p>
+  <div class="pay" style="margin-top:12px"><div class="tabbox"><div class="body" style="border-top:0;padding-top:0"><span class="k">Snippet</span><pre id="em-code">…</pre><button type="button" class="copy" id="em-copy">copy</button></div></div></div>
+  <div class="dlgfoot"><button type="button" class="btn" data-close="embeddlg">Close</button><span style="flex:1"></span><button type="button" class="btn primary" id="em-copy2">Copy snippet</button></div>
+</div></dialog>
+
+<!--INC:tip-->
+<!--INC:walletdlg,ballotdlg-->
+<!--INC:foot-->
+
+<!--JS:shared,qr,wallet,ledger,walletui,db,ballotui,loader,topic,tip,foot-->

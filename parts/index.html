@@ -1,0 +1,102 @@
+<meta charset="utf-8">
+<title>Burning Take</title>
+<!--INC:head-->
+<!--CSS:base,index-->
+
+<!--INC:nav-->
+
+<header class="hero">
+  <canvas id="embers"></canvas>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow" id="heroeyebrow">Onchain polls</span>
+      <h1>Say it like you <em>mean it.</em></h1>
+      <p class="sub">Put your sats where your take&nbsp;is.</p>
+      <p class="lede">Ask anything. Takes are weighed in sats, not accounts. Every take is a bitcoin transaction that burns a little to say something for good. No servers, no take-backs, nothing to trust but the chain.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><a class="btn primary" href="explore.html" id="browsebtn">Browse topics →</a><a class="btn" href="topic.html#burning-take">#burning-take</a></div>
+      <div class="toolbar" id="chips" style="margin-top:22px"></div>
+      <div class="stats">
+        <div class="stat"><b>0.1030 ₿</b><span>burned total</span></div>
+        <div class="stat"><b>1,284</b><span>takes</span></div>
+        <div class="stat"><b>6,402</b><span>burns</span></div>
+        <div class="stat"><b>≈ $10,300</b><span>gone forever</span></div>
+      </div>
+    </div>
+
+    <div class="illo">
+      <svg viewBox="0 0 520 396" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ledger of burned takes: six confirmed and one pending in the mempool">
+        <defs>
+          <linearGradient id="h3-card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17141c"/><stop offset="1" stop-color="#0e0c12"/></linearGradient>
+          <linearGradient id="h3-ember" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff6a1a"/></linearGradient>
+          <radialGradient id="h3-heat" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffb547" stop-opacity=".55"/><stop offset=".55" stop-color="#ff6a1a" stop-opacity=".22"/><stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/></radialGradient>
+          <filter id="h3-blur" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+        </defs>
+
+        <rect x="20" y="20" width="480" height="356" rx="18" fill="url(#h3-card)" stroke="rgba(255,255,255,.1)"/>
+
+        <g font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="11" letter-spacing="1.5" fill="#6d665f">
+          <text x="44" y="44" fill="#ffb547" font-weight="500">TOPIC LEDGER</text>
+          <text x="476" y="44" text-anchor="end">bc1qa7v…3ktq <tspan fill="#ffb547">· unspendable</tspan></text>
+          <line x1="20" y1="58" x2="500" y2="58" stroke="rgba(255,255,255,.09)"/>
+          <text class="h3-blk" x="44" y="82" font-size="10">BLOCK</text>
+          <text class="h3-txt" x="120" y="82" font-size="10">OP_RETURN</text>
+          <text x="476" y="82" font-size="10" text-anchor="end" fill="#ffb547">SATS BURNED</text>
+        </g>
+
+        <g class="h3-rows" font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="15" fill="#f3efe9">
+      <g opacity=".5"><text class="h3-blk" x="44" y="112" font-size="11" fill="#6d665f">965,803</text><text class="h3-txt" x="120" y="112">Tabs over spaces</text><text x="476" y="112" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">4,096</text></g>
+      <g opacity=".58"><text class="h3-blk" x="44" y="144" font-size="11" fill="#6d665f">965,806</text><text class="h3-txt" x="120" y="144">AI will not take my job</text><text x="476" y="144" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">8,000</text></g>
+      <g opacity=".68"><text class="h3-blk" x="44" y="176" font-size="11" fill="#6d665f">965,808</text><text class="h3-txt" x="120" y="176">Pizza is better than pasta</text><text x="476" y="176" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">12,500</text></g>
+      <g opacity=".78"><text class="h3-blk" x="44" y="208" font-size="11" fill="#6d665f">965,809</text><text class="h3-txt" x="120" y="208">Coffee before 6am is a crime</text><text x="476" y="208" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">2,100</text></g>
+      <g opacity=".88"><text class="h3-blk" x="44" y="240" font-size="11" fill="#6d665f">965,811</text><text class="h3-txt" x="120" y="240">Bitcoin fixes this</text><text x="476" y="240" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">50,000</text></g>
+      <rect x="20" y="254" width="480" height="28" fill="rgba(255,106,26,.08)"/>
+      <g opacity="1"><text class="h3-blk" x="44" y="272" font-size="11" fill="#a89f95">965,812</text><text class="h3-txt" x="120" y="272">Remote work beats the office</text><text x="476" y="272" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="13">33,333</text></g>
+
+          <line x1="20" y1="290" x2="500" y2="290" stroke="rgba(255,181,71,.25)"/>
+          <ellipse class="h3-heat" cx="260" cy="312" rx="230" ry="24" fill="url(#h3-heat)" filter="url(#h3-blur)"/>
+          <g class="h3-dotwrap"><circle class="h3-dot" cx="48" cy="310" r="3" fill="#ff6a1a"/></g>
+          <text class="h3-mp" x="58" y="314" font-size="10" letter-spacing="1.5" fill="#ff6a1a">YOURS</text>
+          <text class="h3-txt h3-live" x="120" y="314" font-weight="500" fill="url(#h3-ember)">Spaces over tabs</text>
+          <text x="476" y="314" text-anchor="end" fill="url(#h3-ember)" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="14">21,000</text>
+        </g>
+
+        <g stroke="rgba(255,255,255,.14)" stroke-dasharray="3 5"><line x1="30" y1="336" x2="490" y2="336"/></g>
+        <circle cx="20" cy="336" r="7" fill="#0b0a0e" stroke="rgba(255,255,255,.1)"/><circle cx="500" cy="336" r="7" fill="#0b0a0e" stroke="rgba(255,255,255,.1)"/>
+
+        <g font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="10" letter-spacing="1.5" fill="#6d665f">
+          <text x="44" y="360">TOTAL · UNSPENDABLE · FOREVER</text>
+          <text x="476" y="361" text-anchor="end" fill="#ffb547" font-family="Unbounded,system-ui,sans-serif" font-weight="600" font-size="15" letter-spacing="0">110,029 sats</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="how"><div class="wrap">
+  <div>
+    <div class="sec-head"><div><span class="eyebrow">Protocol</span><h2>How it works</h2></div><a class="btn sm" href="spec.html">Read the full spec →</a></div>
+    <div class="steps">
+      <a class="step" href="spec.html#derivation"><div class="n">#</div><div><h3>Pick a topic</h3><p>A name becomes an address: hash the script <code class="mono">OP_RETURN &lt;name&gt;</code>, wrap it as P2WSH. Unspendable by consensus, indexed by every explorer.</p></div></a>
+      <a class="step" href="spec.html#vote"><div class="n">₿</div><div><h3>Burn to it</h3><p>Send sats to the topic address and add an OP_RETURN with your take, 80 bytes max. Sats are the weight. A burn with no take counts as abstain.</p></div></a>
+      <a class="step" href="spec.html#counting"><div class="n">Σ</div><div><h3>Anyone can count</h3><p>List the address's transactions, read each OP_RETURN, sum sats per take after trimming, lowercasing and stripping punctuation. This page does it in your browser.</p></div></a>
+    </div>
+  </div>
+</div></section>
+
+<section id="source" style="padding-top:0"><div class="wrap">
+  <div>
+    <div class="sec-head"><div><span class="eyebrow">Don't trust, verify</span><h2>Check the burn yourself</h2></div><a class="btn sm" href="verify.html">Read the full guide →</a></div>
+    <div class="steps">
+      <a class="step" href="verify.html#address"><div class="n">1</div><div><h3>Recompute the address</h3><p>Name → script → SHA-256 → bech32. Four steps you can do by hand, and a live tool that does them in front of you.</p></div></a>
+      <a class="step" href="verify.html#node"><div class="n">2</div><div><h3>Ask your own node</h3><p><code class="mono">decodescript</code> returns the same address, <code class="mono">scantxoutset</code> shows every sat still sitting there, unspendable.</p></div></a>
+      <a class="step" href="verify.html#tally"><div class="n">3</div><div><h3>Recount the burns</h3><p>Twenty lines against any explorer, or your node, reproduce every number on this page. No trust in us required.</p></div></a>
+    </div>
+  </div>
+</div></section>
+
+<!--INC:tip-->
+
+<!--INC:walletdlg,ballotdlg-->
+<!--INC:foot-->
+
+<!--JS:shared,qr,wallet,ledger,walletui,db,ballotui,loader,index,tip,foot-->

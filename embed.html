@@ -1,0 +1,734 @@
+<meta charset="utf-8">
+<title>Burning Take · embed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* ===== embed only: one compact card, dark by default, ?theme=light flips the tokens. No nav, no footer, no dialogs. ===== */
+:root{
+  color-scheme:dark;
+  --bg:#0b0a0e; --bg2:#121016; --panel:rgba(255,255,255,.04); --line:rgba(255,255,255,.1);
+  --ink:#f3efe9; --ink2:#a89f95; --ink3:#8a8177;
+  --ember:#ff6a1a; --ember2:#ffb547; --ember-dim:rgba(255,106,26,.16); --ok:#5fd39a;
+  --side:#26303f; --side2:#3b4a60; --side-ink:#aab6c8;
+  --font-d:"Unbounded",system-ui,sans-serif; --font-b:"Instrument Sans",system-ui,sans-serif; --font-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#fbf7f2; --bg2:#ffffff; --panel:rgba(20,10,0,.035); --line:rgba(20,10,0,.12);
+  --ink:#1b1512; --ink2:#5d544c; --ink3:#8a8177;
+  --ember:#e85d0c; --ember2:#c77a00; --ember-dim:rgba(232,93,12,.12);
+  --side:#c9ced6; --side2:#a9b1bd; --side-ink:#4a5160;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:var(--font-b);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.card{position:relative;overflow:hidden;padding:14px 16px 12px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--panel),transparent),var(--bg2);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-height:120px}   /* minmax(0,…): a nowrap footer line never widens the card past the iframe */
+.card::before{content:"";position:absolute;inset:-50% -20% auto auto;width:60%;height:130%;background:radial-gradient(closest-side,var(--ember-dim),transparent 70%);pointer-events:none}
+.card>*{position:relative}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;min-height:20px}
+.eyebrow{font-family:var(--font-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ember2)}
+.cd{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 9px;font-family:var(--font-m);font-size:11px;border:1px solid rgba(255,181,71,.35);background:var(--ember-dim);color:var(--ember2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cd i{width:6px;height:6px;border-radius:50%;background:var(--ember2);box-shadow:0 0 8px var(--ember);animation:pulse .9s ease-in-out infinite alternate}
+.cd.closed{color:var(--ink3);border-color:var(--line);background:transparent}.cd.closed i{animation:none;background:var(--ink3);box-shadow:none}
+@keyframes pulse{from{opacity:.3;transform:scale(.7)}to{opacity:1;transform:scale(1.2)}}
+h1{font-family:var(--font-d);font-weight:600;font-size:clamp(15px,3.4vw,19px);letter-spacing:-.01em;line-height:1.2;margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.muted{color:var(--ink2);margin:0}
+.view{display:grid;gap:6px;min-height:40px}
+/* duel */
+.duel{display:grid;gap:6px}
+.duel .names{display:flex;justify-content:space-between;gap:10px;font-family:var(--font-d);font-weight:600;font-size:13px}
+.duel .names .b{color:var(--ink2);text-align:right}
+.duel .bar{position:relative;display:flex;height:30px;border-radius:9px;overflow:hidden;background:linear-gradient(90deg,var(--side),var(--side2))}
+.duel .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2));transition:width .4s}
+.duel .bar span{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--font-d);font-weight:600;font-size:12px}
+.duel .bar .pa{left:10px;color:#1a0900}.duel .bar .pb{right:10px;color:var(--side-ink)}
+:root[data-theme="light"] .duel .bar .pb{color:#fff}
+.duel .sats{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums}
+/* top 3 */
+.row{position:relative;display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.row .txt{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.other .txt{color:var(--ink2);font-weight:400}
+.row .sats{font-family:var(--font-d);font-weight:600;font-size:12px;color:var(--ember2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .sats small{font-family:var(--font-m);font-weight:400;font-size:10px;color:var(--ink3)}
+.row .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--ember2),var(--ember));opacity:.8;transition:width .4s}
+.row .rk{font-family:var(--font-d);font-weight:600;font-size:12px;color:var(--ink3)}.row .rk.one{color:var(--ember2)}   /* ranked like the topic board: 01 in ember */
+.rest{font-family:var(--font-m);font-size:11px;color:var(--ink3);padding:0 2px}
+/* number */
+.num{display:grid;grid-template-columns:1fr 1fr minmax(120px,1.4fr);gap:8px;align-items:stretch}
+.num .tile{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;align-content:center;gap:2px;min-width:0}
+.num .tile b{font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num .tile span{font-family:var(--font-m);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em}
+.hist{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;align-items:end;height:52px;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.hist div{height:100%;display:flex;align-items:end;background:var(--panel);border-radius:3px}
+.hist i{display:block;width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--ember2),var(--ember));min-height:2px}
+/* foot */
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:10px}
+.cta{display:inline-flex;align-items:center;border-radius:999px;padding:7px 14px;font-weight:600;font-size:12px;background:linear-gradient(135deg,var(--ember2),var(--ember));color:#1a0900;box-shadow:0 8px 24px -10px rgba(255,106,26,.7);white-space:nowrap}
+.cta:hover{filter:brightness(1.07)}
+.pw{display:block;max-width:100%;font-family:var(--font-m);font-size:10px;color:var(--ink3);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}   /* a block, so the ellipsis applies to the whole line */
+.pw i{display:inline-block;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--ember2),var(--ember) 60%,#7a2200);box-shadow:0 0 8px rgba(255,106,26,.55);vertical-align:-1px;margin-right:6px}
+.pw a{color:var(--ink2)}.pw a:hover{color:var(--ink)}
+.pw .st:not(:empty)::before{content:" · "}
+@media (max-width:380px){.num{grid-template-columns:1fr 1fr}.hist{grid-column:1/-1}.foot{flex-direction:column;align-items:stretch}.cta{justify-content:center}}
+@media (prefers-reduced-motion:reduce){.cd i{animation:none}.duel .bar i,.row .bar{transition:none}}
+</style>
+
+<div class="card" id="card">
+  <div class="top">
+    <span class="eyebrow" id="ekind">…</span>
+    <span class="cd" id="ecount" hidden><i></i><span id="ecounttxt"></span></span>
+  </div>
+  <h1 id="etitle">…</h1>
+  <div class="view" id="eview"><p class="muted" id="eloading">Reading the chain…</p></div>
+  <div class="foot">
+    <a class="cta" id="elink" href="topic.html" target="_blank" rel="noopener">Burn your take →</a>
+    <span class="pw"><i></i>powered by <a id="ehome" href="index.html" target="_blank" rel="noopener">Burning Take</a><span class="st" id="estatus"></span></span>
+  </div>
+</div>
+
+<script>
+// ---------- stub data (example figures) ----------
+// Aggregates per scope; expanded into individual burns to simulate explorer paging.
+const SCOPES = {
+  general: [
+    {t:"Bitcoin fixes this", sats:4812000, votes:213},
+    {t:"Pizza is better than pasta", sats:1930500, votes:88},
+    {t:"Remote work beats the office", sats:1204000, votes:61},
+    {t:"Tabs over spaces", sats:966300, votes:140},
+    {t:"Paris should ban cars inside the périphérique", sats:712000, votes:34},
+    {t:"AI will not take my job", sats:455900, votes:52},
+    {t:"Coffee before 6am is a crime", sats:120400, votes:19},
+    {t:"Spaces over tabs", sats:98000, votes:27},
+  ],
+  bitcoin: [
+    {t:"Self custody or it isn't yours", sats:3100000, votes:120},
+    {t:"Lightning is the scaling answer", sats:2200000, votes:96},
+    {t:"Ordinals are spam", sats:1400000, votes:64},
+    {t:"Ordinals are fee revenue", sats:720000, votes:32},
+  ],
+  pizza: [
+    {t:"pineapple is a crime", sats:801000, votes:58},
+    {t:"pineapple belongs", sats:399000, votes:30},
+  ],
+  "tabs-vs-spaces": [
+    {t:"tabs", sats:640300, votes:101},
+    {t:"spaces", sats:424000, votes:66},
+  ],
+  "paris-cars?yes|no": [
+    {t:"yes", sats:612000, votes:41},
+    {t:"no", sats:100500, votes:12},
+    {t:"maybe", sats:12000, votes:3},
+    {t:"only on weekends", sats:4000, votes:1},
+  ],
+  "ai-jobs": [
+    {t:"AI will not take my job", sats:455900, votes:52},
+  ],
+  coffee: [
+    {t:"Espresso only", sats:210000, votes:31},
+    {t:"Filter is fine", sats:150000, votes:22},
+  ],
+  "remote-work": [
+    {t:"Fully remote", sats:380000, votes:44},
+    {t:"Hybrid", sats:120000, votes:15},
+  ],
+  "ban-ordinals?yes|no!5000": [
+    {t:"yes", sats:300000, votes:40},
+    {t:"no", sats:200000, votes:30},
+  ],
+  "btc-eoy-2026?50000..500000@966500": [
+    {t:"120000", sats:210000, votes:12},{t:"150000", sats:180000, votes:9},{t:"100000", sats:160000, votes:14},
+    {t:"250000", sats:90000, votes:5},{t:"90000", sats:60000, votes:6},{t:"420000", sats:40000, votes:2},{t:"to the moon", sats:8000, votes:2},
+  ],
+  "eu-elections?in|out": [
+    {t:"in", sats:90000, votes:9},
+    {t:"out", sats:60000, votes:7},
+  ],
+  "l2-winner?lightning|liquid|ark|fedimint": [
+    {t:"lightning", sats:360000, votes:30},
+    {t:"ark", sats:190000, votes:19},
+    {t:"liquid", sats:110000, votes:12},
+    {t:"fedimint", sats:52000, votes:6},
+    {t:"rgb", sats:8000, votes:2},
+  ],
+  "best-editor": [
+    {t:"vim", sats:50000, votes:11},
+    {t:"emacs", sats:47000, votes:9},
+  ],
+  "lightning-vs-liquid": [
+    {t:"lightning", sats:30000, votes:5},
+  ],
+  "burning-take": [                                   // the project's own topic: feedback, weighed in sats
+    {t:"Ship it on mainnet already", sats:180000, votes:21},
+    {t:"Add a burner wallet", sats:64000, votes:9},
+    {t:"Needs a dark mode joke", sats:12000, votes:4},
+    {t:"Rename topics to boards", sats:5000, votes:2},
+  ],
+};
+// What the address summary endpoint returns per scope: total received = total burned, tx count = votes.
+const STATS = {};
+for (const [k,v] of Object.entries(SCOPES)) STATS[k] = {sats:v.reduce((a,x)=>a+x.sats,0), votes:v.reduce((a,x)=>a+x.votes,0)};
+const DIRECTORY=[            // last = block of the latest registration burn, active = block of the latest burn inside the scope
+  {name:"ai-jobs", reg:5000, listings:1, last:965799, active:965811},
+  {name:"pizza", reg:42000, listings:5, last:965410, active:965812},
+  {name:"general", reg:210000, listings:14, last:963000, active:965812},
+  {name:"paris-cars?yes|no", reg:31000, listings:2, last:965640, active:965640},
+  {name:"tabs-vs-spaces", reg:12000, listings:3, last:964880, active:965801},
+  {name:"bitcoin", reg:88000, listings:6, last:964120, active:965810},
+  {name:"coffee", reg:8000, listings:2, last:965702, active:965702},
+  {name:"remote-work", reg:15000, listings:3, last:965300, active:965790},
+  {name:"eu-elections?in|out", reg:20000, listings:1, last:965811, active:965811},
+  {name:"l2-winner?lightning|liquid|ark|fedimint", reg:18000, listings:2, last:965500, active:965807},
+  {name:"ban-ordinals?yes|no!5000", reg:25000, listings:2, last:965750, active:965809},
+  {name:"btc-eoy-2026?50000..500000@966500", reg:60000, listings:4, last:965600, active:965812},
+  {name:"best-editor", reg:3000, listings:1, last:965790, active:965300},
+  {name:"lightning-vs-liquid", reg:2000, listings:1, last:965812, active:965812},
+  {name:"burning-take", reg:50000, listings:3, last:965000, active:965812},
+];
+// ---------- sponsor score: sats burned to the root topic with a topic's name (registering and sponsoring are the same act) ----------
+const REG_SATS=330;   // ponytail: registering lists a topic at the smallest burn Bitcoin relays (P2WSH dust); sponsoring is where an amount is chosen
+const featureScore=name=>{ const d=DIRECTORY.find(t=>t.name===name); return d?(d.reg||0):0; };
+const featuredRank=(n=8)=>[...DIRECTORY].filter(d=>(d.reg||0)>0).sort((a,b)=>b.reg-a.reg).slice(0,n).map(d=>({name:d.name, sats:d.reg}));
+const BTCUSD = 100000, TIP = 965812;
+const fmt = n => n.toLocaleString("en-US");
+// statements and topic names come from the chain, and names also from links: text only. Everything they reach through innerHTML goes through esc()
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hashText=()=>{ const h=location.hash.slice(1); try{ return decodeURIComponent(h); }catch{ return h; } };   // a malformed link (#%) must not break the page
+// a burn read from the cache, a snapshot or (in the real build) the explorer: ids and numbers are checked here, so the pages can trust their shape
+const cleanVote=v=>{ if(!v||!/^[0-9a-f]{64}$/.test(v.txid)) return null;
+  return {...v, t:String(v.t??""), sats:Math.max(0,Math.round(+v.sats||0)), h:Number.isInteger(v.h)?v.h:null, from:/^[a-z0-9]{14,90}$/i.test(v.from||"")?v.from:null, tx:v.txid.slice(0,6)+"…"+v.txid.slice(-4)}; };
+const nfc = x => { const a=Math.abs(+x); if(a<1e4) return String(x); const [d,s]=a>=1e9?[1e9,"B"]:a>=1e6?[1e6,"M"]:[1e3,"k"], v=+x/d*10;   // number chips: 50000 -> 50k, 1500000 -> 1.5M, only when exact
+  return Math.abs(v-Math.round(v))<1e-9 ? Math.round(v)/10+s : fmt(+x); };                                                    // 12345 stays 12,345, years stay bare
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const $ = id => document.getElementById(id);
+const LS=(k,v)=>{ try{ return v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v); }catch{ return null; } };   // always through NETKEY(): bv.vote.tip / bv.scope.tip / bv.summary / bv.wallet
+const rhex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b=>b.toString(16).padStart(2,"0")).join("");
+const norm = t => t.trim().toLowerCase().replace(/\s+/g," ").replace(/[.!?]+$/,"");
+
+// ---------- network: one constant, read once ----------
+// host label (mainnet. / signet. / testnet.) wins; else ?net= (remembered), else the remembered choice, else mainnet
+const NET=(()=>{ const loc=typeof location!=="undefined"?location:{hostname:"",search:""}; const h=loc.hostname; const q=new URLSearchParams(loc.search).get("net"); let n = /^(signet|testnet)\./.test(h) ? "signet" : /^mainnet\./.test(h) ? "mainnet" : null; if(!n){ try{ n = q || localStorage.getItem("bv.net") || "mainnet"; if(q) localStorage.setItem("bv.net", q); }catch{ n = q || "mainnet"; } } return n==="signet"||n==="testnet" ? "signet" : "mainnet"; })();
+const HRP = NET==="mainnet" ? "bc" : "tb";
+const NETKEY = k => k + "." + NET;      // storage keys carry the network: a signet wallet is invisible on mainnet
+// ---------- time window: one choice shared by Explore and the topic boards, remembered in this browser ----------
+const WIN={all:Infinity, month:4320, week:1008, today:144};          // blocks, ~10 min each
+const WINLABEL={all:"all time", month:"this month", week:"this week", today:"today"};
+const winGet=()=>{ const w=LS(NETKEY("bv.window")); return w&&w in WIN ? w : "all"; };
+const winSet=w=>{ if(w in WIN) LS(NETKEY("bv.window"),w); };
+const TXURL = txid => "https://mempool.space/" + (NET==="mainnet"?"":"signet/") + "tx/" + txid;
+
+const enc=new TextEncoder();
+const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
+const cache={};
+// ---------- summary cache: per-scope totals from the address summary endpoint, stale-while-revalidate, no expiry ----------
+// Totals change with every burn, but an old number beats an empty box: show what we have, refresh behind, overwrite.
+const summaryLoad=()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.summary"))||"null"); return j ? j.stats : null; }catch{ return null; } };
+const summarySave=()=>{ try{ const stats={}; for(const d of DIRECTORY) if(d.stats) stats[d.name]=d.stats; LS(NETKEY("bv.summary"),JSON.stringify({at:Date.now(),stats})); }catch{} };
+const summaryApply=st=>{ let any=false; for(const d of DIRECTORY) if(st&&st[d.name]){ d.stats=st[d.name]; any=true; } return any; };
+// summaryWarm() -> Promise<"snapshot"|"cache"|false>: the shipped snapshot index first (snapshots/<net>/index.json, relative, built by snapshot.py), then the LS cache.
+const summaryWarm=async()=>{
+  const snap=await snapshotIndex();
+  if(snap){ const st={}; for(const t of snap.topics) st[t.name]={sats:t.sats, votes:t.votes}; if(summaryApply(st)) return "snapshot"; }
+  return summaryApply(summaryLoad()) ? "cache" : false;
+};
+// ---------- snapshots: static JSON written at build time (snapshot.py), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
+const SNAPDIR="snapshots/"+NET+"/";
+const snapshotKey=async name=>toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(name))));   // file name = hex sha256 of the canonical topic name
+const snapshotGet=async url=>{ try{ if(typeof fetch!=="function") return null; const r=await fetch(url,{cache:"no-cache"}); if(!r.ok) return null; return await r.json(); }catch{ return null; } };   // any failure = no snapshot
+let SNAPIDX=null;                                       // the index is fetched once per page: it says which topics have a snapshot file, so an unsnapshotted topic never 404s
+const snapshotIndex=()=>SNAPIDX||(SNAPIDX=snapshotGet(SNAPDIR+"index.json").then(j=>j&&Array.isArray(j.topics) ? j : null));                                            // -> Promise<{height, topics:[{name, sats, votes, active, reg, listings}]} | null>
+const snapshotFetch=async name=>{ const idx=await snapshotIndex(); if(idx&&!idx.topics.some(t=>t.name===name)) return null;
+  const j=await snapshotGet(SNAPDIR+(await snapshotKey(name))+".json"); return j&&j.net===NET&&Array.isArray(j.votes) ? j : null; };   // -> {name, net, height, count, votes:[{txid,t,sats,h,from}]} | null
+// ---------- stub votes: deterministic, so the page and snapshot.py produce the same burns ----------
+// FNV-1a over the topic name seeds mulberry32; snapshot.py ports both, byte for byte. In the real build every vote's "from" is
+// vin[0].prevout.scriptpubkey_address from the explorer (the first input's address, the closest thing a burn has to a voter identity).
+const fnv1a=s=>{ let h=0x811c9dc5; for(const b of enc.encode(s)){ h^=b; h=Math.imul(h,0x01000193)>>>0; } return h>>>0; };
+const mulberry32=a=>()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
+let BURNERS=null;                                       // 40 fake P2WPKH burners on this network, built on first use (bech32's tables are declared further down)
+const burners=()=>BURNERS||(BURNERS=Array.from({length:40},(_,i)=>{ const r=mulberry32(fnv1a("burner"+i)); return bech32(HRP,0,Array.from({length:20},()=>Math.floor(r()*256))); }));
+function stubVotes(name){
+  const out=[], rnd=mulberry32(fnv1a(name));
+  for (const st of (SCOPES[name]||[])) for (let i=0;i<st.votes;i++){
+    const txid=toHex(Array.from({length:32},()=>Math.floor(rnd()*256))), sats=Math.max(330,Math.round(st.sats/st.votes*(0.3+rnd()*1.4))), r=rnd(), h=TIP-Math.floor(r*r*3000), from=burners()[Math.floor(rnd()*40)];
+    out.push({txid, t:st.t, sats, h, from, tx:txid.slice(0,6)+"…"+txid.slice(-4)});
+  }
+  out.sort((a,b)=>b.h-a.h);                           // stable, like Python's
+  if (out.length) out[0].h=null;                      // one unconfirmed, sitting in the mempool
+  return out;
+}
+// ---------- explorer endpoint: an Esplora API base per network, overridable from the Data source row (index page) ----------
+const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:null} };   // null: the preset has no server for that network
+const esploraDefault=net=>ESPLORA_PRESETS.mempool[net]||ESPLORA_PRESETS.mempool.signet;
+const esploraOverride=()=>{ const v=(LS(NETKEY("bv.endpoint"))||"").trim(); if(!v) return ""; if(ESPLORA_PRESETS[v]) return ESPLORA_PRESETS[v][NET]||""; return /^https?:\/\//.test(v) ? v.replace(/\/+$/,"") : ""; };   // stored: preset id or a full API base URL
+const esploraFor=net=>esploraOverride()||esploraDefault(net);                                   // what this page reads the chain through
+const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
+globalThis.ESPLORA_OVERRIDE_URL=esploraOverride();                                              // read by wallet.js esploraBase()
+try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
+// ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
+const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]
+const watchSave=a=>{ try{ LS(NETKEY("bv.watch"),JSON.stringify(a)); }catch{} };
+const watchHas=name=>watchGet().some(w=>w.name===name);
+const watchToggle=name=>{ const a=watchGet(), i=a.findIndex(w=>w.name===name); if(i>=0) a.splice(i,1); else a.push({name, seenH:0, seenCount:0}); watchSave(a); return i<0; };   // -> true when now watched
+const watchMarkSeen=(name,count,height)=>{ const a=watchGet(), w=a.find(x=>x.name===name); if(!w) return; w.seenCount=count; w.seenH=height; watchSave(a); };
+// ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
+const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
+const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} };
+const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
+const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
+const ballotClear=()=>ballotSave([]);
+const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
+const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
+const ballotFee=(nIn=1,feeRate=2,entries=ballotGet(),tipSats=0)=>{                                // -> {vsize, fee}: P2WPKH inputs, P2WSH burns, OP_RETURN(s), tip, change
+  const stm=entries.map(e=>enc.encode(e.statement||""));
+  const joined=stm.reduce((a,b)=>a+b.length,0)+Math.max(0,stm.length-1), shared=joined<=80;
+  const opret= !stm.some(b=>b.length) ? 0 : shared ? 9+joined+(joined<=75?0:1) : stm.reduce((a,b)=>a+(b.length?9+b.length+(b.length<=75?0:1):10),0);
+  const vsize=11+68*nIn+43*entries.length+opret+(tipSats>0?31:0)+31;
+  return {vsize, fee:Math.ceil(vsize*feeRate)};
+};
+
+// ---------- closed questions: "question?a|b|c" in the scope name ----------
+function parseScope(name){
+  // grammar: question[?a|b|c | ?lo..hi][@deadline][!min]  — canonical order, so one question = one address
+  let q=name, spec="", deadline=null, min=null;
+  const i=name.indexOf("?"); if(i>=0){ q=name.slice(0,i); spec=name.slice(i+1); }
+  const take=(src,re,set)=>src.replace(re,(_,v)=>{set(+v);return "";});
+  q=take(q,/@(\d+)/,v=>deadline=v); q=take(q,/!(\d+)/,v=>min=v);
+  spec=take(spec,/@(\d+)/,v=>deadline=v); spec=take(spec,/!(\d+)/,v=>min=v);
+  let opts=null, range=null;
+  const m=spec.match(/^(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?)$/);
+  if (m) range=[+m[1],+m[2]].sort((a,b)=>a-b);
+  else if (spec){ const o=[...new Set(spec.split("|").map(norm).filter(Boolean))]; if(o.length>1) opts=o; }
+  return {q:q.trim(), opts, range, deadline, min};
+}
+const canonical = p => p.q + (p.opts?"?"+p.opts.join("|"):p.range?`?${p.range[0]}..${p.range[1]}`:"") + (p.deadline?"@"+p.deadline:"") + (p.min?"!"+p.min:"");
+const label = name => { const p=parseScope(name), tags=[];
+  if(p.opts) tags.push("poll · "+esc(p.opts.join(" | "))); if(p.range) tags.push(`number · ${nfc(p.range[0])} – ${nfc(p.range[1])}`);
+  if(p.deadline) tags.push(p.deadline>TIP?`closes in ${fmt(p.deadline-TIP)} blocks`:"closed"); if(p.min) tags.push(`min ${fmt(p.min)} sats`);
+  return esc(p.q) + tags.map(t=>` <span class="pill" style="padding:1px 7px;font-size:11px">${t}</span>`).join(""); };
+const kind = p => p.range ? "number" : p.opts ? (p.opts.length===2?"duel":"poll") : "open";
+// ---------- one way to name, count and time a topic, for Explore and the topic page alike ----------
+const kindWord = p => { const k=kind(p); return k==="duel" ? (p.opts.join("|")==="yes|no"?"yes-no":"duel") : k==="poll" ? `poll · ${p.opts.length} options` : k; };   // open, yes-no, duel, poll · N options, number
+const topicName = (name,hash=true) => { const p=parseScope(name); return (hash?"#":"")+esc(p.q)+(p.opts||p.range?"?":""); };   // "#general", "#paris-cars?"  (escaped HTML)
+const numOf = t => { const m=norm(String(t)).match(/^(-?\d+(?:\.\d+)?)([km])?$/); return m ? +m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1) : NaN; };   // spec §5: "150k" = 150000
+const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?`${d}d ${h}h`:h?`${h}h ${m%60}m`:`${m}m`; };   // blocks at ~10 min
+const ICON_TAKE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';   // a take: a megaphone, said out loud
+// ---------- icon badges (.fi, base.css), one visual language on every page: the shape says what (ICON_TAKE, a megaphone, for any burn's take or answer,
+// ✦ a sponsorship, a flame most burned, a clock the latest, a person a burner, # a registration), the tint which kind of burn (ember a take, red most burned, gold a sponsorship, slate a burner, grey a registration) ----------
+const svgIcon = (d,fill) => `<svg width="16" height="16" viewBox="0 0 24 24" ${fill?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"'} aria-hidden="true">${d}</svg>`;
+const ICONS = {
+  top: svgIcon('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),   // most burned: a flame
+  latest: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),                   // the latest: a clock
+  feature: "✦",                                                                                   // a sponsorship (the key keeps the data's word: intent "feature")
+  burner: svgIcon('<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>'),
+  join: svgIcon('<circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),   // a new burner
+  reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
+};
+const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
+const satsShort = n => n<1e3 ? String(n) : n<1e4 ? (n/1e3).toFixed(1).replace(/\.0$/,"")+"k" : n<1e6 ? Math.round(n/1e3)+"k" : (n/1e6).toFixed(1).replace(/\.0$/,"")+"M";   // "210k" on buttons
+// counted burns of one topic, with the topic page's rules: late and below-minimum burns do not count; poll and number answers
+// are kept apart from off-list ones (on:false), and number answers merge by value ("150k" and "150000" are one row)
+function tallyOf(name, votes){
+  const p=parseScope(name), rows={}; let sats=0, burns=0;
+  for(const v of votes){
+    if(p.deadline && (v.h===null ? TIP+1>=p.deadline : v.h>=p.deadline)) continue;
+    if(p.min && v.sats<p.min) continue;
+    let key=norm(v.t), t=v.t, on=true;
+    if(p.range){ const x=numOf(v.t); on=Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]; if(on){ key="n:"+x; t=String(x); } }
+    else if(p.opts) on=p.opts.includes(key);
+    const r=rows[key]||(rows[key]={t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
+    if(on){ sats+=v.sats; burns++; }
+  }
+  const list=Object.values(rows).sort((a,b)=>b.sats-a.sats);
+  return {sats, burns, answers:list.filter(r=>r.on), other:list.filter(r=>!r.on)};
+}
+const weightedMedian = rows => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; for(const r of rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t))){ acc+=r.sats; if(acc>=tot/2) return numOf(r.t); } return null; };
+
+// ---------- scope: name -> P2WSH(OP_RETURN name) ----------
+const CH="qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+function polymod(v){const G=[0x3b6a57b2,0x26508e6d,0x1ea119fa,0x3d4233dd,0x2a1462b3];let c=1;for(const x of v){const b=c>>>25;c=((c&0x1ffffff)<<5)^x;for(let i=0;i<5;i++)if((b>>>i)&1)c^=G[i]}return c>>>0}
+function hrpExpand(h){const r=[];for(const ch of h)r.push(ch.charCodeAt(0)>>5);r.push(0);for(const ch of h)r.push(ch.charCodeAt(0)&31);return r}
+function toWords(bytes){let acc=0,bits=0,out=[];for(const b of bytes){acc=((acc<<8)|b)&0xfff;bits+=8;while(bits>=5){bits-=5;out.push((acc>>bits)&31)}}if(bits>0)out.push((acc<<(5-bits))&31);return out}
+function bech32(hrp,ver,prog){const data=[ver,...toWords(prog)];const pm=polymod([...hrpExpand(hrp),...data,0,0,0,0,0,0])^1;const chk=[];for(let i=0;i<6;i++)chk.push((pm>>>(5*(5-i)))&31);return hrp+"1"+[...data,...chk].map(d=>CH[d]).join("")}
+async function deriveScope(name){
+  const nb=enc.encode(name);
+  const script=new Uint8Array(nb.length ? [0x6a, ...(nb.length<=75?[nb.length]:[0x4c,nb.length]), ...nb] : [0x6a]);   // root scope: bare OP_RETURN
+  const hash=new Uint8Array(await crypto.subtle.digest("SHA-256",script));
+  return {name, script:toHex(script), hash:toHex(hash), addr:bech32(HRP,0,hash)};   // bc1… on mainnet, tb1… on signet
+}
+
+// ---------- bech32 decoder + unsigned transaction + ready-to-sign payload (pure) ----------
+const BECH32M=0x2bc830a3;
+// ---------- tip configuration: put the project addresses here (bech32 / bech32m). null = no tip on that network, every tip UI stays hidden ----------
+const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:null };   // project tip addresses per network; null hides every tip control on that network
+const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
+const tipEnabled = () => !!TIP_EFFECTIVE;
+function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
+function bech32Decode(addr){                                     // -> {hrp, version, program}; v0 = bech32, v1+ = bech32m (BIP-173 / BIP-350)
+  if(typeof addr!=="string") throw new Error("not a string");
+  if(addr!==addr.toLowerCase() && addr!==addr.toUpperCase()) throw new Error("mixed case");
+  const s=addr.toLowerCase(), i=s.lastIndexOf("1");
+  if(s.length<8||s.length>90||i<1||i+7>s.length) throw new Error("bad length");
+  const hrp=s.slice(0,i), data=[...s.slice(i+1)].map(c=>CH.indexOf(c));
+  if(data.includes(-1)) throw new Error("bad character");
+  const version=data[0]; if(version>16) throw new Error("bad witness version");
+  if(polymod([...hrpExpand(hrp),...data])!==(version===0?1:BECH32M)) throw new Error("bad checksum");
+  const program=fromWords(data.slice(1,-6));
+  if(program.length<2||program.length>40) throw new Error("bad program length");
+  if(version===0&&program.length!==20&&program.length!==32) throw new Error("bad v0 program length");
+  return {hrp, version, program};
+}
+function scriptPubKey(addr){ const {version,program}=bech32Decode(addr); return new Uint8Array([version?0x50+version:0x00, program.length, ...program]); }
+function opReturnScript(bytes){ return new Uint8Array([0x6a, ...(bytes.length<=75?[bytes.length]:[0x4c,bytes.length]), ...bytes]); }   // 6a + minimal push
+const varint=n=> n<0xfd?[n] : n<=0xffff?[0xfd,n&255,n>>8] : [0xfe,n&255,(n>>8)&255,(n>>16)&255,(n>>>24)&255];
+const le64=sats=>{ const lo=sats%4294967296, hi=Math.floor(sats/4294967296); return [lo&255,(lo>>8)&255,(lo>>16)&255,(lo>>>24)&255,hi&255,(hi>>8)&255,(hi>>16)&255,(hi>>>24)&255]; };
+function serializeUnsignedTx(outputs){                           // version 2, no inputs, no witness, locktime 0 — a wallet funds and signs it
+  const b=[0x02,0,0,0, ...varint(0), ...varint(outputs.length)];
+  for(const o of outputs) b.push(...le64(o.value), ...varint(o.script.length), ...o.script);
+  b.push(0,0,0,0);
+  return toHex(new Uint8Array(b));
+}
+/* self-check (not executed): serializeUnsignedTx([{value:5000, script:scriptPubKey("bc1qrz05qq6tu7senu06nzgkdrhr4dsyn7pd8rrghec0t9h2ktsc27msqvznj2")},{value:0, script:opReturnScript(enc.encode("pizza"))}])
+   === "02000000" + "00" + "02"
+     + "8813000000000000" + "22" + "0020189f40034be7a199f1fa9891668ee3ab6049f82d38c68be70f596eab2e1857b7"
+     + "0000000000000000" + "07" + "6a0570697a7a61"                                     // OP_RETURN push(5) "pizza"
+     + "00000000"
+   i.e. 0200000000028813000000000000220020189f40034be7a199f1fa9891668ee3ab6049f82d38c68be70f596eab2e1857b70000000000000000076a0570697a7a6100000000 */
+function buildPayload({burnAddr, burnSats, statementBytes=null, tipAddr=null, tipSats=0, burnLabel="burn"}){
+  const btc=v=>(v/1e8).toFixed(8);
+  const outs=[], core=[], electrum=[];
+  outs.push({label:burnLabel, addr:burnAddr, sats:burnSats, script:scriptPubKey(burnAddr)});
+  core.push(`{"${burnAddr}":${btc(burnSats)}}`); electrum.push(`${burnAddr}, ${burnSats} sat`);
+  if(statementBytes && statementBytes.length){
+    const dataHex=toHex(statementBytes);
+    outs.push({label:"OP_RETURN", addr:"OP_RETURN", sats:0, script:opReturnScript(statementBytes)});
+    core.push(`{"data":"${dataHex}"}`); electrum.push(`OP_RETURN ${dataHex}, 0`);
+  }
+  let tipOmitted=false;
+  if(tipSats>0){
+    let ts=null; try{ ts=tipAddr?scriptPubKey(tipAddr):null; }catch{ ts=null; }
+    if(ts){ outs.push({label:"tip", addr:tipAddr, sats:tipSats, script:ts}); core.push(`{"${tipAddr}":${btc(tipSats)}}`); electrum.push(`${tipAddr}, ${tipSats} sat`); }
+    else tipOmitted=true;
+  }
+  return {
+    outputs: outs.map(o=>({label:o.label, addr:o.addr, sats:o.sats, scriptHex:toHex(o.script)})),
+    rawHex: serializeUnsignedTx(outs.map(o=>({value:o.sats, script:o.script}))),
+    core: {
+      createrawtransaction: `bitcoin-cli createrawtransaction '[]' '[${core.join(",")}]'`,
+      note: "fundrawtransaction adds inputs and change to a zero-input transaction",
+      next: ["bitcoin-cli fundrawtransaction <hex>", "bitcoin-cli signrawtransactionwithwallet <funded hex>", "bitcoin-cli sendrawtransaction <signed hex>"],
+    },
+    electrum: electrum.join("\n"),
+    tipOmitted,
+  };
+}
+// Several burns in one transaction (spec §4): one burn output per entry, then the statements. If every statement joined by 0x1F fits in
+// 80 bytes -> one shared OP_RETURN after the burns (relays everywhere); else one OP_RETURN per entry, right after its burn output
+// (needs post-Core-30 relay policy). A counter splits each OP_RETURN payload on 0x1F and hands the pieces, in order, to the topic outputs.
+function buildBallotPayload(entries, {tipAddr=null, tipSats=0}={}){
+  const btc=v=>(v/1e8).toFixed(8);
+  const outs=[], core=[], electrum=[];
+  const burn=e=>{ const s=scriptPubKey(e.addr); outs.push({label:e.name?"burn · #"+e.name:(e.intent==="feature"?"sponsor":"register")+" · root", addr:e.addr, sats:e.sats, script:s}); core.push(`{"${e.addr}":${btc(e.sats)}}`); electrum.push(`${e.addr}, ${e.sats} sat`); };   // name "" = the root topic: a registration or a sponsorship
+  const data=bytes=>{ const hex=toHex(bytes); outs.push({label:"OP_RETURN", addr:"OP_RETURN", sats:0, script:opReturnScript(bytes)}); core.push(`{"data":"${hex}"}`); electrum.push(`OP_RETURN ${hex}, 0`); };
+  const stm=entries.map(e=>String(e.statement||"")), any=stm.some(Boolean);
+  const joined=enc.encode(stm.join(BALLOT_SEP));
+  const shared=joined.length<=80;
+  if(shared){ entries.forEach(burn); if(any) data(joined); }
+  else{
+    const lastWith=stm.reduce((a,s,i)=>s?i:a,-1);
+    entries.forEach((e,i)=>{ burn(e); if(i<=lastWith) data(enc.encode(stm[i])); });   // an empty OP_RETURN keeps the piece order for an abstain that has a later voter
+  }
+  let tipOmitted=false;
+  if(tipSats>0){
+    let ts=null; try{ ts=tipAddr?scriptPubKey(tipAddr):null; }catch{ ts=null; }
+    if(ts){ outs.push({label:"tip", addr:tipAddr, sats:tipSats, script:ts}); core.push(`{"${tipAddr}":${btc(tipSats)}}`); electrum.push(`${tipAddr}, ${tipSats} sat`); }
+    else tipOmitted=true;
+  }
+  return {
+    outputs: outs.map(o=>({label:o.label, addr:o.addr, sats:o.sats, scriptHex:toHex(o.script)})),
+    rawHex: serializeUnsignedTx(outs.map(o=>({value:o.sats, script:o.script}))),
+    core: {
+      createrawtransaction: `bitcoin-cli createrawtransaction '[]' '[${core.join(",")}]'`,
+      note: "fundrawtransaction adds inputs and change to a zero-input transaction",
+      next: ["bitcoin-cli fundrawtransaction <hex>", "bitcoin-cli signrawtransactionwithwallet <funded hex>", "bitcoin-cli sendrawtransaction <signed hex>"],
+    },
+    electrum: electrum.join("\n"),
+    tipOmitted, shared, burns: entries.length,
+  };
+}
+
+// ---------- transaction panel, one instance per dialog: the wallet block on top, the outputs + raw hex under "Advanced" ----------
+// payPanel(prefix): {set(args), paint(), wallet, onpaint}. set() builds the payload, paints the outputs + raw hex and hands it to the wallet block;
+// onpaint (set by the page) repaints the dialog footer, whose primary button is the wallet action (walletPrimary).
+function payPanel(prefix){
+  const pre=$(prefix+"-text"), tipnote=$(prefix+"-tipnote"), copy=$(prefix+"-copy"), wal=$(prefix+"-wallet");
+  const wtab=wal?walletTab(prefix,wal):null;
+  let last=null;
+  const api={wallet:wtab, onpaint:null};
+  const paint=()=>{ pre.textContent=last?last.rawHex:"…"; copy.disabled=!last; if(wtab) wtab.paint(); if(api.onpaint) api.onpaint(); };
+  copy.onclick=()=>{ if(last) copyText(pre.textContent,copy); };
+  const set=args=>{ try{ last=buildPayload(args); }catch{ last=null; } tipnote.hidden=!(last&&last.tipOmitted); if(wtab) wtab.update(last); paint(); };
+  api.set=set; api.paint=paint;
+  paint();
+  return api;
+}
+const PAY=[];                                          // every panel on the page, repainted together when the wallet changes
+
+// ---------- amount chips: a .seg of presets over a number input; Custom reveals the input, an off-preset value keeps it visible ----------
+function amountChips(seg, input, onchange){
+  let custom=false;
+  const chips=[...seg.querySelectorAll("[data-sats]")];
+  const sync=()=>{
+    const v=Number(input.value||0), min=+input.min||0; let hit=null;
+    for(const b of chips){ if(b.dataset.sats==="custom") continue; b.disabled=+b.dataset.sats<min; if(!b.disabled&&+b.dataset.sats===v) hit=b; }   // below the minimum: greyed out
+    for(const b of chips) b.setAttribute("aria-pressed",String(b===hit || (!hit&&b.dataset.sats==="custom")));
+    input.hidden=!!hit&&!custom;
+  };
+  seg.onclick=e=>{ const b=e.target.closest("[data-sats]"); if(!b||b.disabled) return;
+    if(b.dataset.sats==="custom"){ custom=true; sync(); input.focus(); input.select(); return; }
+    custom=false; input.value=b.dataset.sats; sync(); onchange(); };
+  input.addEventListener("input",sync);
+  const reset=def=>{ custom=false; input.value=Math.max(+def,+input.min||0); sync(); };   // the default, or the minimum when that is higher
+  sync();
+  return {sync, reset};
+}
+
+// ---------- copy ----------
+function copyText(txt,btn){
+  const done=()=>{
+    if(btn.classList.contains("icon")){ btn.classList.add("copied"); clearTimeout(btn._ct); btn._ct=setTimeout(()=>btn.classList.remove("copied"),1200); return; }   // icon-only button: swap glyph for a check + tooltip
+    const o=btn.textContent;btn.textContent="copied";setTimeout(()=>btn.textContent=o,1200)};
+  (navigator.clipboard?.writeText(txt)||Promise.reject()).then(done).catch(()=>{
+    const ta=document.createElement("textarea"); ta.value=txt; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;opacity:0;top:0;left:0";
+    document.body.appendChild(ta); ta.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch{} ta.remove();
+    if(ok) return done();
+    const el=btn.previousElementSibling; if(!el||!el.matches("code,pre")) return;   // a header button (e.g. Copy link) has no text to select
+    const r=document.createRange(); r.selectNodeContents(el);
+    const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+  });
+}
+document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(b.dataset.copy,b));
+
+// ---------- .seg toggles: one sliding thumb per group, parked under the aria-pressed="true" button ----------
+const RM=matchMedia("(prefers-reduced-motion:reduce)");
+const NARROW=matchMedia("(max-width:480px)");   // phone: shorter texts (walletPill); markup uses .more (desktop-only) / .less (phone-only) spans
+function segThumbs(){
+  const place=seg=>{
+    const th=seg._thumb, on=seg.querySelector('button[aria-pressed="true"]'); if(!th) return;
+    th.hidden=!on; if(!on||!seg.offsetWidth) return;                 // hidden dialog/step: placed when it becomes visible (ResizeObserver)
+    const fresh=!th.style.width; if(fresh) th.style.transition="none";   // first placement snaps, later ones slide
+    th.style.left=on.offsetLeft+"px"; th.style.top=on.offsetTop+"px"; th.style.width=on.offsetWidth+"px"; th.style.height=on.offsetHeight+"px";
+    if(fresh){ void th.offsetWidth; th.style.transition=""; }
+  };
+  document.querySelectorAll(".seg").forEach(seg=>{
+    if(!seg._thumb){
+      const th=document.createElement("i"); th.className="thumb"; seg.prepend(th); seg._thumb=th;
+      new MutationObserver(()=>place(seg)).observe(seg,{attributes:true,attributeFilter:["aria-pressed"],subtree:true});
+      if("ResizeObserver" in window){ const ro=new ResizeObserver(()=>place(seg)); ro.observe(seg); seg.querySelectorAll("button").forEach(b=>ro.observe(b)); }   // buttons too: a late web font widens them without moving the seg box
+    }
+    place(seg);
+  });
+  if(!segThumbs.bound){ segThumbs.bound=true; const all=()=>document.querySelectorAll(".seg").forEach(place); addEventListener("resize",all); document.fonts?.ready.then(all); }
+}
+
+// ---------- network chip: shows NET; a tiny menu switches to the other network (host label, else remembered in bv.net) ----------
+function netSwitch(to){
+  const h=location.hostname, u=new URL(location.href);
+  if(/^(mainnet|signet|testnet)\./.test(h)){ u.hostname=h.replace(/^(mainnet|signet|testnet)\./, to+"."); location.href=u.href; return; }   // same path, search and hash
+  try{ localStorage.setItem("bv.net",to); }catch{}
+  u.searchParams.delete("net");
+  if(u.href===location.href) location.reload(); else location.href=u.href;
+}
+(()=>{
+  const pill=$("netpill"), menu=$("netmenu"); if(!pill||!menu) return;
+  $("nettxt").textContent=NET; pill.classList.toggle("test",NET!=="mainnet"); pill.title="Bitcoin network: "+NET;
+  const close=()=>{ menu.hidden=true; pill.setAttribute("aria-expanded","false"); };
+  menu.querySelectorAll("[data-net]").forEach(b=>{ const on=b.dataset.net===NET; b.setAttribute("aria-checked",String(on)); b.onclick=()=>{ close(); if(!on) netSwitch(b.dataset.net); }; });
+  pill.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; pill.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector('[aria-checked="true"]').focus(); };
+  document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); pill.focus(); } });
+})();
+
+// ---------- a small menu under a button (aria-expanded + hidden): closes on outside click and Escape. -> close() ----------
+function dropMenu(btn,menu){
+  const close=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false"); };
+  btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
+  document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); btn.focus(); } });
+  menu.addEventListener("keydown",e=>{                                     // arrow keys walk the items, like a native menu
+    const items=[...menu.querySelectorAll('[role="menuitem"]:not([disabled])')], i=items.indexOf(document.activeElement); if(!items.length) return;
+    const to = e.key==="ArrowDown"?(i+1)%items.length : e.key==="ArrowUp"?(i-1+items.length)%items.length : e.key==="Home"?0 : e.key==="End"?items.length-1 : -1;
+    if(to>=0){ e.preventDefault(); items[to].focus(); }
+  });
+  return close;
+}
+
+// ---------- dialogs ----------
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+document.querySelectorAll("dialog").forEach(d=>{
+  d.addEventListener("click",e=>{ if(e.target===d) d.close(); });           // click on the backdrop dismisses (the .dlg card fills the dialog box)
+  d.addEventListener("close",()=>document.documentElement.style.overflow="");
+  new MutationObserver(()=>{ if(d.open) document.documentElement.style.overflow="hidden"; }).observe(d,{attributes:true,attributeFilter:["open"]});
+});
+
+// ---------- IndexedDB cache (every page): votes keyed [txid, scope] with indexes scope / txid, one sync record per scope ----------
+// Confirmed burns never change, so a scope scanned once is read back from disk and only the tail is fetched.
+// The cache is a speed-up, never the source of truth: it can be empty, blocked or evicted at any time.
+// v2: compound key. One transaction can burn in several topics at once (a ballot, spec §4) and each burn is its own row;
+// v1 rows were keyed by txid alone, so the upgrade drops both stores and the next visit rebuilds them from the snapshot.
+const DB=(()=>{
+  let dbp=null;
+  const open=()=>dbp||(dbp=new Promise((res,rej)=>{
+    let req; try{ req=indexedDB.open("burning-voice-"+NET,2); }catch(e){ return rej(e); }   // one cache per network
+    req.onupgradeneeded=()=>{ const db=req.result;
+      for(const s of ["votes","scopes"]) if(db.objectStoreNames.contains(s)) db.deleteObjectStore(s);
+      const v=db.createObjectStore("votes",{keyPath:["txid","scope"]}); v.createIndex("scope","scope"); v.createIndex("txid","txid");
+      db.createObjectStore("scopes",{keyPath:"name"}); };
+    req.onsuccess=()=>{ const db=req.result; db.onversionchange=()=>{ db.close(); dbp=null; }; res(db); };   // another tab upgrades or deletes the cache: let go, reopen on the next call (a held connection would block it forever)
+    req.onerror=()=>rej(req.error); req.onblocked=()=>rej(new Error("blocked"));
+  }));
+  const tx=(db,stores,mode,fn)=>new Promise((res,rej)=>{ const t=db.transaction(stores,mode); const out=fn(t); t.oncomplete=()=>res(out); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); });
+  const get=(store,key)=>new Promise((res,rej)=>{ const r=store.get(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+  const all=(idx,key)=>new Promise((res,rej)=>{ const r=idx.getAll(key); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); });
+  const byH=(a,b)=>(b.h??Infinity)===(a.h??Infinity) ? 0 : (b.h??Infinity)-(a.h??Infinity);
+  return {
+    async sync(name){ try{ const db=await open(); return await tx(db,["scopes"],"readonly",t=>get(t.objectStore("scopes"),name)) .then(x=>x||null); }catch{ return null; } },   // -> {name,lastTx,height,count,at} | null
+    async votes(name){ try{ const db=await open(); const rows=await tx(db,["votes"],"readonly",t=>all(t.objectStore("votes").index("scope"),name)).then(p=>p); return (await rows).map(cleanVote).filter(Boolean).sort(byH); }catch{ return null; } },   // -> [{txid,t,sats,h,from,tx,scope[,vout]}] newest first | null
+    async all(){ try{ const db=await open(); return (await tx(db,["votes"],"readonly",t=>all(t.objectStore("votes")))).map(cleanVote).filter(Boolean); }catch{ return null; } },                                            // -> every cached burn of every topic (burner page filters by from) | null
+    async scopes(){ try{ const db=await open(); return await tx(db,["scopes"],"readonly",t=>all(t.objectStore("scopes"))); }catch{ return null; } },                                       // -> every sync record [{name,lastTx,height,count,at}] | null
+    async byTx(txid){ try{ const db=await open(); const rows=await tx(db,["votes"],"readonly",t=>all(t.objectStore("votes").index("txid"),txid)).then(p=>p); return (await rows).map(cleanVote).filter(Boolean); }catch{ return null; } },            // -> every burn of one transaction, one row per topic (a ballot has several) | null
+    async put(name,page,all){ try{ const db=await open(); await tx(db,["votes","scopes"],"readwrite",t=>{
+        const vs=t.objectStore("votes"); for(const v of page) if(v.h!==null) vs.put({...v,scope:name});           // the mempool part goes through putPending (loader.js persist)
+        if(all){ const conf=all.filter(v=>v.h!==null); t.objectStore("scopes").put({name, lastTx:conf[0]?conf[0].txid:null, height:TIP, count:conf.length, at:Date.now()}); }   // sync record once the whole scan landed
+      }); }catch{} },
+    async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
+  };
+})();
+// ---------- topic loader: the data path only, no rendering (shared by topic.js and embed.js) ----------
+// IndexedDB (warm) → shipped snapshot (cold, whole) → explorer scan (paged). Every path leaves the scope on disk so the next visit is the IndexedDB one.
+// loadVotes(name, {onPage, onPhase, cancelled}) → Promise<{votes, source:"cache"|"snapshot"|"scan", requests}|null>
+//   onPage(votes)   a batch of burns that just landed: the whole cache or snapshot, or one explorer page (25 burns)
+//   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done", source?, count?, page?, pages?, height?, lastTx?, requests?}
+//   cancelled()     → true when the caller moved on (another scope opened): the loader stops and resolves null
+// Every vote carries tx (short txid form). cache[name] (shared.js) holds the full list for the page that asked, so addPending can prepend to it.
+// persist(): confirmed burns through DB.put (cursor + sync record); the mempool ones as pending rows (DB.putPending), so receipt.html#<txid> and the
+// burner page find a burn the explorer has only just seen. The confirmed row overwrites the pending one (same key) on the next scan.
+const persist=(name,page,all)=>{ DB.put(name,page,all); const pend=page.filter(v=>v.h===null); if(pend.length) DB.putPending(name,pend); };
+async function loadVotes(name,{onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+  onPhase({phase:"cache"});
+  const rec=await DB.sync(name); if(cancelled()) return null;
+  if(rec&&(rec.count||rec.lastTx)){                       // warm: read from disk, then fetch only what is newer than the cursor. An empty record (a scan that found nothing) protects nothing: a topic that gained a snapshot since is read cold
+    const stored=(await DB.votes(name))||[]; if(cancelled()) return null;
+    cache[name]=stored; onPage(stored);
+    onPhase({phase:"cache", source:"cache", count:stored.length, lastTx:rec.lastTx, height:rec.height});
+    await sleep(350); if(cancelled()) return null;          // ponytail: the stub has no new burns; the real page pages the explorer until it meets rec.lastTx
+    onPhase({phase:"done", source:"cache", count:stored.length, requests:1});
+    return {votes:stored, source:"cache", requests:1};
+  }
+  onPhase({phase:"snapshot"});                              // cold: the shipped snapshot (snapshots/<net>/<sha256(name)>.json) lands whole, then only burns newer than its height are fetched
+  const snap=await snapshotFetch(name); if(cancelled()) return null;
+  if(snap){
+    const votes=snap.votes.map(cleanVote).filter(Boolean);
+    cache[name]=votes; onPage(votes);
+    onPhase({phase:"snapshot", source:"snapshot", count:votes.length, height:snap.height});
+    persist(name, votes, votes);                            // on disk like a finished scan
+    await sleep(350); if(cancelled()) return null;          // ponytail: the stub tail is empty; the real page pages the explorer from snap.height to the tip
+    onPhase({phase:"done", source:"snapshot", count:votes.length, requests:1});
+    return {votes, source:"snapshot", requests:1};
+  }
+  const votes=cache[name]||(cache[name]=stubVotes(name));  // no snapshot: the explorer, 25 burns per request
+  const pages=Math.ceil(votes.length/25);
+  for(let p=0;p<pages;p++){
+    onPhase({phase:"scan", page:p+1, pages, count:Math.min((p+1)*25,votes.length)});
+    await sleep(180+Math.random()*180); if(cancelled()) return null;
+    const page=votes.slice(p*25,p*25+25); onPage(page);
+    persist(name, page, p===pages-1 ? votes : null);        // each page lands on disk as it arrives; the sync record only once the scan completes
+  }
+  if(!pages) persist(name, [], votes);
+  onPhase({phase:"done", source:"scan", count:votes.length, requests:pages});
+  return {votes, source:"scan", requests:pages};
+}
+// ---------- a burn's home: every burn of every known topic, for pages that start from an address or a txid rather than a topic ----------
+// loadAll({onPhase}) → Promise<[{txid,t,sats,h,from,tx,scope}]>: what IndexedDB holds, plus the snapshot of every indexed topic the cache does not know yet
+// (each one is written to the cache, so the second visit is disk only). onPhase({phase:"cache"|"snapshots"|"done", k, n, count}).
+async function loadAll({onPhase=()=>{}}={}){
+  onPhase({phase:"cache"});
+  const rows=(await DB.all())||[], known=new Set(((await DB.scopes())||[]).map(s=>s.name));
+  const idx=await snapshotIndex(), todo=idx?idx.topics.map(t=>t.name).filter(n=>!known.has(n)):[];
+  let k=0;
+  for(const name of todo){
+    onPhase({phase:"snapshots", k, n:todo.length, count:rows.length});
+    const snap=await snapshotFetch(name); k++;
+    if(!snap) continue;
+    const votes=snap.votes.map(cleanVote).filter(Boolean);
+    persist(name, votes, votes);
+    for(const v of votes) rows.push({...v, scope:name});
+  }
+  onPhase({phase:"done", k, n:todo.length, count:rows.length});
+  return rows;
+}
+// ---------- embed: one compact card of a topic for any page (embed.html#<name>[?net=signet][&theme=light]) ----------
+// Same data path as the topic page (loader.js: IndexedDB → snapshot → explorer), same buckets (late / below minimum), no dialogs, no wallet.
+// The host sizes the iframe from the {bvHeight} message this page posts whenever its height changes.
+{ const th=new URLSearchParams(location.search).get("theme"); if(th==="light") document.documentElement.dataset.theme="light"; }
+const post=()=>{ try{ if(parent!==window) parent.postMessage({bvHeight:Math.ceil($("card").getBoundingClientRect().height), topic:scope?scope.name:""},"*"); }catch{} };
+if("ResizeObserver" in window) new ResizeObserver(post).observe(document.body);
+let scope=null, agg={}, late={sats:0,votes:0}, dust={sats:0,votes:0}, seq=0;
+const T0=Date.now();
+const dhm=ms=>{ const m=Math.max(0,Math.round(ms/60000)), d=Math.floor(m/1440), h=Math.floor(m%1440/60), mm=m%60; return d?`${d}d ${h}h`:h?`${h}h ${mm}m`:`${mm}m`; };
+const nfm=x=>Math.abs(+x)>=10000?fmt(+x):String(x);
+function addVote(v){
+  const p=scope.spec;
+  if (p.deadline && (v.h===null ? TIP+1>=p.deadline : v.h>=p.deadline)) { late.sats+=v.sats; late.votes++; return; }
+  if (p.min && v.sats<p.min) { dust.sats+=v.sats; dust.votes++; return; }
+  const k=norm(v.t), a=agg[k]||(agg[k]={t:v.t,sats:0,votes:0}); a.sats+=v.sats; a.votes++;
+}
+function tick(){                                            // the deadline as time left, ticking between blocks
+  const p=scope.spec, el=$("ecount"); if(!p.deadline){ el.hidden=true; return; }
+  const closed=p.deadline<=TIP; el.hidden=false; el.classList.toggle("closed",closed);
+  $("ecounttxt").textContent= closed ? `closed · block ${fmt(p.deadline)}` : `closes in ${dhm((p.deadline-TIP)*600000-(Date.now()-T0))}`;
+  el.title=`block ${fmt(p.deadline)}`;
+}
+setInterval(()=>{ if(scope) tick(); },60000);
+function view(){
+  const p=scope.spec, k=kind(p), S=Object.values(agg), host=$("eview"), max=Math.max(1,...S.map(s=>s.sats));
+  const find=o=>S.find(s=>norm(s.t)===o)||{t:o,sats:0,votes:0};
+  const rows=(list,cls="")=>list.map((s,i)=>`<div class="row ${cls}"><span class="rk${i?"":" one"}">${cls?"":String(i+1).padStart(2,"0")}</span><span class="txt" title="${esc(s.t)}">${esc(s.t)}</span><span class="sats">${fmt(s.sats)}<small> sats</small></span><i class="bar" style="width:${(s.sats/max*100).toFixed(1)}%"></i></div>`).join("");
+  if(k==="duel"){
+    const [A,B]=p.opts.map(find), tot=A.sats+B.sats, pa=tot?A.sats/tot*100:50, pct=v=>tot?v.toFixed(0)+"%":"—";
+    host.innerHTML=`<div class="duel"><div class="names"><span class="a">${esc(A.t)}</span><span class="b">${esc(B.t)}</span></div>
+      <div class="bar"><i style="width:${pa.toFixed(1)}%"></i><span class="pa">${pct(pa)}</span><span class="pb">${pct(100-pa)}</span></div>
+      <div class="sats"><span>${fmt(A.sats)} sats · ${A.votes} burn${A.votes===1?"":"s"}</span><span>${fmt(B.sats)} sats · ${B.votes} burn${B.votes===1?"":"s"}</span></div></div>`;
+  } else if(k==="number"){
+    const [lo,hi]=p.range, num=t=>{const m=norm(t).match(/^(-?\d+(?:\.\d+)?)([km])?$/);return m?+m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1):NaN};
+    const valid=S.map(s=>({...s,x:num(s.t)})).filter(s=>Number.isFinite(s.x)&&s.x>=lo&&s.x<=hi), tot=valid.reduce((a,s)=>a+s.sats,0);
+    const mean=tot?valid.reduce((a,s)=>a+s.x*s.sats,0)/tot:null; let median=null; if(tot){ let acc=0; for(const s of valid.slice().sort((a,b)=>a.x-b.x)){ acc+=s.sats; if(acc>=tot/2){median=s.x;break;} } }
+    const bins=Array(10).fill(0); for(const s of valid){ bins[Math.min(9,Math.floor((s.x-lo)/((hi-lo)||1)*10))]+=s.sats; } const bmax=Math.max(1,...bins);
+    const nf=x=>x===null?"—":x.toLocaleString("en-US",{maximumFractionDigits:2});
+    host.innerHTML=`<div class="num"><div class="tile"><b>${nf(mean)}</b><span>weighted mean</span></div><div class="tile"><b>${nf(median)}</b><span>median</span></div>
+      <div class="hist" title="${nfm(lo)} – ${nfm(hi)} · ${fmt(tot)} sats on ${valid.length} value${valid.length===1?"":"s"}">${bins.map(b=>`<div><i style="height:${(b/bmax*100).toFixed(0)}%"></i></div>`).join("")}</div></div>`;
+  } else {
+    const main= k==="poll" ? p.opts.map(find) : S;
+    const top=main.slice().sort((a,b)=>b.sats-a.sats).slice(0,3), rest=main.length-top.length, others=k==="poll"?S.filter(s=>!p.opts.includes(norm(s.t))).length:0;
+    host.innerHTML= top.length ? rows(top)+(rest>0||others?`<div class="rest">${[rest>0?`+ ${rest} more`:"", others?`${others} off-list`:""].filter(Boolean).join(" · ")}</div>`:"") : `<p class="muted">Nothing burned here yet. Be the first.</p>`;
+  }
+  post();
+}
+async function open(){
+  const raw=hashText().trim().toLowerCase()||"general", name=canonical(parseScope(raw));
+  scope={name, spec:parseScope(name)}; agg={}; late={sats:0,votes:0}; dust={sats:0,votes:0};
+  const p=scope.spec, k=kind(p), my=++seq;
+  $("etitle").textContent= k==="open" ? `Hottest takes on #${p.q}` : `${p.q}?`;
+  $("ekind").textContent=[{open:"open question",duel:"duel",poll:`poll · ${p.opts?p.opts.length:0} options`,number:"number"}[k], p.min?`min ${fmt(p.min)} sats`:null, p.range?`${nfc(p.range[0])} – ${nfc(p.range[1])}`:null].filter(Boolean).join(" · ");
+  const u=new URL("topic.html",location.href); if(NET!=="mainnet") u.searchParams.set("net",NET); u.hash=name; $("elink").href=u.href;
+  const h=new URL("index.html",location.href); if(NET!=="mainnet") h.searchParams.set("net",NET); $("ehome").href=h.href;
+  document.title=p.q+" · Burning Take"; tick();
+  $("eview").innerHTML=`<p class="muted" id="eloading">Reading the chain…</p>`; $("estatus").textContent=""; post();
+  const r=await loadVotes(name,{ cancelled:()=>my!==seq,
+    onPage:vs=>{ vs.forEach(addVote); view(); },
+    onPhase:ph=>{ $("estatus").textContent= ph.phase==="done" ? `${NET} · block ${fmt(TIP)} · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="scan" ? `scanning ${ph.page}/${ph.pages}` : ""; } });
+  if(r&&!r.votes.length) view();
+}
+addEventListener("hashchange",open); open();
+addEventListener("load",post);
+</script>

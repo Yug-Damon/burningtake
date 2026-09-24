@@ -1,0 +1,63 @@
+/* ===== explore only: the Watching and Featured strips over the directory ===== */
+.strip{margin-bottom:16px}
+.striphead{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.striphead .divider{flex:1;margin:0}
+.striphead .hint{font-family:var(--font-m);font-size:11px;letter-spacing:.04em;color:var(--ember2);white-space:nowrap;padding:6px 0}
+.striphead .hint:hover{color:var(--ink)}
+/* featured chip: name + the sats burned to feature it */
+/* watch chip: link + unread badge + a small ✕ */
+.wchip{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-weight:600;font-size:12px;transition:.15s;max-width:100%}
+.wchip:hover{border-color:rgba(255,255,255,.2)}
+.wchip a{display:inline-flex;align-items:center;gap:7px;padding:6px 6px 6px 12px;min-width:0}
+.wchip a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wchip.unreg{border-style:dashed;color:var(--ink2)}
+.wchip .new{font-family:var(--font-m);font-weight:500;font-size:10px;line-height:1;color:#1a0900;background:linear-gradient(135deg,var(--ember2),var(--ember));border-radius:999px;padding:3px 6px;flex:none}
+.wchip .x{border:0;background:transparent;color:var(--ink3);padding:0 11px 0 4px;font-size:11px;cursor:pointer;border-radius:0 999px 999px 0;font-family:var(--font-m)}
+.wchip .x:hover,.wchip .x:focus-visible{color:#ff8c5c}
+@media (max-width:480px){.wchip a,.wchip .x{min-height:40px}.striphead .hint{padding:8px 0}}
+/* FEATURED: shorter cards, feature score as the number, top takes in ink */
+.fcard{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"head big" "lead lead";align-items:start;gap:10px 12px;padding:16px;align-content:start}   /* the badge, eyebrow and name left, the sats in the top-right corner */
+.fcard .fhead{grid-area:head}.fcard .big{grid-area:big;text-align:right;white-space:nowrap}.fcard .lead{grid-area:lead}
+.fcard .lead{min-height:0;gap:4px}
+.fcard .lead .row3 .m{color:var(--ink);font-size:12px}
+.fcard .lead .row3{grid-template-columns:20px minmax(0,1fr) auto}.fcard .rk{font-style:normal;font-family:var(--font-d);font-weight:600;font-size:12px;color:var(--ink3)}.fcard .row3:first-child .rk{color:var(--ember2)}   /* ranked like the topic board: 01 in ember */
+.fcard .lead .row3.num i{display:none}.fcard .lead .row3.num{grid-template-columns:1fr auto}
+.fcard .nt{font-family:var(--font-m);font-size:11px;color:var(--ink3);letter-spacing:.04em}
+.fcard .ktype{font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.fcard .lead .row3.lt{grid-template-columns:minmax(0,1fr) auto}.fcard.ghost{pointer-events:none}
+.fcard .fhead{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-areas:"i k" "i n";column-gap:10px;row-gap:1px;align-items:center;min-width:0}.fcard .fhead>.fi{grid-area:i}.fcard .ktype{grid-area:k}
+.fcard .name{grid-area:n;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25}   /* the badge, then the eyebrow over the name, both on its right */
+/* a name nobody registered: a one-line offer under the matches, or a panel when nothing matches */
+.createrow{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-top:12px;padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.createrow p{margin:0;color:var(--ink2);max-width:60ch}.createrow b{color:var(--ink)}
+.createrow .acts{display:flex;gap:8px;flex-wrap:wrap}
+.createrow.compact{padding:8px 0 0;border:0;border-top:1px dashed var(--line);border-radius:0;background:transparent}.createrow.compact .why{display:none}
+/* activity comes after a clear break */
+@media (max-width:860px){
+  .fcard{align-items:center;padding:14px 16px;gap:6px 12px}
+  .fcard .big{font-size:16px}.fcard .big small{display:inline;margin:0 0 0 5px;font-size:11px}
+  .fcard .lead .row3~.row3,.fcard .nt{display:none}
+}
+/* two independent columns under the spotlight: left = hottest takes, most burned; right = biggest features, recent, top burners.
+   On phones they merge into one column in reading order: hottest, features, most burned, recent, burners */
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 40px;align-items:start;margin-top:28px}
+.cols2>.col{display:grid;gap:28px;align-content:start;min-width:0}
+.cols2.solo{grid-template-columns:minmax(0,1fr)}
+.cols2 .col>div>.divider:first-child,.cols2 .col>div>.burnercol>.divider:first-child{margin-top:0}
+@media (max-width:860px){
+  .cols2{grid-template-columns:minmax(0,1fr);gap:24px}.cols2>.col{display:contents}
+  #hotcol{order:1}#featcol{order:2}#scoperows{order:3}#recentcol{order:4}#topburners{order:5}
+}
+/* HOTTEST TAKES: one row per topic, led by the take badge; a small bar says where the take stands, drawn for the topic's kind:
+   its share (open), the split (duel), every option (poll), its place in the range (number) */
+.hk .lbt .vs{color:var(--ink3)}
+.hk .hv{display:flex;align-items:center;gap:8px;justify-self:end;font-size:11px;color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.viz{position:relative;display:flex;gap:2px;width:96px;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.07)}
+.viz i{min-width:3px;background:linear-gradient(90deg,var(--ember),var(--ember2))}
+.viz i.b{background:#3b4a60}   /* the other sides, in the duel card's second color */
+.viz.num{height:2px;margin-block:2px;overflow:visible;background:rgba(255,255,255,.2)}
+.viz.num::before,.viz.num::after{content:"";position:absolute;top:-3px;width:1px;height:8px;background:rgba(255,255,255,.3)}.viz.num::before{left:0}.viz.num::after{right:0}
+.viz.num i{position:absolute;top:50%;width:9px;height:9px;min-width:0;border-radius:50%;transform:translate(-50%,-50%);background:var(--ember2);box-shadow:0 0 6px var(--ember)}
+@media (max-width:480px){.viz{width:64px}}
+.burnercol>.striphead{margin-bottom:4px;flex-wrap:wrap;row-gap:0}.burnercol>.striphead .divider{white-space:nowrap}@media (min-width:481px){.burnercol>.striphead .hint{padding:0}}   /* a list heading with its link, as tall as a plain heading; the link drops under it when the line is too short */
+@media (min-width:861px) and (max-width:1100px){.fcard{padding:14px}.fcard .name{font-size:15px}.fcard .big{font-size:18px}.fcard .big .more{display:none}.fcard .big .less{display:inline}}   /* three narrow cards: a smaller number, just "sats" under it */
