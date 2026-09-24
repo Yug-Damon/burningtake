@@ -1,43 +1,52 @@
 // ---------- receipt page: one burn, identified by its txid (receipt.html#<txid>) ----------
-// Data: IndexedDB by txid (one row per topic of the transaction; a ballot has several), else every shipped snapshot (loader.js loadAll).
+// Data: IndexedDB by txid (one row per topic of the transaction; a ballot has several), else the transaction itself from the explorer, its outputs matched against the directory.
 // A burn signed in this browser is on disk as pending (h:null) the moment it is broadcast, so the receipt link works before any explorer has it.
 const status=$("status");
 let R=null, ALL=[], seq=0;                                  // R: the burn shown (lowest vout), ALL: every burn of the transaction
 const stmtOf=v=>v.t||"";
 function paint(){
-  const v=R, p=parseScope(v.scope), abstain=!stmtOf(v);
+  const v=R, abstain=!stmtOf(v), root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, p=parseScope(tn);   // a root burn sponsors (the first time: registers) the topic its statement names
   $("rnet").textContent=NET; $("ricon").innerHTML=ICON_TAKE;
   $("rstmt").textContent= abstain ? "abstain · a burn with no take" : stmtOf(v); $("rstmt").classList.toggle("abstain",abstain);
   $("rsats").textContent=fmt(v.sats);
-  $("rtopic").textContent="#"+p.q; $("rtopic").href="topic.html#"+encodeURIComponent(v.scope); $("rtopic").title=v.scope;
+  $("rin").textContent= root&&tn ? "to sponsor" : "in";
+  $("rtopic").textContent= root&&!tn ? "the root topic" : "#"+p.q; $("rtopic").href= root&&!tn ? "explore.html" : "topic.html#"+encodeURIComponent(tn); $("rtopic").title=tn;   // a root burn naming no topic: an ordinary burn to that address
   if(v.h===null){ $("rblock").innerHTML=`<span class="pend"><i></i>pending</span>`; $("rconf").textContent="in the mempool · not final"; }
   else { $("rblock").textContent=fmt(v.h); const c=TIP-v.h+1; $("rconf").textContent=`${fmt(c)} confirmation${c===1?"":"s"}`; }
   $("rfrom").textContent=v.from||"unknown"; $("rfrom").href=v.from?"burner.html#"+v.from:"#"; $("rfrom").title=v.from||"";
   $("rtxid").textContent=v.txid; $("rexp").href=TXURL(v.txid);
   const others=ALL.filter(x=>x!==v);
   $("ralso").hidden=!others.length;
-  $("ralso").innerHTML= others.length ? `Same transaction, ${others.length} more burn${others.length===1?"":"s"}: `+others.map(x=>`<a href="topic.html#${encodeURIComponent(x.scope)}">#${esc(parseScope(x.scope).q)}</a> · ${x.t?esc(x.t):"<i>abstain</i>"} · ${fmt(x.sats)} sats`).join(" · ") : "";
+  $("ralso").innerHTML= others.length ? `Same transaction, ${others.length} more burn${others.length===1?"":"s"}: `+others.map(x=>`${x.scope?"":"sponsoring "}<a href="topic.html#${encodeURIComponent(x.scope||nameOf(x.t)||"")}">#${esc(parseScope(x.scope||nameOf(x.t)||"").q)}</a> · ${x.t?esc(x.t):"<i>abstain</i>"} · ${fmt(x.sats)} sats`).join(" · ") : "";
   document.title=(abstain?"abstain":stmtOf(v))+" · receipt · Burning Take";
   $("rcard").hidden=false; $("runknown").hidden=true; $("rpreview").hidden=true;
 }
-function unknown(txid, why){
+function unknown(txid, why){                               // why: "bad" (not a txid) | "missing" (no such transaction) | "other" (it burns in no topic this page can name) | "offline"
+  const T={bad:["That is not a transaction id","A receipt link ends with the 64 hex characters of a transaction id: receipt.html#<txid>."],
+    missing:["No such transaction","The explorer knows no transaction with this id, confirmed or in the mempool."],
+    other:["Not a burn in a registered topic","This transaction pays no topic this page can name. If it burns in a topic nobody registered, open that topic by its name and the burn shows there."],
+    offline:["The explorer did not answer","Try again in a moment, or pick another explorer at the bottom of the page."]}[why];
   $("rcard").hidden=true; $("runknown").hidden=false;
-  $("runkt").textContent= why ? "That is not a transaction id" : "Unknown here yet";
-  $("runkp").textContent= why ? "A receipt link ends with the 64 hex characters of a transaction id: receipt.html#<txid>." : "This app has not seen that transaction. Open its topic so it gets scanned, then come back to this link.";
-  $("rfind").hidden=!!why; $("runkexpp").hidden=!!why; if(!why) $("runkexp").href=TXURL(txid);
+  $("runkt").textContent=T[0]; $("runkp").textContent=T[1];
+  $("rfind").hidden=why!=="other"; $("runkexpp").hidden=why==="bad"; if(why!=="bad") $("runkexp").href=TXURL(txid);
   document.title="Receipt · Burning Take";
 }
 async function load(){
   const txid=hashText().trim().toLowerCase(), my=++seq;
   R=null; ALL=[];
-  if(!/^[0-9a-f]{64}$/.test(txid)){ status.innerHTML=""; unknown(txid,true); return; }
+  if(!/^[0-9a-f]{64}$/.test(txid)){ status.innerHTML=""; unknown(txid,"bad"); return; }
   status.innerHTML=`<span class="spin"></span> looking up ${txid.slice(0,10)}…`;
   let rows=(await DB.byTx(txid))||[]; if(my!==seq) return;
-  if(!rows.length){
-    const all=await loadAll({onPhase:p=>{ if(my===seq&&p.phase==="snapshots") status.innerHTML=`<span class="spin"></span> searching snapshots · ${p.k}/${p.n}`; }}); if(my!==seq) return;
-    rows=all.filter(v=>v.txid===txid);
+  if(!rows.length){                                        // not in this browser: the transaction from the explorer, its outputs matched against every topic this page can name
+    let tx;
+    try{ tx=await chainGet(`/tx/${txid}`); }catch(e){ if(my!==seq) return; status.innerHTML=""; unknown(txid, e&&(e.status===404||e.status===400)?"missing":"offline"); return; }
+    await dirLoad(); if(my!==seq) return;
+    const topics=new Map([[await topicAddr(""),""]]);
+    for(const n of new Set([...DIRECTORY.map(d=>d.name), ...((await DB.scopes())||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
+    rows=txBurns(tx,topics).map(v=>cleanVote({...v, scope:v.name})).filter(Boolean);
   }
-  if(!rows.length){ status.innerHTML=`<span class="dot"></span> not in the cache or the snapshots`; unknown(txid); return; }
+  if(my!==seq) return;
+  if(!rows.length){ status.innerHTML=""; unknown(txid,"other"); return; }
   rows.sort((a,b)=>(a.vout??0)-(b.vout??0)); ALL=rows; R=rows[0]; paint();
   status.innerHTML=`<span class="dot"></span> found · block ${fmt(TIP)}`;
 }
@@ -68,7 +77,7 @@ async function drawCard(){
   y+=18; x.font=`400 28px ${B}`; x.fillStyle="#a89f95"; const pre="burned "; x.fillText(pre,96,y); let dx=96+x.measureText(pre).width;
   x.font=`600 30px ${D}`; x.fillStyle="#ffb547"; const n=fmt(v.sats)+" sats"; x.fillText(n,dx,y); dx+=x.measureText(n).width;
   x.font=`400 28px ${B}`; x.fillStyle="#a89f95"; x.fillText(" in ",dx,y); dx+=x.measureText(" in ").width;
-  x.fillStyle="#f3efe9"; x.font=`500 28px ${B}`; x.fillText("#"+parseScope(v.scope).q,dx,y);
+  x.fillStyle="#f3efe9"; x.font=`500 28px ${B}`; x.fillText("#"+parseScope(v.scope||nameOf(v.t)||"").q,dx,y);
   y+=46; x.font=`400 20px ${M}`; x.fillStyle="#8a8177";
   x.fillText(v.h===null ? "pending in the mempool" : `block ${fmt(v.h)} · ${fmt(TIP-v.h+1)} confirmation${TIP-v.h===0?"":"s"} · burned for good`,96,y);
   x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);

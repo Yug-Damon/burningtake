@@ -1,63 +1,57 @@
-// ---------- topic loader: the data path only, no rendering (shared by topic.js and embed.js) ----------
-// IndexedDB (warm) → shipped snapshot (cold, whole) → explorer scan (paged). Every path leaves the scope on disk so the next visit is the IndexedDB one.
-// loadVotes(name, {onPage, onPhase, cancelled}) → Promise<{votes, source:"cache"|"snapshot"|"scan", requests}|null>
-//   onPage(votes)   a batch of burns that just landed: the whole cache or snapshot, or one explorer page (25 burns)
-//   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done", source?, count?, page?, pages?, height?, lastTx?, requests?}
-//   cancelled()     → true when the caller moved on (another scope opened): the loader stops and resolves null
-// Every vote carries tx (short txid form). cache[name] (shared.js) holds the full list for the page that asked, so addPending can prepend to it.
-// persist(): confirmed burns through DB.put (cursor + sync record); the mempool ones as pending rows (DB.putPending), so receipt.html#<txid> and the
-// burner page find a burn the explorer has only just seen. The confirmed row overwrites the pending one (same key) on the next scan.
-const persist=(name,page,all)=>{ DB.put(name,page,all); const pend=page.filter(v=>v.h===null); if(pend.length) DB.putPending(name,pend); };
-async function loadVotes(name,{onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+// ---------- the data path, no rendering (every app page): IndexedDB first, then the explorer for everything newer ----------
+// loadVotes(name, {onPage, onPhase, cancelled}) -> Promise<{votes, source:"cache"|"snapshot"|"scan", requests, error?}|null>
+//   onPage(votes)   burns that just landed, each txid once: what this browser (or a published snapshot) knows, then every explorer page
+//   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done"|"error", source?, count?, page?, lastTx?, height?, requests?}
+//   cancelled()     -> true when the caller moved on: the loader stops and resolves null
+// The result's votes are the whole list with the mempool as the explorer lists it now: pages recount from it, not from the batches.
+tipReady(); priceReady();                                                 // the chain tip and the BTC price, once per page (shared.js)
+const ADDRS=new Map();                                                    // topic name -> address, derived once per page
+const topicAddr=async name=>{ if(!ADDRS.has(name)) ADDRS.set(name,(await deriveScope(name)).addr); return ADDRS.get(name); };
+const FRESH_PENDING=10*60000;                                             // a burn signed in this browser stays pending this long, even before the explorer lists it
+async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+  if(!TIP) await tipReady();                                              // windows and deadlines need a tip: the cached one, else the first answer
+  const addr=raw||await topicAddr(name), shown=new Set(), show=vs=>{ const f=vs.filter(v=>!shown.has(v.txid)); f.forEach(v=>shown.add(v.txid)); if(f.length) onPage(f); };
+  let known=[], source="scan";
   onPhase({phase:"cache"});
   const rec=await DB.sync(name); if(cancelled()) return null;
-  if(rec&&(rec.count||rec.lastTx)){                       // warm: read from disk, then fetch only what is newer than the cursor. An empty record (a scan that found nothing) protects nothing: a topic that gained a snapshot since is read cold
-    const stored=(await DB.votes(name))||[]; if(cancelled()) return null;
-    cache[name]=stored; onPage(stored);
-    onPhase({phase:"cache", source:"cache", count:stored.length, lastTx:rec.lastTx, height:rec.height});
-    await sleep(350); if(cancelled()) return null;          // ponytail: the stub has no new burns; the real page pages the explorer until it meets rec.lastTx
-    onPhase({phase:"done", source:"cache", count:stored.length, requests:1});
-    return {votes:stored, source:"cache", requests:1};
+  if(rec&&(rec.count||rec.lastTx)){ known=(await DB.votes(name))||[]; source="cache"; onPhase({phase:"cache", source, count:known.length, lastTx:rec.lastTx}); }
+  else{
+    onPhase({phase:"snapshot"});
+    const snap=await snapshotFetch(name); if(cancelled()) return null;
+    if(snap){ known=snap.votes.map(cleanVote).filter(Boolean); source="snapshot"; DB.put(name, known, known); onPhase({phase:"snapshot", source, count:known.length, height:snap.height}); }
   }
-  onPhase({phase:"snapshot"});                              // cold: the shipped snapshot (snapshots/<net>/<sha256(name)>.json) lands whole, then only burns newer than its height are fetched
-  const snap=await snapshotFetch(name); if(cancelled()) return null;
-  if(snap){
-    const votes=snap.votes.map(cleanVote).filter(Boolean);
-    cache[name]=votes; onPage(votes);
-    onPhase({phase:"snapshot", source:"snapshot", count:votes.length, height:snap.height});
-    persist(name, votes, votes);                            // on disk like a finished scan
-    await sleep(350); if(cancelled()) return null;          // ponytail: the stub tail is empty; the real page pages the explorer from snap.height to the tip
-    onPhase({phase:"done", source:"snapshot", count:votes.length, requests:1});
-    return {votes, source:"snapshot", requests:1};
-  }
-  const votes=cache[name]||(cache[name]=stubVotes(name));  // no snapshot: the explorer, 25 burns per request
-  const pages=Math.ceil(votes.length/25);
-  for(let p=0;p<pages;p++){
-    onPhase({phase:"scan", page:p+1, pages, count:Math.min((p+1)*25,votes.length)});
-    await sleep(180+Math.random()*180); if(cancelled()) return null;
-    const page=votes.slice(p*25,p*25+25); onPage(page);
-    persist(name, page, p===pages-1 ? votes : null);        // each page lands on disk as it arrives; the sync record only once the scan completes
-  }
-  if(!pages) persist(name, [], votes);
-  onPhase({phase:"done", source:"scan", count:votes.length, requests:pages});
-  return {votes, source:"scan", requests:pages};
+  if(known.length){ cache[name]=known; show(known); }
+  const topics=new Map([[addr,name]]), burns=txs=>txs.flatMap(tx=>txBurns(tx,topics)).map(cleanVote).filter(Boolean);
+  const conf=known.filter(v=>v.h!==null), pend=[], fresh=[];              // newest first: the scan stops at the newest confirmed burn already known
+  let scan;
+  try{ scan=await scanAddress(addr,{stopTx:conf.length?conf[0].txid:null, cancelled, onPage:p=>{
+    const m=burns(p.mempool), c=burns(p.confirmed); pend.push(...m); fresh.push(...c); show([...m,...c]);
+    onPhase({phase:"scan", page:p.requests, count:shown.size}); }}); }
+  catch(e){ if(cancelled()) return null; onPhase({phase:"error", source, count:known.length}); return {votes:known, source, requests:0, error:String((e&&e.message)||e)}; }
+  if(!scan) return null;
+  const listed=new Set([...pend,...fresh].map(v=>v.txid)), now=Date.now();
+  const votes=[...pend, ...known.filter(v=>v.h===null&&!listed.has(v.txid)&&now-(v.at||0)<FRESH_PENDING), ...fresh, ...conf.filter(v=>!listed.has(v.txid))];   // a mempool burn the explorer stopped listing was replaced or dropped
+  DB.put(name, fresh, votes); DB.putPending(name, pend); DB.prunePending(name, new Set(votes.filter(v=>v.h===null).map(v=>v.txid)));
+  cache[name]=votes;
+  onPhase({phase:"done", source, count:votes.length, requests:scan.requests});
+  return {votes, source, requests:scan.requests};
 }
-// ---------- a burn's home: every burn of every known topic, for pages that start from an address or a txid rather than a topic ----------
-// loadAll({onPhase}) → Promise<[{txid,t,sats,h,from,tx,scope}]>: what IndexedDB holds, plus the snapshot of every indexed topic the cache does not know yet
-// (each one is written to the cache, so the second visit is disk only). onPhase({phase:"cache"|"snapshots"|"done", k, n, count}).
-async function loadAll({onPhase=()=>{}}={}){
-  onPhase({phase:"cache"});
-  const rows=(await DB.all())||[], known=new Set(((await DB.scopes())||[]).map(s=>s.name));
-  const idx=await snapshotIndex(), todo=idx?idx.topics.map(t=>t.name).filter(n=>!known.has(n)):[];
-  let k=0;
-  for(const name of todo){
-    onPhase({phase:"snapshots", k, n:todo.length, count:rows.length});
-    const snap=await snapshotFetch(name); k++;
-    if(!snap) continue;
-    const votes=snap.votes.map(cleanVote).filter(Boolean);
-    persist(name, votes, votes);
-    for(const v of votes) rows.push({...v, scope:name});
-  }
-  onPhase({phase:"done", k, n:todo.length, count:rows.length});
-  return rows;
+// ---------- the directory (spec §7): registrations are burns to the root topic whose statement is a topic name ----------
+// dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
+// d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
+let ROOTV=[], DIRP=null, DIRERR=false;
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(r=>{
+  ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length;
+  const was=new Map(DIRECTORY.map(d=>[d.name,d])), next=new Map();
+  for(const v of ROOTV){ const name=nameOf(v.t); if(!name) continue; const h=v.h??TIP+1;
+    const d=next.get(name)||{name, stats:null, active:0, ...(was.get(name)||{}), reg:0, listings:0, first:Infinity, last:0};
+    d.reg+=v.sats; d.listings++; d.first=Math.min(d.first,h); d.last=Math.max(d.last,h); next.set(name,d); }
+  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY; }));
+const rootBurns=()=>ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name);   // the sponsorships (a topic's first one registers it), newest first
+// dirTopics({onTopic}) -> Promise: every registered topic through loadVotes, three at a time; its burns land in cache[name], then d.stats and d.active
+async function dirTopics({onTopic=()=>{}}={}){
+  const todo=[...DIRECTORY];
+  const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(()=>null), vs=(r&&r.votes)||cache[d.name]||[];
+    cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); onTopic(d); } };
+  await Promise.all([worker(),worker(),worker()]);
 }

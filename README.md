@@ -2,14 +2,18 @@
 
 Say it like you mean it. A topic is a name, and its address is P2WSH(OP_RETURN name): a script nobody can spend. A take is a burn to that address with the take in an OP_RETURN, weighed by the sats burned. Anyone can recount every topic from the chain.
 
-This repository is the static mock of the app: plain HTML pages with stub data, built from `parts/`, plus the protocol spec, a verification guide and a node guide.
+Static pages, no backend. Every page reads Bitcoin through an Esplora API (mempool.space by default, blockstream.info when it does not answer, or your own node, picked in the footer) and keeps what it read in IndexedDB, so the next visit only fetches newer burns. The directory of topics is the root topic's registrations (spec §7). `snapshots/<net>/` may hold published snapshots of finished scans (spec §6); it ships empty.
 
 ## Build
 
-    python3 build.py       # parts/ -> the app pages, the docs from _*.tpl, then snapshots/
+    python3 build.py       # parts/ -> the app pages, then the docs from _*.tpl
     python3 check-ids.py   # every id a script reads exists in its page
 
 ## Test
 
     npm install
     npm test
+
+## Deploy
+
+Any static host. On GitHub Pages: Settings → Pages → Deploy from a branch → `main`, `/ (root)`.

@@ -45,7 +45,7 @@ function bPaint(){
     </div>`).join("");
   const tip=bTipSats(), one=ballotFee(1,1,e,tip).fee, sep=e.reduce((a,x)=>a+ballotFee(1,1,[x],0).fee,0)+(tip?ballotFee(1,1,[],tip).fee-ballotFee(1,1,[],0).fee:0);
   $("b-sats").textContent=fmt(ballotSats(e))+" sats"; $("b-fee").textContent="≈ "+fmt(one)+" sats"; $("b-save").textContent="≈ "+fmt(Math.max(0,sep-one))+" sats";
-  $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?"≈ $"+(tip/1e8*BTCUSD).toFixed(2):"skipped";
+  $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?usdOf(tip):"skipped";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";

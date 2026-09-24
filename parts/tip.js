@@ -6,7 +6,7 @@ if(tipEnabled()){
   const tipAmount=()=>Number($("tipdamt").value||0);
   const tipRender=()=>{
     const sats=tipAmount();
-    $("tipdusd").textContent="≈ $"+(sats/1e8*BTCUSD).toFixed(2);
+    $("tipdusd").textContent=usdOf(sats);
     $("tipdaddr").textContent=TIP_EFFECTIVE; $("copytipd").dataset.copy=TIP_EFFECTIVE;
     $("tipdemo").hidden=true;
     tpay.set({burnAddr:TIP_EFFECTIVE, burnSats:sats, statementBytes:null, tipAddr:null, tipSats:0, burnLabel:"tip"});

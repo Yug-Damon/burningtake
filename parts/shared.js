@@ -1,105 +1,10 @@
-// ---------- stub data (example figures) ----------
-// Aggregates per scope; expanded into individual burns to simulate explorer paging.
-const SCOPES = {
-  general: [
-    {t:"Bitcoin fixes this", sats:4812000, votes:213},
-    {t:"Pizza is better than pasta", sats:1930500, votes:88},
-    {t:"Remote work beats the office", sats:1204000, votes:61},
-    {t:"Tabs over spaces", sats:966300, votes:140},
-    {t:"Paris should ban cars inside the périphérique", sats:712000, votes:34},
-    {t:"AI will not take my job", sats:455900, votes:52},
-    {t:"Coffee before 6am is a crime", sats:120400, votes:19},
-    {t:"Spaces over tabs", sats:98000, votes:27},
-  ],
-  bitcoin: [
-    {t:"Self custody or it isn't yours", sats:3100000, votes:120},
-    {t:"Lightning is the scaling answer", sats:2200000, votes:96},
-    {t:"Ordinals are spam", sats:1400000, votes:64},
-    {t:"Ordinals are fee revenue", sats:720000, votes:32},
-  ],
-  pizza: [
-    {t:"pineapple is a crime", sats:801000, votes:58},
-    {t:"pineapple belongs", sats:399000, votes:30},
-  ],
-  "tabs-vs-spaces": [
-    {t:"tabs", sats:640300, votes:101},
-    {t:"spaces", sats:424000, votes:66},
-  ],
-  "paris-cars?yes|no": [
-    {t:"yes", sats:612000, votes:41},
-    {t:"no", sats:100500, votes:12},
-    {t:"maybe", sats:12000, votes:3},
-    {t:"only on weekends", sats:4000, votes:1},
-  ],
-  "ai-jobs": [
-    {t:"AI will not take my job", sats:455900, votes:52},
-  ],
-  coffee: [
-    {t:"Espresso only", sats:210000, votes:31},
-    {t:"Filter is fine", sats:150000, votes:22},
-  ],
-  "remote-work": [
-    {t:"Fully remote", sats:380000, votes:44},
-    {t:"Hybrid", sats:120000, votes:15},
-  ],
-  "ban-ordinals?yes|no!5000": [
-    {t:"yes", sats:300000, votes:40},
-    {t:"no", sats:200000, votes:30},
-  ],
-  "btc-eoy-2026?50000..500000@966500": [
-    {t:"120000", sats:210000, votes:12},{t:"150000", sats:180000, votes:9},{t:"100000", sats:160000, votes:14},
-    {t:"250000", sats:90000, votes:5},{t:"90000", sats:60000, votes:6},{t:"420000", sats:40000, votes:2},{t:"to the moon", sats:8000, votes:2},
-  ],
-  "eu-elections?in|out": [
-    {t:"in", sats:90000, votes:9},
-    {t:"out", sats:60000, votes:7},
-  ],
-  "l2-winner?lightning|liquid|ark|fedimint": [
-    {t:"lightning", sats:360000, votes:30},
-    {t:"ark", sats:190000, votes:19},
-    {t:"liquid", sats:110000, votes:12},
-    {t:"fedimint", sats:52000, votes:6},
-    {t:"rgb", sats:8000, votes:2},
-  ],
-  "best-editor": [
-    {t:"vim", sats:50000, votes:11},
-    {t:"emacs", sats:47000, votes:9},
-  ],
-  "lightning-vs-liquid": [
-    {t:"lightning", sats:30000, votes:5},
-  ],
-  "burning-take": [                                   // the project's own topic: feedback, weighed in sats
-    {t:"Ship it on mainnet already", sats:180000, votes:21},
-    {t:"Add a burner wallet", sats:64000, votes:9},
-    {t:"Needs a dark mode joke", sats:12000, votes:4},
-    {t:"Rename topics to boards", sats:5000, votes:2},
-  ],
-};
-// What the address summary endpoint returns per scope: total received = total burned, tx count = votes.
-const STATS = {};
-for (const [k,v] of Object.entries(SCOPES)) STATS[k] = {sats:v.reduce((a,x)=>a+x.sats,0), votes:v.reduce((a,x)=>a+x.votes,0)};
-const DIRECTORY=[            // last = block of the latest registration burn, active = block of the latest burn inside the scope
-  {name:"ai-jobs", reg:5000, listings:1, last:965799, active:965811},
-  {name:"pizza", reg:42000, listings:5, last:965410, active:965812},
-  {name:"general", reg:210000, listings:14, last:963000, active:965812},
-  {name:"paris-cars?yes|no", reg:31000, listings:2, last:965640, active:965640},
-  {name:"tabs-vs-spaces", reg:12000, listings:3, last:964880, active:965801},
-  {name:"bitcoin", reg:88000, listings:6, last:964120, active:965810},
-  {name:"coffee", reg:8000, listings:2, last:965702, active:965702},
-  {name:"remote-work", reg:15000, listings:3, last:965300, active:965790},
-  {name:"eu-elections?in|out", reg:20000, listings:1, last:965811, active:965811},
-  {name:"l2-winner?lightning|liquid|ark|fedimint", reg:18000, listings:2, last:965500, active:965807},
-  {name:"ban-ordinals?yes|no!5000", reg:25000, listings:2, last:965750, active:965809},
-  {name:"btc-eoy-2026?50000..500000@966500", reg:60000, listings:4, last:965600, active:965812},
-  {name:"best-editor", reg:3000, listings:1, last:965790, active:965300},
-  {name:"lightning-vs-liquid", reg:2000, listings:1, last:965812, active:965812},
-  {name:"burning-take", reg:50000, listings:3, last:965000, active:965812},
-];
+// ---------- the directory: every registered topic, read from the root topic's burns (dirLoad, loader.js; spec §7) ----------
+let DIRECTORY=[];            // [{name, reg, listings, first, last, active, stats}]: reg = sats burned to the root naming it (sponsor score), first/last = those burns' heights, active = the topic's latest burn, stats = {sats, votes} once counted
 // ---------- sponsor score: sats burned to the root topic with a topic's name (registering and sponsoring are the same act) ----------
 const REG_SATS=330;   // ponytail: registering lists a topic at the smallest burn Bitcoin relays (P2WSH dust); sponsoring is where an amount is chosen
 const featureScore=name=>{ const d=DIRECTORY.find(t=>t.name===name); return d?(d.reg||0):0; };
 const featuredRank=(n=8)=>[...DIRECTORY].filter(d=>(d.reg||0)>0).sort((a,b)=>b.reg-a.reg).slice(0,n).map(d=>({name:d.name, sats:d.reg}));
-const BTCUSD = 100000, TIP = 965812;
+let TIP=0, BTCUSD=null;                               // the chain tip and the BTC price, from the explorer (the chain section below)
 const fmt = n => n.toLocaleString("en-US");
 // statements and topic names come from the chain, and names also from links: text only. Everything they reach through innerHTML goes through esc()
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -130,18 +35,7 @@ const TXURL = txid => "https://mempool.space/" + (NET==="mainnet"?"":"signet/") 
 const enc=new TextEncoder();
 const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
 const cache={};
-// ---------- summary cache: per-scope totals from the address summary endpoint, stale-while-revalidate, no expiry ----------
-// Totals change with every burn, but an old number beats an empty box: show what we have, refresh behind, overwrite.
-const summaryLoad=()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.summary"))||"null"); return j ? j.stats : null; }catch{ return null; } };
-const summarySave=()=>{ try{ const stats={}; for(const d of DIRECTORY) if(d.stats) stats[d.name]=d.stats; LS(NETKEY("bv.summary"),JSON.stringify({at:Date.now(),stats})); }catch{} };
-const summaryApply=st=>{ let any=false; for(const d of DIRECTORY) if(st&&st[d.name]){ d.stats=st[d.name]; any=true; } return any; };
-// summaryWarm() -> Promise<"snapshot"|"cache"|false>: the shipped snapshot index first (snapshots/<net>/index.json, relative, built by snapshot.py), then the LS cache.
-const summaryWarm=async()=>{
-  const snap=await snapshotIndex();
-  if(snap){ const st={}; for(const t of snap.topics) st[t.name]={sats:t.sats, votes:t.votes}; if(summaryApply(st)) return "snapshot"; }
-  return summaryApply(summaryLoad()) ? "cache" : false;
-};
-// ---------- snapshots: static JSON written at build time (snapshot.py), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
+// ---------- snapshots: static JSON a host may publish (spec §6), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
 const SNAPDIR="snapshots/"+NET+"/";
 const snapshotKey=async name=>toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(name))));   // file name = hex sha256 of the canonical topic name
 const snapshotGet=async url=>{ try{ if(typeof fetch!=="function") return null; const r=await fetch(url,{cache:"no-cache"}); if(!r.ok) return null; return await r.json(); }catch{ return null; } };   // any failure = no snapshot
@@ -149,23 +43,6 @@ let SNAPIDX=null;                                       // the index is fetched 
 const snapshotIndex=()=>SNAPIDX||(SNAPIDX=snapshotGet(SNAPDIR+"index.json").then(j=>j&&Array.isArray(j.topics) ? j : null));                                            // -> Promise<{height, topics:[{name, sats, votes, active, reg, listings}]} | null>
 const snapshotFetch=async name=>{ const idx=await snapshotIndex(); if(idx&&!idx.topics.some(t=>t.name===name)) return null;
   const j=await snapshotGet(SNAPDIR+(await snapshotKey(name))+".json"); return j&&j.net===NET&&Array.isArray(j.votes) ? j : null; };   // -> {name, net, height, count, votes:[{txid,t,sats,h,from}]} | null
-// ---------- stub votes: deterministic, so the page and snapshot.py produce the same burns ----------
-// FNV-1a over the topic name seeds mulberry32; snapshot.py ports both, byte for byte. In the real build every vote's "from" is
-// vin[0].prevout.scriptpubkey_address from the explorer (the first input's address, the closest thing a burn has to a voter identity).
-const fnv1a=s=>{ let h=0x811c9dc5; for(const b of enc.encode(s)){ h^=b; h=Math.imul(h,0x01000193)>>>0; } return h>>>0; };
-const mulberry32=a=>()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
-let BURNERS=null;                                       // 40 fake P2WPKH burners on this network, built on first use (bech32's tables are declared further down)
-const burners=()=>BURNERS||(BURNERS=Array.from({length:40},(_,i)=>{ const r=mulberry32(fnv1a("burner"+i)); return bech32(HRP,0,Array.from({length:20},()=>Math.floor(r()*256))); }));
-function stubVotes(name){
-  const out=[], rnd=mulberry32(fnv1a(name));
-  for (const st of (SCOPES[name]||[])) for (let i=0;i<st.votes;i++){
-    const txid=toHex(Array.from({length:32},()=>Math.floor(rnd()*256))), sats=Math.max(330,Math.round(st.sats/st.votes*(0.3+rnd()*1.4))), r=rnd(), h=TIP-Math.floor(r*r*3000), from=burners()[Math.floor(rnd()*40)];
-    out.push({txid, t:st.t, sats, h, from, tx:txid.slice(0,6)+"…"+txid.slice(-4)});
-  }
-  out.sort((a,b)=>b.h-a.h);                           // stable, like Python's
-  if (out.length) out[0].h=null;                      // one unconfirmed, sitting in the mempool
-  return out;
-}
 // ---------- explorer endpoint: an Esplora API base per network, overridable from the Data source row (index page) ----------
 const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:null} };   // null: the preset has no server for that network
 const esploraDefault=net=>ESPLORA_PRESETS.mempool[net]||ESPLORA_PRESETS.mempool.signet;
@@ -173,6 +50,67 @@ const esploraOverride=()=>{ const v=(LS(NETKEY("bv.endpoint"))||"").trim(); if(!
 const esploraFor=net=>esploraOverride()||esploraDefault(net);                                   // what this page reads the chain through
 const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
 globalThis.ESPLORA_OVERRIDE_URL=esploraOverride();                                              // read by wallet.js esploraBase()
+// ---------- the chain: every number on every page is read from the explorer above (Esplora API), cached in IndexedDB (db.js) ----------
+const API_PAGE=25;                                                     // confirmed transactions per history page (Esplora)
+// With no explorer of your own, the default one and then the other public one: whichever answered last goes first (remembered an hour),
+// so a blocked or down explorer costs one timeout, not every page. The wallet (wallet.js esploraBase) follows the same choice.
+let LIVE_BASE=(()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.livebase"))||"null"); return j&&Date.now()-j.at<3600000 ? j.base : null; }catch{ return null; } })();
+const chainBases=()=>{ const own=esploraOverride(); return own ? [own] : [...new Set([LIVE_BASE, ESPLORA_PRESETS.mempool[NET], ESPLORA_PRESETS.blockstream[NET]].filter(Boolean))]; };
+async function chainGet(path,{text=false}={}){                         // GET explorer + path -> JSON (or text); throws when no explorer gives an answer
+  let err;
+  for(const base of chainBases()){
+    for(let i=0;i<4;i++){
+      if(i) await sleep(800*2**(i-1));                                    // a busy explorer: 0.8 s, 1.6 s, 3.2 s
+      let r;
+      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {}); }
+      catch(e){ err=e; break; }                                          // unreachable (offline, blocked, too slow): the next explorer
+      if(r.ok){ if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
+        return text ? (await r.text()).trim() : await r.json(); }
+      err=new Error(`the explorer answered ${r.status}`); err.status=r.status;
+      if(r.status!==429 && r.status<500) throw err;                       // a 4xx is the answer, whoever is asked
+    }
+  }
+  throw err;
+}
+TIP=+(LS(NETKEY("bv.tip"))||0);                                         // the last tip this browser saw: windows and countdowns work at once, the fresh one lands a moment later
+const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=h; LS(NETKEY("bv.tip"),String(h)); } }catch{} return TIP; };
+let TIPP=null, PRICEP=null;
+const tipReady=()=>TIPP||(TIPP=tipRefresh());                          // started by loader.js on every app page
+const priceReady=()=>PRICEP||(PRICEP=NET!=="mainnet"||chainBases()[0]!==ESPLORA_PRESETS.mempool.mainnet ? Promise.resolve() : chainGet("/v1/prices").then(j=>{ if(+j.USD>0) BTCUSD=+j.USD; },()=>{}));   // only mempool.space serves a USD price: with another explorer the dollar hints stay hidden
+const usdOf=sats=>BTCUSD ? "≈ $"+(sats/1e8*BTCUSD).toFixed(2) : "";
+// ---------- one transaction -> its burns (spec §4): the outputs paying known topic addresses, each with its statement ----------
+// Statements: the OP_RETURN payloads in output order, split on 0x1F, the pieces handed in order to the P2WSH outputs (every topic address is P2WSH).
+// Several outputs to one topic are summed and take the first one's piece. No piece, or an empty one: an abstain.
+const hexBytes=h=>new Uint8Array((String(h||"").match(/../g)||[]).map(x=>parseInt(x,16)));
+const opReturnData=hex=>{ const b=hexBytes(hex), out=[]; if(b[0]!==0x6a) return null;   // OP_RETURN, then its pushes, concatenated
+  for(let i=1;i<b.length;){ const op=b[i++], n=op<=0x4b?op:op===0x4c?b[i++]:op===0x4d?b[i++]|b[i++]<<8:-1; if(n<0||i+n>b.length) break; for(let j=0;j<n;j++) out.push(b[i+j]); i+=n; }
+  return new Uint8Array(out); };
+const UTF8=new TextDecoder();
+function txBurns(tx,topics){                                           // topics: Map(address -> topic name) -> [{txid, name, t, sats, h, from, vout}]
+  const vout=Array.isArray(tx&&tx.vout)?tx.vout:[], pieces=[];
+  for(const o of vout) if(o.scriptpubkey_type==="op_return"){ const d=opReturnData(o.scriptpubkey); if(!d) continue;
+    for(let s=0,i=0;i<=d.length;i++) if(i===d.length||d[i]===0x1f){ pieces.push(UTF8.decode(d.subarray(s,i))); s=i+1; } }
+  const out=new Map(); let k=0;
+  vout.forEach((o,i)=>{ if(o.scriptpubkey_type!=="v0_p2wsh") return; const piece=pieces[k++]??"", name=topics.get(o.scriptpubkey_address); if(name===undefined) return;
+    if(!out.has(name)) out.set(name,{name, t:piece, sats:0, vout:i}); out.get(name).sats+=Math.round(+o.value||0); });
+  const st=tx.status||{}, h=st.confirmed&&Number.isInteger(st.block_height)?st.block_height:null, pv=tx.vin&&tx.vin[0]&&tx.vin[0].prevout;
+  return [...out.values()].map(b=>({txid:tx.txid, ...b, h, from:pv&&pv.scriptpubkey_address||null}));
+}
+// ---------- an address's history, newest first (Esplora): the mempool and the newest confirmed, then 25 confirmed per request, until stopTx ----------
+async function scanAddress(addr,{stopTx=null,maxPages=Infinity,onPage=()=>{},cancelled=()=>false}={}){   // -> {mempool:[tx], confirmed:[tx], requests} | null when cancelled
+  const mempool=[], confirmed=[]; let path=`/address/${addr}/txs`, requests=0;
+  for(;;){
+    const page=await chainGet(path); requests++; if(cancelled()) return null;
+    const conf=page.filter(t=>t.status&&t.status.confirmed), mp=requests===1?page.filter(t=>!(t.status&&t.status.confirmed)):[];
+    const stop=stopTx?conf.findIndex(t=>t.txid===stopTx):-1, fresh=stop>=0?conf.slice(0,stop):conf;
+    mempool.push(...mp); confirmed.push(...fresh); onPage({mempool:mp, confirmed:fresh, requests});
+    if(stop>=0 || conf.length<API_PAGE || requests>=maxPages) return {mempool, confirmed, requests};
+    path=`/address/${addr}/txs/chain/${conf[conf.length-1].txid}`;
+  }
+}
+// a registration states a topic's canonical name, as the app writes it (spec §7): lowercase, no whitespace, modifiers in canonical order.
+// The root topic's address is also a well-known generic burn address: anything else burned there is some other burn, not a registration.
+const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
 try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
 // ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
 const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]

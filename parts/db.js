@@ -29,6 +29,8 @@ const DB=(()=>{
         const vs=t.objectStore("votes"); for(const v of page) if(v.h!==null) vs.put({...v,scope:name});           // the mempool part goes through putPending (loader.js persist)
         if(all){ const conf=all.filter(v=>v.h!==null); t.objectStore("scopes").put({name, lastTx:conf[0]?conf[0].txid:null, height:TIP, count:conf.length, at:Date.now()}); }   // sync record once the whole scan landed
       }); }catch{} },
-    async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
+    async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name, at:v.at||Date.now()}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
+    async prunePending(name,keep){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const r=t.objectStore("votes").index("scope").openCursor(IDBKeyRange.only(name));   // mempool burns the explorer no longer lists: replaced or dropped
+        r.onsuccess=()=>{ const c=r.result; if(!c) return; if(c.value.h===null&&!keep.has(c.value.txid)) c.delete(); c.continue(); }; }); }catch{} },
   };
 })();

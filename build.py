@@ -46,5 +46,3 @@ if __name__ == "__main__":
         with open(os.path.join(HERE, doc + ".html"), "w", encoding="utf-8") as f:
             f.write(tpl.replace("/*CSS*/", css, 1))
         print(f"wrote {doc}.html")
-    import snapshot                      # snapshots/<net>/*.json: same stub votes as the page (shared PRNG), refreshed on every build
-    snapshot.main()

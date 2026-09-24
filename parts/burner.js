@@ -1,8 +1,8 @@
 // ---------- burner page: every burn whose first input is one address, across every topic this app has seen (burner.html#<address>) ----------
-// Data: IndexedDB across all topics (DB.all), plus the shipped snapshot of every indexed topic the cache does not know yet (loader.js loadAll).
+// Data: the address's own history from the explorer, each transaction matched against every topic this page can name (the directory, and the topics opened in this browser); IndexedDB when the explorer does not answer.
 // Nothing is watched or remembered here: an address is a fact on the chain, not a thing this browser follows.
 const status=$("status"), groups=$("groups");
-let ADDR="", ROWSB=[], seq=0;                // (loading: the tiles and groups show shimmering placeholders until loadAll returns)                // ROWSB: this address's burns [{txid,t,sats,h,from,tx,scope}], LOADED: the last loadAll done phase
+let ADDR="", ROWSB=[], seq=0;                // (loading: the tiles and groups show shimmering placeholders until the scan lands)                // ROWSB: this address's burns [{txid,t,sats,h,from,tx,scope}], LOADED: the last loadAll done phase
 const validAddr=a=>{ try{ return bech32Decode(a).hrp===HRP; }catch{ return false; } };
 const shortAddr=a=>a.slice(0,10)+"…"+a.slice(-6);
 const hv=v=>v.h===null?Number.MAX_SAFE_INTEGER:v.h;         // pending first
@@ -51,7 +51,7 @@ function paintEmpty(kind){                                  // kind: "none" (not
   const e=$("bempty"); e.hidden=!kind; if(!kind) return;
   groups.hidden=true;
   $("bemptyt").textContent= kind==="none" ? "Which burner?" : kind==="bad" ? `Not a ${NET} address` : `No burns from this address yet on ${NET}`;
-  $("bemptyp").textContent= kind==="none" ? "Paste a burner address, or open one from the top burners of any topic." : kind==="bad" ? `A burner is a bech32 address of this network (${HRP}1…). Switch the network chip if the address belongs to the other one.` : "Burns show here once a topic they belong to has been opened in this browser or ships in a snapshot.";
+  $("bemptyp").textContent= kind==="none" ? "Paste a burner address, or open one from the top burners of any topic." : kind==="bad" ? `A burner is a bech32 address of this network (${HRP}1…). Switch the network chip if the address belongs to the other one.` : "This address has not burned in a registered topic yet.";
   $("bpaste").hidden=kind==="zero";
 }
 async function load(){
@@ -59,11 +59,19 @@ async function load(){
   paintHead();
   if(!ADDR||!validAddr(ADDR)){ status.innerHTML=""; paintRows(); $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; paintEmpty(ADDR?"bad":"none"); return; }
   paintEmpty(null); paintLoading();
-  status.innerHTML=`<span class="spin"></span> reading cache…`;
-  const rows=await loadAll({onPhase:p=>{ if(my!==seq) return; if(p.phase==="snapshots") status.innerHTML=`<span class="spin"></span> loading snapshots · ${p.k}/${p.n}`; }});
+  status.innerHTML=`<span class="spin"></span> reading the directory…`;
+  await dirLoad(); if(my!==seq) return;
+  const topics=new Map();                                   // every topic this page can name: the registered ones, and the ones opened in this browser
+  for(const n of new Set([...DIRECTORY.map(d=>d.name), ...((await DB.scopes())||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
+  let rows, failed=false;
+  try{
+    const scan=await scanAddress(ADDR,{maxPages:40, cancelled:()=>my!==seq, onPage:p=>{ status.innerHTML=`<span class="spin"></span> reading this address · request ${p.requests}`; }});
+    if(!scan) return;
+    rows=[...scan.mempool, ...scan.confirmed].filter(tx=>{ const pv=tx.vin&&tx.vin[0]&&tx.vin[0].prevout; return pv&&pv.scriptpubkey_address===ADDR; }).flatMap(tx=>txBurns(tx,topics));   // its burns: the transactions whose first input it signed
+  }catch{ if(my!==seq) return; failed=true; rows=((await DB.all())||[]).filter(v=>v.from===ADDR); }
   if(my!==seq) return;
-  ROWSB=rows.filter(v=>v.from===ADDR); paintRows(true);
-  status.innerHTML=`<span class="dot"></span> synced · block ${fmt(TIP)}${ROWSB.length?"":" · no burns"}`;   // where the rows came from only shows while loading
+  ROWSB=rows.map(v=>cleanVote({...v, scope:v.scope??v.name})).filter(Boolean); paintRows(true);
+  status.innerHTML= failed ? "the explorer did not answer · the burns this browser knows" : `<span class="dot"></span> synced · block ${fmt(TIP)}${ROWSB.length?"":" · no burns"}`;
   if(!ROWSB.length) paintEmpty("zero");
 }
 addEventListener("hashchange",load); load();

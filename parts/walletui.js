@@ -42,7 +42,7 @@ async function walletPaint(){
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more"> · ≈ $${(walletSats()/1e8*BTCUSD).toFixed(2)}</span>`:"explorer unreachable";
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:"explorer unreachable";
   }
   walletPill();
 }

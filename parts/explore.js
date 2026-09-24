@@ -1,10 +1,9 @@
-// ---------- directory: scan the root scope once, then one summary request per scope ----------
-let sq="", win=winGet();                                             // the time window: shared.js, remembered in this browser, also used by the topic boards
+// ---------- directory: the root topic's registrations (dirLoad), then every topic counted (dirTopics), both in loader.js ----------
+let sq="", win=winGet(), DIRREADY=false;   // DIRREADY: the root topic has answered                                             // the time window: shared.js, remembered in this browser, also used by the topic boards
 const inWin = v => v.h===null || v.h >= TIP-WIN[win];
-// ponytail: windowed numbers come from the per-scope history scan, not the summary endpoint; stub votes stand in here
-const allVotes = name => cache[name] || (cache[name]=stubVotes(name));
+const allVotes = name => cache[name] || [];
 const winVotes = name => allVotes(name).filter(inWin);
-// counted exactly like the topic page (tallyOf, shared.js), so both pages show the same sats. d.stats only says the summary has arrived
+// counted exactly like the topic page (tallyOf, shared.js), so both pages show the same sats. d.stats says the topic has been counted
 const tally = d => !d.stats ? null : tallyOf(d.name, winVotes(d.name));
 const tallyAll = d => !d.stats ? null : tallyOf(d.name, allVotes(d.name));
 const loadedAll = () => DIRECTORY.every(d=>d.stats);
@@ -28,7 +27,7 @@ function renderDir(){
   if(!searching) renderFeatured();
   const matches=renderRows();
   $("hotcol").hidden = $("colR").hidden = searching || !DIRECTORY.length;
-  $("cols2").classList.toggle("solo", searching);                     // a search: the matches take the full width
+  $("cols2").classList.toggle("solo", searching || !DIRECTORY.length);                     // a search: the matches take the full width
   if(!searching){ renderHot(); renderRecent(); renderFeatList(); renderBurners(); balanceHot(); }
   renderCreate(matches);
   renderStrips();
@@ -39,7 +38,7 @@ function renderFeatured(){
   const W=WINLABEL[win], used=new Set(), pick=list=>{ const d=list.find(x=>x&&!used.has(x.name)); if(d) used.add(d.name); return d; };
   const topD = loadedAll() ? pick(DIRECTORY.filter(d=>tally(d).sats>0).sort((a,b)=>tally(b).sats-tally(a).sats)) : null;   // none before every count is in
   const featD = pick(featuredRank(DIRECTORY.length).map(f=>DIRECTORY.find(d=>d.name===f.name)));
-  const recD = pick([...DIRECTORY].sort((a,b)=>b.active-a.active));                     // ties keep directory order, like the home page's hot chips
+  const recD = pick([...DIRECTORY].filter(d=>d.active).sort((a,b)=>b.active-a.active));                     // ties keep directory order, like the home page's hot chips
   const takes=d=>{ const p=parseScope(d.name), T=tally(d);                               // top takes in the window; off-list answers never appear
     return !T ? '<span class="sk" style="width:70%"></span>'
       : !T.answers.length ? `<span class="nt">${win==="all"?"No takes yet":"No burns "+W}</span>`
@@ -63,7 +62,7 @@ function renderFeatured(){
 // ---------- MOST BURNED (window) while browsing, or the matches of a search (all time) ----------
 function renderRows(){
   const host=$("scoperows"), all=loadedAll();
-  if(!DIRECTORY.length){ host.innerHTML=`<div class="emptybox">No topics registered yet</div>`; return []; }
+  if(!DIRECTORY.length){ host.innerHTML=`<div class="emptybox">${!DIRREADY ? "Reading the directory…" : DIRERR ? `The explorer did not answer. <button type="button" class="linkbtn" data-retry>Retry</button>` : "No topics registered yet"}</div>`; return []; }
   let list, head, sats, ranked;
   if(sq){ list=searchMatches(); sats=tallyAll; ranked=false;
     head=list.length?`<div class="divider">${list.length} matching topic${list.length===1?"":"s"} · all time</div>`:""; }
@@ -84,6 +83,7 @@ function renderRows(){
 }
 $("scoperows").addEventListener("click",e=>{
   if(e.target.closest("[data-win-all]")) $("xseg").querySelector('[data-win="all"]').click();
+  if(e.target.closest("[data-retry]")) dirSync({fresh:true});
 });
 // ---------- a searched name that is not registered: one line under the matches, or the panel when nothing matches ----------
 function renderCreate(matches){
@@ -93,13 +93,6 @@ function renderCreate(matches){
   if(show){ $("createname").innerHTML=topicName(name); $("openunreg").href="topic.html#"+name; }   // a real <a>: script-driven navigation does not work in the hosted viewer
 }
 // ---------- activity: single burns and sponsorships across topics, inside the window ----------
-// ponytail: the root topic's burns (registering and sponsoring are one act) are stubbed from DIRECTORY; the real page reads them from the root scan it already makes
-let ROOTB=null;
-const rootBurns=()=>ROOTB||(ROOTB=DIRECTORY.flatMap(d=>{
-  const rnd=mulberry32(fnv1a("root:"+d.name)), w=Array.from({length:Math.max(1,d.listings)},()=>0.3+rnd()), tw=w.reduce((a,x)=>a+x,0), sats=w.map(x=>Math.round(d.reg*x/tw));
-  sats[0]+=d.reg-sats.reduce((a,x)=>a+x,0);                                       // they add up to the sponsor score
-  return sats.map((s,i)=>({txid:toHex(Array.from({length:32},()=>Math.floor(rnd()*256))), name:d.name, t:d.name, sats:s, h:i?d.last-1-Math.floor(rnd()*6000):d.last, from:burners()[Math.floor(rnd()*40)]}));
-}));
 const short=a=>a.slice(0,6)+"…"+a.slice(-4), whenH=h=>h===null?"in the mempool":"block "+fmt(h), H=v=>v.h===null?1e12:v.h;
 const listCol=(head,rows,hint="")=>{ const h=`<div class="divider">${head} · ${WINLABEL[win]}</div>`;   // hint: a link at the heading's right end
   return `<div class="burnercol">${hint?`<div class="striphead">${h}${hint}</div>`:h}${rows.join("")||`<span class="note">none ${WINLABEL[win]}</span>`}</div>`; };
@@ -177,17 +170,22 @@ addEventListener("storage",e=>{ if(e.key===NETKEY("bv.watch")) renderDir(); }); 
 $("sq").oninput=e=>{sq=e.target.value.trim().toLowerCase(); renderDir()};
 if(matchMedia("(max-width:480px)").matches) $("sq").placeholder="Search or name a topic";
 renderDir();
-// sync line under the title, same voice as the topic page: root scan, then one summary request per topic
-let warmDir=false; summaryWarm().then(w=>{ warmDir=w; if(w){ renderDir(); dirStatus(); } });   // snapshot index, else the last known totals: no skeletons
-let dirDone=0;
-const dirStatus=()=>{
-  const n=DIRECTORY.length;
-  $("dirstatus").innerHTML = dirDone<n
-    ? (warmDir ? `<span class="dot"></span> synced · block ${fmt(TIP)} · ${n} topics` : `<span class="spin"></span> counting · ${dirDone} of ${n} topics`)   // warm: the counts are already in
-    : `<span class="dot"></span> synced · block ${fmt(TIP)} · ${n} topics`;
-};
-dirStatus();
-DIRECTORY.forEach(async d=>{ await sleep(250+Math.random()*900); d.stats=STATS[d.name]; dirDone++; renderDir(); summarySave(); dirStatus(); });   // then refresh quietly
+// sync line under the title, same voice as the topic page: the directory (the root topic), then every topic, three at a time (loader.js)
+let dirPhase="root", dirDone=0;
+const dirStatus=()=>{ const n=DIRECTORY.length, s=n===1?"":"s";
+  $("dirstatus").innerHTML = DIRERR ? `the explorer did not answer · <button type="button" class="linkbtn" data-retry>retry</button>`
+    : dirPhase==="root" ? `<span class="spin"></span> reading the directory…`
+    : dirPhase==="topics" ? `<span class="spin"></span> counting · ${dirDone} of ${n} topic${s}`
+    : `<span class="dot"></span> synced · block ${fmt(TIP)} · ${n} topic${s}`; };
+async function dirSync({fresh=false,quiet=false}={}){                 // quiet: a new block, counted behind the numbers already on screen
+  if(!quiet){ dirPhase="root"; dirStatus(); }
+  await dirLoad(fresh); DIRREADY=true; dirDone=0; if(!quiet) dirPhase="topics"; renderDir(); dirStatus();
+  await dirTopics({onTopic:()=>{ dirDone++; renderDir(); if(!quiet) dirStatus(); }});
+  dirPhase="done"; renderDir(); dirStatus();
+}
+dirSync();
+$("dirstatus").addEventListener("click",e=>{ if(e.target.closest("[data-retry]")) dirSync({fresh:true}); });
+setInterval(async()=>{ if(document.hidden) return; const was=TIP; await tipRefresh(); if(TIP!==was) dirSync({fresh:true, quiet:true}); },60000);   // a new block: count again, one request per topic (cache first)
 const spay=payPanel("spay"); PAY.push(spay);
 const nfm=x=>Math.abs(+x)>=10000?fmt(+x):String(x);   // separators for big numbers, years/percentages stay bare
 $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copylisttip").dataset.copy=TIP_EFFECTIVE||""; $("copylisttip").disabled=!TIP_EFFECTIVE;
@@ -200,7 +198,7 @@ function updateList(){
   $("listhex").textContent=toHex(opReturnScript(data));
   const ton=!!TIP_EFFECTIVE&&$("listtipon").checked, t=regTipSats();
   $("listtip").hidden=!ton; $("listtipoff").hidden=ton;
-  $("listtipusd").textContent=t?"≈ $"+(t/1e8*BTCUSD).toFixed(2):"skipped";
+  $("listtipusd").textContent=t?usdOf(t):"skipped";
   $("listtiprow").hidden=!t;
   spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});   // "…" until the root address is derived
 }

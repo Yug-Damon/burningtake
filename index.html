@@ -625,10 +625,10 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><a class="btn primary" href="explore.html" id="browsebtn">Browse topics →</a><a class="btn" href="topic.html#burning-take">#burning-take</a></div>
       <div class="toolbar" id="chips" style="margin-top:22px"></div>
       <div class="stats">
-        <div class="stat"><b>0.1030 ₿</b><span>burned total</span></div>
-        <div class="stat"><b>1,284</b><span>takes</span></div>
-        <div class="stat"><b>6,402</b><span>burns</span></div>
-        <div class="stat"><b>≈ $10,300</b><span>gone forever</span></div>
+        <div class="stat"><b id="stburned">—</b><span>burned total</span></div>
+        <div class="stat"><b id="sttakes">—</b><span>takes</span></div>
+        <div class="stat"><b id="stburns">—</b><span>burns</span></div>
+        <div class="stat"><b id="stusd">—</b><span>gone forever</span></div>
       </div>
     </div>
 
@@ -874,108 +874,13 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 
 <script>
-// ---------- stub data (example figures) ----------
-// Aggregates per scope; expanded into individual burns to simulate explorer paging.
-const SCOPES = {
-  general: [
-    {t:"Bitcoin fixes this", sats:4812000, votes:213},
-    {t:"Pizza is better than pasta", sats:1930500, votes:88},
-    {t:"Remote work beats the office", sats:1204000, votes:61},
-    {t:"Tabs over spaces", sats:966300, votes:140},
-    {t:"Paris should ban cars inside the périphérique", sats:712000, votes:34},
-    {t:"AI will not take my job", sats:455900, votes:52},
-    {t:"Coffee before 6am is a crime", sats:120400, votes:19},
-    {t:"Spaces over tabs", sats:98000, votes:27},
-  ],
-  bitcoin: [
-    {t:"Self custody or it isn't yours", sats:3100000, votes:120},
-    {t:"Lightning is the scaling answer", sats:2200000, votes:96},
-    {t:"Ordinals are spam", sats:1400000, votes:64},
-    {t:"Ordinals are fee revenue", sats:720000, votes:32},
-  ],
-  pizza: [
-    {t:"pineapple is a crime", sats:801000, votes:58},
-    {t:"pineapple belongs", sats:399000, votes:30},
-  ],
-  "tabs-vs-spaces": [
-    {t:"tabs", sats:640300, votes:101},
-    {t:"spaces", sats:424000, votes:66},
-  ],
-  "paris-cars?yes|no": [
-    {t:"yes", sats:612000, votes:41},
-    {t:"no", sats:100500, votes:12},
-    {t:"maybe", sats:12000, votes:3},
-    {t:"only on weekends", sats:4000, votes:1},
-  ],
-  "ai-jobs": [
-    {t:"AI will not take my job", sats:455900, votes:52},
-  ],
-  coffee: [
-    {t:"Espresso only", sats:210000, votes:31},
-    {t:"Filter is fine", sats:150000, votes:22},
-  ],
-  "remote-work": [
-    {t:"Fully remote", sats:380000, votes:44},
-    {t:"Hybrid", sats:120000, votes:15},
-  ],
-  "ban-ordinals?yes|no!5000": [
-    {t:"yes", sats:300000, votes:40},
-    {t:"no", sats:200000, votes:30},
-  ],
-  "btc-eoy-2026?50000..500000@966500": [
-    {t:"120000", sats:210000, votes:12},{t:"150000", sats:180000, votes:9},{t:"100000", sats:160000, votes:14},
-    {t:"250000", sats:90000, votes:5},{t:"90000", sats:60000, votes:6},{t:"420000", sats:40000, votes:2},{t:"to the moon", sats:8000, votes:2},
-  ],
-  "eu-elections?in|out": [
-    {t:"in", sats:90000, votes:9},
-    {t:"out", sats:60000, votes:7},
-  ],
-  "l2-winner?lightning|liquid|ark|fedimint": [
-    {t:"lightning", sats:360000, votes:30},
-    {t:"ark", sats:190000, votes:19},
-    {t:"liquid", sats:110000, votes:12},
-    {t:"fedimint", sats:52000, votes:6},
-    {t:"rgb", sats:8000, votes:2},
-  ],
-  "best-editor": [
-    {t:"vim", sats:50000, votes:11},
-    {t:"emacs", sats:47000, votes:9},
-  ],
-  "lightning-vs-liquid": [
-    {t:"lightning", sats:30000, votes:5},
-  ],
-  "burning-take": [                                   // the project's own topic: feedback, weighed in sats
-    {t:"Ship it on mainnet already", sats:180000, votes:21},
-    {t:"Add a burner wallet", sats:64000, votes:9},
-    {t:"Needs a dark mode joke", sats:12000, votes:4},
-    {t:"Rename topics to boards", sats:5000, votes:2},
-  ],
-};
-// What the address summary endpoint returns per scope: total received = total burned, tx count = votes.
-const STATS = {};
-for (const [k,v] of Object.entries(SCOPES)) STATS[k] = {sats:v.reduce((a,x)=>a+x.sats,0), votes:v.reduce((a,x)=>a+x.votes,0)};
-const DIRECTORY=[            // last = block of the latest registration burn, active = block of the latest burn inside the scope
-  {name:"ai-jobs", reg:5000, listings:1, last:965799, active:965811},
-  {name:"pizza", reg:42000, listings:5, last:965410, active:965812},
-  {name:"general", reg:210000, listings:14, last:963000, active:965812},
-  {name:"paris-cars?yes|no", reg:31000, listings:2, last:965640, active:965640},
-  {name:"tabs-vs-spaces", reg:12000, listings:3, last:964880, active:965801},
-  {name:"bitcoin", reg:88000, listings:6, last:964120, active:965810},
-  {name:"coffee", reg:8000, listings:2, last:965702, active:965702},
-  {name:"remote-work", reg:15000, listings:3, last:965300, active:965790},
-  {name:"eu-elections?in|out", reg:20000, listings:1, last:965811, active:965811},
-  {name:"l2-winner?lightning|liquid|ark|fedimint", reg:18000, listings:2, last:965500, active:965807},
-  {name:"ban-ordinals?yes|no!5000", reg:25000, listings:2, last:965750, active:965809},
-  {name:"btc-eoy-2026?50000..500000@966500", reg:60000, listings:4, last:965600, active:965812},
-  {name:"best-editor", reg:3000, listings:1, last:965790, active:965300},
-  {name:"lightning-vs-liquid", reg:2000, listings:1, last:965812, active:965812},
-  {name:"burning-take", reg:50000, listings:3, last:965000, active:965812},
-];
+// ---------- the directory: every registered topic, read from the root topic's burns (dirLoad, loader.js; spec §7) ----------
+let DIRECTORY=[];            // [{name, reg, listings, first, last, active, stats}]: reg = sats burned to the root naming it (sponsor score), first/last = those burns' heights, active = the topic's latest burn, stats = {sats, votes} once counted
 // ---------- sponsor score: sats burned to the root topic with a topic's name (registering and sponsoring are the same act) ----------
 const REG_SATS=330;   // ponytail: registering lists a topic at the smallest burn Bitcoin relays (P2WSH dust); sponsoring is where an amount is chosen
 const featureScore=name=>{ const d=DIRECTORY.find(t=>t.name===name); return d?(d.reg||0):0; };
 const featuredRank=(n=8)=>[...DIRECTORY].filter(d=>(d.reg||0)>0).sort((a,b)=>b.reg-a.reg).slice(0,n).map(d=>({name:d.name, sats:d.reg}));
-const BTCUSD = 100000, TIP = 965812;
+let TIP=0, BTCUSD=null;                               // the chain tip and the BTC price, from the explorer (the chain section below)
 const fmt = n => n.toLocaleString("en-US");
 // statements and topic names come from the chain, and names also from links: text only. Everything they reach through innerHTML goes through esc()
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1006,18 +911,7 @@ const TXURL = txid => "https://mempool.space/" + (NET==="mainnet"?"":"signet/") 
 const enc=new TextEncoder();
 const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
 const cache={};
-// ---------- summary cache: per-scope totals from the address summary endpoint, stale-while-revalidate, no expiry ----------
-// Totals change with every burn, but an old number beats an empty box: show what we have, refresh behind, overwrite.
-const summaryLoad=()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.summary"))||"null"); return j ? j.stats : null; }catch{ return null; } };
-const summarySave=()=>{ try{ const stats={}; for(const d of DIRECTORY) if(d.stats) stats[d.name]=d.stats; LS(NETKEY("bv.summary"),JSON.stringify({at:Date.now(),stats})); }catch{} };
-const summaryApply=st=>{ let any=false; for(const d of DIRECTORY) if(st&&st[d.name]){ d.stats=st[d.name]; any=true; } return any; };
-// summaryWarm() -> Promise<"snapshot"|"cache"|false>: the shipped snapshot index first (snapshots/<net>/index.json, relative, built by snapshot.py), then the LS cache.
-const summaryWarm=async()=>{
-  const snap=await snapshotIndex();
-  if(snap){ const st={}; for(const t of snap.topics) st[t.name]={sats:t.sats, votes:t.votes}; if(summaryApply(st)) return "snapshot"; }
-  return summaryApply(summaryLoad()) ? "cache" : false;
-};
-// ---------- snapshots: static JSON written at build time (snapshot.py), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
+// ---------- snapshots: static JSON a host may publish (spec §6), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
 const SNAPDIR="snapshots/"+NET+"/";
 const snapshotKey=async name=>toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(name))));   // file name = hex sha256 of the canonical topic name
 const snapshotGet=async url=>{ try{ if(typeof fetch!=="function") return null; const r=await fetch(url,{cache:"no-cache"}); if(!r.ok) return null; return await r.json(); }catch{ return null; } };   // any failure = no snapshot
@@ -1025,23 +919,6 @@ let SNAPIDX=null;                                       // the index is fetched 
 const snapshotIndex=()=>SNAPIDX||(SNAPIDX=snapshotGet(SNAPDIR+"index.json").then(j=>j&&Array.isArray(j.topics) ? j : null));                                            // -> Promise<{height, topics:[{name, sats, votes, active, reg, listings}]} | null>
 const snapshotFetch=async name=>{ const idx=await snapshotIndex(); if(idx&&!idx.topics.some(t=>t.name===name)) return null;
   const j=await snapshotGet(SNAPDIR+(await snapshotKey(name))+".json"); return j&&j.net===NET&&Array.isArray(j.votes) ? j : null; };   // -> {name, net, height, count, votes:[{txid,t,sats,h,from}]} | null
-// ---------- stub votes: deterministic, so the page and snapshot.py produce the same burns ----------
-// FNV-1a over the topic name seeds mulberry32; snapshot.py ports both, byte for byte. In the real build every vote's "from" is
-// vin[0].prevout.scriptpubkey_address from the explorer (the first input's address, the closest thing a burn has to a voter identity).
-const fnv1a=s=>{ let h=0x811c9dc5; for(const b of enc.encode(s)){ h^=b; h=Math.imul(h,0x01000193)>>>0; } return h>>>0; };
-const mulberry32=a=>()=>{ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
-let BURNERS=null;                                       // 40 fake P2WPKH burners on this network, built on first use (bech32's tables are declared further down)
-const burners=()=>BURNERS||(BURNERS=Array.from({length:40},(_,i)=>{ const r=mulberry32(fnv1a("burner"+i)); return bech32(HRP,0,Array.from({length:20},()=>Math.floor(r()*256))); }));
-function stubVotes(name){
-  const out=[], rnd=mulberry32(fnv1a(name));
-  for (const st of (SCOPES[name]||[])) for (let i=0;i<st.votes;i++){
-    const txid=toHex(Array.from({length:32},()=>Math.floor(rnd()*256))), sats=Math.max(330,Math.round(st.sats/st.votes*(0.3+rnd()*1.4))), r=rnd(), h=TIP-Math.floor(r*r*3000), from=burners()[Math.floor(rnd()*40)];
-    out.push({txid, t:st.t, sats, h, from, tx:txid.slice(0,6)+"…"+txid.slice(-4)});
-  }
-  out.sort((a,b)=>b.h-a.h);                           // stable, like Python's
-  if (out.length) out[0].h=null;                      // one unconfirmed, sitting in the mempool
-  return out;
-}
 // ---------- explorer endpoint: an Esplora API base per network, overridable from the Data source row (index page) ----------
 const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:null} };   // null: the preset has no server for that network
 const esploraDefault=net=>ESPLORA_PRESETS.mempool[net]||ESPLORA_PRESETS.mempool.signet;
@@ -1049,6 +926,67 @@ const esploraOverride=()=>{ const v=(LS(NETKEY("bv.endpoint"))||"").trim(); if(!
 const esploraFor=net=>esploraOverride()||esploraDefault(net);                                   // what this page reads the chain through
 const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
 globalThis.ESPLORA_OVERRIDE_URL=esploraOverride();                                              // read by wallet.js esploraBase()
+// ---------- the chain: every number on every page is read from the explorer above (Esplora API), cached in IndexedDB (db.js) ----------
+const API_PAGE=25;                                                     // confirmed transactions per history page (Esplora)
+// With no explorer of your own, the default one and then the other public one: whichever answered last goes first (remembered an hour),
+// so a blocked or down explorer costs one timeout, not every page. The wallet (wallet.js esploraBase) follows the same choice.
+let LIVE_BASE=(()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.livebase"))||"null"); return j&&Date.now()-j.at<3600000 ? j.base : null; }catch{ return null; } })();
+const chainBases=()=>{ const own=esploraOverride(); return own ? [own] : [...new Set([LIVE_BASE, ESPLORA_PRESETS.mempool[NET], ESPLORA_PRESETS.blockstream[NET]].filter(Boolean))]; };
+async function chainGet(path,{text=false}={}){                         // GET explorer + path -> JSON (or text); throws when no explorer gives an answer
+  let err;
+  for(const base of chainBases()){
+    for(let i=0;i<4;i++){
+      if(i) await sleep(800*2**(i-1));                                    // a busy explorer: 0.8 s, 1.6 s, 3.2 s
+      let r;
+      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {}); }
+      catch(e){ err=e; break; }                                          // unreachable (offline, blocked, too slow): the next explorer
+      if(r.ok){ if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
+        return text ? (await r.text()).trim() : await r.json(); }
+      err=new Error(`the explorer answered ${r.status}`); err.status=r.status;
+      if(r.status!==429 && r.status<500) throw err;                       // a 4xx is the answer, whoever is asked
+    }
+  }
+  throw err;
+}
+TIP=+(LS(NETKEY("bv.tip"))||0);                                         // the last tip this browser saw: windows and countdowns work at once, the fresh one lands a moment later
+const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=h; LS(NETKEY("bv.tip"),String(h)); } }catch{} return TIP; };
+let TIPP=null, PRICEP=null;
+const tipReady=()=>TIPP||(TIPP=tipRefresh());                          // started by loader.js on every app page
+const priceReady=()=>PRICEP||(PRICEP=NET!=="mainnet"||chainBases()[0]!==ESPLORA_PRESETS.mempool.mainnet ? Promise.resolve() : chainGet("/v1/prices").then(j=>{ if(+j.USD>0) BTCUSD=+j.USD; },()=>{}));   // only mempool.space serves a USD price: with another explorer the dollar hints stay hidden
+const usdOf=sats=>BTCUSD ? "≈ $"+(sats/1e8*BTCUSD).toFixed(2) : "";
+// ---------- one transaction -> its burns (spec §4): the outputs paying known topic addresses, each with its statement ----------
+// Statements: the OP_RETURN payloads in output order, split on 0x1F, the pieces handed in order to the P2WSH outputs (every topic address is P2WSH).
+// Several outputs to one topic are summed and take the first one's piece. No piece, or an empty one: an abstain.
+const hexBytes=h=>new Uint8Array((String(h||"").match(/../g)||[]).map(x=>parseInt(x,16)));
+const opReturnData=hex=>{ const b=hexBytes(hex), out=[]; if(b[0]!==0x6a) return null;   // OP_RETURN, then its pushes, concatenated
+  for(let i=1;i<b.length;){ const op=b[i++], n=op<=0x4b?op:op===0x4c?b[i++]:op===0x4d?b[i++]|b[i++]<<8:-1; if(n<0||i+n>b.length) break; for(let j=0;j<n;j++) out.push(b[i+j]); i+=n; }
+  return new Uint8Array(out); };
+const UTF8=new TextDecoder();
+function txBurns(tx,topics){                                           // topics: Map(address -> topic name) -> [{txid, name, t, sats, h, from, vout}]
+  const vout=Array.isArray(tx&&tx.vout)?tx.vout:[], pieces=[];
+  for(const o of vout) if(o.scriptpubkey_type==="op_return"){ const d=opReturnData(o.scriptpubkey); if(!d) continue;
+    for(let s=0,i=0;i<=d.length;i++) if(i===d.length||d[i]===0x1f){ pieces.push(UTF8.decode(d.subarray(s,i))); s=i+1; } }
+  const out=new Map(); let k=0;
+  vout.forEach((o,i)=>{ if(o.scriptpubkey_type!=="v0_p2wsh") return; const piece=pieces[k++]??"", name=topics.get(o.scriptpubkey_address); if(name===undefined) return;
+    if(!out.has(name)) out.set(name,{name, t:piece, sats:0, vout:i}); out.get(name).sats+=Math.round(+o.value||0); });
+  const st=tx.status||{}, h=st.confirmed&&Number.isInteger(st.block_height)?st.block_height:null, pv=tx.vin&&tx.vin[0]&&tx.vin[0].prevout;
+  return [...out.values()].map(b=>({txid:tx.txid, ...b, h, from:pv&&pv.scriptpubkey_address||null}));
+}
+// ---------- an address's history, newest first (Esplora): the mempool and the newest confirmed, then 25 confirmed per request, until stopTx ----------
+async function scanAddress(addr,{stopTx=null,maxPages=Infinity,onPage=()=>{},cancelled=()=>false}={}){   // -> {mempool:[tx], confirmed:[tx], requests} | null when cancelled
+  const mempool=[], confirmed=[]; let path=`/address/${addr}/txs`, requests=0;
+  for(;;){
+    const page=await chainGet(path); requests++; if(cancelled()) return null;
+    const conf=page.filter(t=>t.status&&t.status.confirmed), mp=requests===1?page.filter(t=>!(t.status&&t.status.confirmed)):[];
+    const stop=stopTx?conf.findIndex(t=>t.txid===stopTx):-1, fresh=stop>=0?conf.slice(0,stop):conf;
+    mempool.push(...mp); confirmed.push(...fresh); onPage({mempool:mp, confirmed:fresh, requests});
+    if(stop>=0 || conf.length<API_PAGE || requests>=maxPages) return {mempool, confirmed, requests};
+    path=`/address/${addr}/txs/chain/${conf[conf.length-1].txid}`;
+  }
+}
+// a registration states a topic's canonical name, as the app writes it (spec §7): lowercase, no whitespace, modifiers in canonical order.
+// The root topic's address is also a well-known generic burn address: anything else burned there is some other burn, not a registration.
+const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
 try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
 // ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
 const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]
@@ -1644,7 +1582,7 @@ async function decryptSecret(blob,pass){                         // -> Promise<s
 
 // ---------- explorer I/O (mempool.space, Esplora API; CORS open, text/plain POST needs no preflight) ----------
 const WALLET_ESPLORA={mainnet:"", signet:"signet/", testnet:"testnet/", testnet4:"testnet4/"};
-const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
+const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : (typeof LIVE_BASE==="string"&&LIVE_BASE&&typeof NET==="string"&&network===NET) ? LIVE_BASE : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
 async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure
   try{
     const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}});
@@ -1856,7 +1794,7 @@ async function walletPaint(){
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more"> · ≈ $${(walletSats()/1e8*BTCUSD).toFixed(2)}</span>`:"explorer unreachable";
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:"explorer unreachable";
   }
   walletPill();
 }
@@ -2008,7 +1946,9 @@ const DB=(()=>{
         const vs=t.objectStore("votes"); for(const v of page) if(v.h!==null) vs.put({...v,scope:name});           // the mempool part goes through putPending (loader.js persist)
         if(all){ const conf=all.filter(v=>v.h!==null); t.objectStore("scopes").put({name, lastTx:conf[0]?conf[0].txid:null, height:TIP, count:conf.length, at:Date.now()}); }   // sync record once the whole scan landed
       }); }catch{} },
-    async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
+    async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name, at:v.at||Date.now()}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
+    async prunePending(name,keep){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const r=t.objectStore("votes").index("scope").openCursor(IDBKeyRange.only(name));   // mempool burns the explorer no longer lists: replaced or dropped
+        r.onsuccess=()=>{ const c=r.result; if(!c) return; if(c.value.h===null&&!keep.has(c.value.txid)) c.delete(); c.continue(); }; }); }catch{} },
   };
 })();
 
@@ -2058,7 +1998,7 @@ function bPaint(){
     </div>`).join("");
   const tip=bTipSats(), one=ballotFee(1,1,e,tip).fee, sep=e.reduce((a,x)=>a+ballotFee(1,1,[x],0).fee,0)+(tip?ballotFee(1,1,[],tip).fee-ballotFee(1,1,[],0).fee:0);
   $("b-sats").textContent=fmt(ballotSats(e))+" sats"; $("b-fee").textContent="≈ "+fmt(one)+" sats"; $("b-save").textContent="≈ "+fmt(Math.max(0,sep-one))+" sats";
-  $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?"≈ $"+(tip/1e8*BTCUSD).toFixed(2):"skipped";
+  $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?usdOf(tip):"skipped";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";
@@ -2094,82 +2034,85 @@ function ballotOpen(){ bSent=null; bStep=1; bSync(); $("ballotdlg").showModal();
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
 ballotPill();
-// ---------- topic loader: the data path only, no rendering (shared by topic.js and embed.js) ----------
-// IndexedDB (warm) → shipped snapshot (cold, whole) → explorer scan (paged). Every path leaves the scope on disk so the next visit is the IndexedDB one.
-// loadVotes(name, {onPage, onPhase, cancelled}) → Promise<{votes, source:"cache"|"snapshot"|"scan", requests}|null>
-//   onPage(votes)   a batch of burns that just landed: the whole cache or snapshot, or one explorer page (25 burns)
-//   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done", source?, count?, page?, pages?, height?, lastTx?, requests?}
-//   cancelled()     → true when the caller moved on (another scope opened): the loader stops and resolves null
-// Every vote carries tx (short txid form). cache[name] (shared.js) holds the full list for the page that asked, so addPending can prepend to it.
-// persist(): confirmed burns through DB.put (cursor + sync record); the mempool ones as pending rows (DB.putPending), so receipt.html#<txid> and the
-// burner page find a burn the explorer has only just seen. The confirmed row overwrites the pending one (same key) on the next scan.
-const persist=(name,page,all)=>{ DB.put(name,page,all); const pend=page.filter(v=>v.h===null); if(pend.length) DB.putPending(name,pend); };
-async function loadVotes(name,{onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+// ---------- the data path, no rendering (every app page): IndexedDB first, then the explorer for everything newer ----------
+// loadVotes(name, {onPage, onPhase, cancelled}) -> Promise<{votes, source:"cache"|"snapshot"|"scan", requests, error?}|null>
+//   onPage(votes)   burns that just landed, each txid once: what this browser (or a published snapshot) knows, then every explorer page
+//   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done"|"error", source?, count?, page?, lastTx?, height?, requests?}
+//   cancelled()     -> true when the caller moved on: the loader stops and resolves null
+// The result's votes are the whole list with the mempool as the explorer lists it now: pages recount from it, not from the batches.
+tipReady(); priceReady();                                                 // the chain tip and the BTC price, once per page (shared.js)
+const ADDRS=new Map();                                                    // topic name -> address, derived once per page
+const topicAddr=async name=>{ if(!ADDRS.has(name)) ADDRS.set(name,(await deriveScope(name)).addr); return ADDRS.get(name); };
+const FRESH_PENDING=10*60000;                                             // a burn signed in this browser stays pending this long, even before the explorer lists it
+async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+  if(!TIP) await tipReady();                                              // windows and deadlines need a tip: the cached one, else the first answer
+  const addr=raw||await topicAddr(name), shown=new Set(), show=vs=>{ const f=vs.filter(v=>!shown.has(v.txid)); f.forEach(v=>shown.add(v.txid)); if(f.length) onPage(f); };
+  let known=[], source="scan";
   onPhase({phase:"cache"});
   const rec=await DB.sync(name); if(cancelled()) return null;
-  if(rec&&(rec.count||rec.lastTx)){                       // warm: read from disk, then fetch only what is newer than the cursor. An empty record (a scan that found nothing) protects nothing: a topic that gained a snapshot since is read cold
-    const stored=(await DB.votes(name))||[]; if(cancelled()) return null;
-    cache[name]=stored; onPage(stored);
-    onPhase({phase:"cache", source:"cache", count:stored.length, lastTx:rec.lastTx, height:rec.height});
-    await sleep(350); if(cancelled()) return null;          // ponytail: the stub has no new burns; the real page pages the explorer until it meets rec.lastTx
-    onPhase({phase:"done", source:"cache", count:stored.length, requests:1});
-    return {votes:stored, source:"cache", requests:1};
+  if(rec&&(rec.count||rec.lastTx)){ known=(await DB.votes(name))||[]; source="cache"; onPhase({phase:"cache", source, count:known.length, lastTx:rec.lastTx}); }
+  else{
+    onPhase({phase:"snapshot"});
+    const snap=await snapshotFetch(name); if(cancelled()) return null;
+    if(snap){ known=snap.votes.map(cleanVote).filter(Boolean); source="snapshot"; DB.put(name, known, known); onPhase({phase:"snapshot", source, count:known.length, height:snap.height}); }
   }
-  onPhase({phase:"snapshot"});                              // cold: the shipped snapshot (snapshots/<net>/<sha256(name)>.json) lands whole, then only burns newer than its height are fetched
-  const snap=await snapshotFetch(name); if(cancelled()) return null;
-  if(snap){
-    const votes=snap.votes.map(cleanVote).filter(Boolean);
-    cache[name]=votes; onPage(votes);
-    onPhase({phase:"snapshot", source:"snapshot", count:votes.length, height:snap.height});
-    persist(name, votes, votes);                            // on disk like a finished scan
-    await sleep(350); if(cancelled()) return null;          // ponytail: the stub tail is empty; the real page pages the explorer from snap.height to the tip
-    onPhase({phase:"done", source:"snapshot", count:votes.length, requests:1});
-    return {votes, source:"snapshot", requests:1};
-  }
-  const votes=cache[name]||(cache[name]=stubVotes(name));  // no snapshot: the explorer, 25 burns per request
-  const pages=Math.ceil(votes.length/25);
-  for(let p=0;p<pages;p++){
-    onPhase({phase:"scan", page:p+1, pages, count:Math.min((p+1)*25,votes.length)});
-    await sleep(180+Math.random()*180); if(cancelled()) return null;
-    const page=votes.slice(p*25,p*25+25); onPage(page);
-    persist(name, page, p===pages-1 ? votes : null);        // each page lands on disk as it arrives; the sync record only once the scan completes
-  }
-  if(!pages) persist(name, [], votes);
-  onPhase({phase:"done", source:"scan", count:votes.length, requests:pages});
-  return {votes, source:"scan", requests:pages};
+  if(known.length){ cache[name]=known; show(known); }
+  const topics=new Map([[addr,name]]), burns=txs=>txs.flatMap(tx=>txBurns(tx,topics)).map(cleanVote).filter(Boolean);
+  const conf=known.filter(v=>v.h!==null), pend=[], fresh=[];              // newest first: the scan stops at the newest confirmed burn already known
+  let scan;
+  try{ scan=await scanAddress(addr,{stopTx:conf.length?conf[0].txid:null, cancelled, onPage:p=>{
+    const m=burns(p.mempool), c=burns(p.confirmed); pend.push(...m); fresh.push(...c); show([...m,...c]);
+    onPhase({phase:"scan", page:p.requests, count:shown.size}); }}); }
+  catch(e){ if(cancelled()) return null; onPhase({phase:"error", source, count:known.length}); return {votes:known, source, requests:0, error:String((e&&e.message)||e)}; }
+  if(!scan) return null;
+  const listed=new Set([...pend,...fresh].map(v=>v.txid)), now=Date.now();
+  const votes=[...pend, ...known.filter(v=>v.h===null&&!listed.has(v.txid)&&now-(v.at||0)<FRESH_PENDING), ...fresh, ...conf.filter(v=>!listed.has(v.txid))];   // a mempool burn the explorer stopped listing was replaced or dropped
+  DB.put(name, fresh, votes); DB.putPending(name, pend); DB.prunePending(name, new Set(votes.filter(v=>v.h===null).map(v=>v.txid)));
+  cache[name]=votes;
+  onPhase({phase:"done", source, count:votes.length, requests:scan.requests});
+  return {votes, source, requests:scan.requests};
 }
-// ---------- a burn's home: every burn of every known topic, for pages that start from an address or a txid rather than a topic ----------
-// loadAll({onPhase}) → Promise<[{txid,t,sats,h,from,tx,scope}]>: what IndexedDB holds, plus the snapshot of every indexed topic the cache does not know yet
-// (each one is written to the cache, so the second visit is disk only). onPhase({phase:"cache"|"snapshots"|"done", k, n, count}).
-async function loadAll({onPhase=()=>{}}={}){
-  onPhase({phase:"cache"});
-  const rows=(await DB.all())||[], known=new Set(((await DB.scopes())||[]).map(s=>s.name));
-  const idx=await snapshotIndex(), todo=idx?idx.topics.map(t=>t.name).filter(n=>!known.has(n)):[];
-  let k=0;
-  for(const name of todo){
-    onPhase({phase:"snapshots", k, n:todo.length, count:rows.length});
-    const snap=await snapshotFetch(name); k++;
-    if(!snap) continue;
-    const votes=snap.votes.map(cleanVote).filter(Boolean);
-    persist(name, votes, votes);
-    for(const v of votes) rows.push({...v, scope:name});
-  }
-  onPhase({phase:"done", k, n:todo.length, count:rows.length});
-  return rows;
+// ---------- the directory (spec §7): registrations are burns to the root topic whose statement is a topic name ----------
+// dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
+// d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
+let ROOTV=[], DIRP=null, DIRERR=false;
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(r=>{
+  ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length;
+  const was=new Map(DIRECTORY.map(d=>[d.name,d])), next=new Map();
+  for(const v of ROOTV){ const name=nameOf(v.t); if(!name) continue; const h=v.h??TIP+1;
+    const d=next.get(name)||{name, stats:null, active:0, ...(was.get(name)||{}), reg:0, listings:0, first:Infinity, last:0};
+    d.reg+=v.sats; d.listings++; d.first=Math.min(d.first,h); d.last=Math.max(d.last,h); next.set(name,d); }
+  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY; }));
+const rootBurns=()=>ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name);   // the sponsorships (a topic's first one registers it), newest first
+// dirTopics({onTopic}) -> Promise: every registered topic through loadVotes, three at a time; its burns land in cache[name], then d.stats and d.active
+async function dirTopics({onTopic=()=>{}}={}){
+  const todo=[...DIRECTORY];
+  const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(()=>null), vs=(r&&r.votes)||cache[d.name]||[];
+    cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); onTopic(d); } };
+  await Promise.all([worker(),worker(),worker()]);
 }
 // ---------- hero chips, five different topics, each led by a small icon badge: a flame for the most burned (all time), ✦ the 3 most sponsored, a clock for the latest burn ----------
 const chipHtml=(name,title,badge)=>`<a class="btn sm" href="topic.html#${esc(name)}" title="${esc(title)}">${badge}<span>${topicName(name,false)}</span></a>`;
 function renderChips(){
-  const sats=d=>tallyOf(d.name, cache[d.name]||(cache[d.name]=stubVotes(d.name))).sats;   // counted like the topic page; ponytail: stub burns stand in for the summary endpoint
-  const top=[...DIRECTORY].sort((a,b)=>sats(b)-sats(a))[0], used=new Set(top?[top.name]:[]);
+  const sats=d=>tallyOf(d.name, cache[d.name]||[]).sats;   // counted like the topic page
+  const top=[...DIRECTORY].filter(d=>d.stats&&sats(d)>0).sort((a,b)=>sats(b)-sats(a))[0], used=new Set(top?[top.name]:[]);
   const feat=featuredRank(DIRECTORY.length).filter(f=>!used.has(f.name)).slice(0,3); feat.forEach(f=>used.add(f.name));
-  const hot=[...DIRECTORY].filter(d=>!used.has(d.name)).sort((a,b)=>b.active-a.active).slice(0,4-feat.length);   // one latest chip; more when fewer topics are sponsored. Ties keep directory order
+  const hot=[...DIRECTORY].filter(d=>d.active&&!used.has(d.name)).sort((a,b)=>b.active-a.active).slice(0,4-feat.length);   // one latest chip; more when fewer topics are sponsored. Ties keep directory order
   $("chips").innerHTML=(top?chipHtml(top.name,`Most burned · ${fmt(sats(top))} sats all time`,iconBadge("sm top",ICONS.top)):"")
     + feat.map(f=>chipHtml(f.name,`Sponsored · ${fmt(f.sats)} sats`,iconBadge("sm feature",ICONS.feature))).join("")
     + hot.map(d=>chipHtml(d.name,`Latest burn · block ${fmt(d.active)}`,iconBadge("sm",ICONS.latest))).join("");
 }
 renderChips();
-DIRECTORY.forEach(async d=>{ await sleep(250+Math.random()*900); d.stats=STATS[d.name]; summarySave(); });   // the chips need no totals; this warms Explore's numbers
+// ---------- the hero's numbers: every burn this page counted, in the topics and the registrations ----------
+let heroReady=false;
+function renderStats(){
+  if(!heroReady) return;
+  const all=[...rootBurns(), ...DIRECTORY.flatMap(d=>cache[d.name]||[])], sats=all.reduce((a,v)=>a+v.sats,0);   // registrations and sponsorships count; other burns to the root address do not
+  const takes=DIRECTORY.reduce((a,d)=>a+new Set((cache[d.name]||[]).map(v=>norm(v.t)).filter(Boolean)).size,0);
+  $("stburned").textContent=(sats/1e8).toFixed(4)+" ₿"; $("sttakes").textContent=fmt(takes); $("stburns").textContent=fmt(all.length);
+  $("stusd").textContent=BTCUSD ? "≈ $"+fmt(Math.round(sats/1e8*BTCUSD)) : "—";
+}
+(async()=>{ await dirLoad(); renderChips(); await dirTopics({onTopic:renderChips}); heroReady=true; renderStats(); priceReady().then(renderStats); })();   // also warms Explore's cache
 
 // ---------- embers ----------
 const c=document.getElementById("embers"), ctx=c.getContext("2d");
@@ -2199,7 +2142,7 @@ if(tipEnabled()){
   const tipAmount=()=>Number($("tipdamt").value||0);
   const tipRender=()=>{
     const sats=tipAmount();
-    $("tipdusd").textContent="≈ $"+(sats/1e8*BTCUSD).toFixed(2);
+    $("tipdusd").textContent=usdOf(sats);
     $("tipdaddr").textContent=TIP_EFFECTIVE; $("copytipd").dataset.copy=TIP_EFFECTIVE;
     $("tipdemo").hidden=true;
     tpay.set({burnAddr:TIP_EFFECTIVE, burnSats:sats, statementBytes:null, tipAddr:null, tipSats:0, burnLabel:"tip"});
@@ -2218,11 +2161,12 @@ if(tipEnabled()){
   const paint=()=>{ const v=stored(), custom=/^https?:\/\//.test(v); sel.value= custom?"custom" : ESPLORA_PRESETS[v]?v : "mempool";
     for(const o of sel.options) if(ESPLORA_PRESETS[o.value]) o.disabled=!ESPLORA_PRESETS[o.value][NET];        // a preset without a server on this network cannot be picked
     url.hidden=!custom&&sel.value!=="custom"; if(custom) url.value=v;
-    act.textContent=esploraFor(NET)+(esploraOverride()?"":" · default"); sel.title="Esplora API: "+act.textContent; };
+    const live=!esploraOverride()&&LIVE_BASE&&LIVE_BASE!==esploraFor(NET);   // the default did not answer: the other public explorer stands in
+    act.textContent=(live?LIVE_BASE:esploraFor(NET))+(esploraOverride()?"":live?" · standing in for the default":" · default"); sel.title="Esplora API: "+act.textContent; };
   sel.onchange=()=>{ if(sel.value==="custom"){ url.hidden=false; url.focus(); if(/^https?:\/\//.test(url.value.trim())) esploraSet(url.value.trim()); else return act.textContent=esploraFor(NET)+" · until a URL is entered"; }
     else esploraSet(sel.value==="mempool"?"":sel.value); paint(); };
   url.onchange=url.onblur=()=>{ const v=url.value.trim(); if(/^https?:\/\//.test(v)) esploraSet(v.replace(/\/+$/,"")); else if(!v) esploraSet(""); paint(); };
   url.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); url.blur(); } };
-  paint();
+  paint(); addEventListener("chainbase",paint);
 })();
 </script>

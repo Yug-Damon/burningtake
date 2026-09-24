@@ -53,12 +53,13 @@ async function open(){
   $("ekind").textContent=[{open:"open question",duel:"duel",poll:`poll · ${p.opts?p.opts.length:0} options`,number:"number"}[k], p.min?`min ${fmt(p.min)} sats`:null, p.range?`${nfc(p.range[0])} – ${nfc(p.range[1])}`:null].filter(Boolean).join(" · ");
   const u=new URL("topic.html",location.href); if(NET!=="mainnet") u.searchParams.set("net",NET); u.hash=name; $("elink").href=u.href;
   const h=new URL("index.html",location.href); if(NET!=="mainnet") h.searchParams.set("net",NET); $("ehome").href=h.href;
-  document.title=p.q+" · Burning Take"; tick();
+  document.title=p.q+" · Burning Take"; tick(); tipReady().then(tick);
   $("eview").innerHTML=`<p class="muted" id="eloading">Reading the chain…</p>`; $("estatus").textContent=""; post();
   const r=await loadVotes(name,{ cancelled:()=>my!==seq,
     onPage:vs=>{ vs.forEach(addVote); view(); },
-    onPhase:ph=>{ $("estatus").textContent= ph.phase==="done" ? `${NET} · block ${fmt(TIP)} · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="scan" ? `scanning ${ph.page}/${ph.pages}` : ""; } });
-  if(r&&!r.votes.length) view();
+    onPhase:ph=>{ $("estatus").textContent= ph.phase==="done" ? `${NET} · block ${fmt(TIP)} · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="scan" ? `scanning · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="error" ? "the explorer did not answer" : ""; } });
+  if(!r||my!==seq) return;
+  agg={}; late={sats:0,votes:0}; dust={sats:0,votes:0}; r.votes.forEach(addVote); view();   // the loader's list is the whole truth
 }
 addEventListener("hashchange",open); open();
 addEventListener("load",post);

@@ -196,17 +196,18 @@ async function loadScope(name){
   renderStand();
   const spin=`<span class="spin"></span>`, dot=`<span class="dot"></span>`;
   const r=await loadVotes(name,{                             // loader.js: IndexedDB → snapshot → explorer; this page only paints
-    cancelled:()=>my!==seq,
+    addr:scope.addr, cancelled:()=>my!==seq,
     onPage:votes=>{ votes.forEach(addVote); S=Object.values(agg); render(); },
     onPhase:p=>{ status.innerHTML=
       p.phase==="cache" ? (p.source ? `${spin} ${p.count} burn${p.count===1?"":"s"} from cache<span class="more"> · checking for burns after ${p.lastTx?p.lastTx.slice(0,8)+"…":"start"}</span>` : `${spin} opening cache…`)
     : p.phase==="snapshot" ? (p.source ? `${spin} ${p.count} burn${p.count===1?"":"s"} from snapshot · block ${fmt(p.height)}<span class="more"> · checking newer burns</span>` : `${spin} looking for a snapshot…`)
-    : p.phase==="scan" ? `${spin} scanning<span class="more"> ${scope.addr.slice(0,14)}…</span> · request ${p.page}/${p.pages} · ${p.count} burn${p.count===1?"":"s"}`
+    : p.phase==="scan" ? `${spin} scanning<span class="more"> ${scope.addr.slice(0,14)}…</span> · request ${p.page} · ${p.count} burn${p.count===1?"":"s"}`
+    : p.phase==="error" ? `the explorer did not answer${p.count?` · ${p.count} burn${p.count===1?"":"s"} known to this browser`:""}`
     : !p.count ? `${dot} synced · block ${fmt(TIP)} · no burns yet`
     : `${dot} synced · block ${fmt(TIP)} · ${p.count} burn${p.count===1?"":"s"}`; },   // synced: block and burns only; source and requests show while loading
   });
   if(!r) return;
-  synced=true; render();
+  SEEN=r.votes.slice(); synced=true; recount();              // the loader's list is the whole truth: the mempool as the explorer lists it now
   watchMarkSeen(name,r.votes.length,TIP);                   // a watched topic: what this browser has now seen, so the watchlist can say "N new burns"
 }
 // a burn signed in this browser (single or ballot) lands on the board at once as pending; the explorer takes over on the next scan
@@ -249,10 +250,10 @@ function update(){
   bytesEl.textContent=n; bytesEl.classList.toggle("over",n>80);
   hexEl.textContent=toHex(opReturnScript(data));                 // 6a + direct push (<=75) or OP_PUSHDATA1
   const b=burnSats();
-  usd.textContent="sats · ≈ $"+(b/1e8*BTCUSD).toFixed(2);
+  usd.textContent="sats"+(usdOf(b)?" · "+usdOf(b):"");
   const ton=!!TIP_EFFECTIVE&&$("vtipck").checked, t=tipSats();
   $("tip").hidden=!ton; $("tipoff").hidden=ton;
-  $("tipusd").textContent=t?"≈ $"+(t/1e8*BTCUSD).toFixed(2):"skipped";
+  $("tipusd").textContent=t?usdOf(t):"skipped";
   $("tiprow").hidden=!t; amt.setAttribute("aria-invalid",String(!vValid2()));
   vpay.set({burnAddr:featureMode&&ROOT?ROOT.addr:scope.addr, burnSats:b, statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});
   syncPollUI(); vReview(); vPaint();
@@ -301,7 +302,7 @@ async function openScope(n){
   scope= raw ? {name:n.slice(0,8)+"…"+n.slice(-6), addr:n, script:"?", hash:"?"} : await deriveScope(n);
   scope.spec = raw ? {} : parseScope(scope.name);
   scope.poll = scope.spec.opts||null;
-  scope.q = raw ? scope.name : scope.spec.q;
+  scope.q = raw ? scope.name : scope.spec.q; const addrNow=scope.addr;
   $("q").value=""; q="";                                    // a new scope starts with an empty search (the page re-renders in place on hashchange)
   loadScope(scope.name); if($("votedlg").open) $("votedlg").close();
   $("addr").textContent=scope.addr;
@@ -326,7 +327,7 @@ async function openScope(n){
   update();
   $("boardtitle").textContent= kind(scope.spec)==="open" ? `Hottest takes on #${scope.q}` : `${scope.q}?`;
   document.title=scope.q+" · Burning Take";
-  headMeta();
+  headMeta(); Promise.all([tipReady(),dirLoad()]).then(()=>{ if(scope.addr===addrNow) headMeta(); });   // the sponsor score and the countdown need the directory and the tip
   if(hashText()!==n) history.replaceState(null,"","#"+n);
 }
 $("copyaddr").onclick=()=>copyText($("addr").textContent,$("copyaddr"));
@@ -337,7 +338,7 @@ function vValid1(){ if(featureMode) return true; const raw=stmt.value.trim(); if
 function vValid2(){ return burnSats()>=+(amt.min||330); }
 function vValid(n=vStep){ return n<=1 ? vValid1() : vValid1()&&vValid2(); }   // step n reachable when everything before it holds   // hoisted: update() runs at load, before this section
 function vReview(){                                     // step 3, in words: what the transaction burns, where, and whether it counts. Text only (textContent)
-  const k=kind(scope.spec||{}), b=burnSats(), t=tipSats(), fs=featureScore(scope.name), usd=v=>" · ≈ $"+(v/1e8*BTCUSD).toFixed(2);
+  const k=kind(scope.spec||{}), b=burnSats(), t=tipSats(), fs=featureScore(scope.name), usd=v=>usdOf(v)?" · "+usdOf(v):"";
   $("vrtopic").textContent="#"+scope.q;
   $("vrstmtk").textContent= regMode ? "Name" : featureMode ? "Sponsored" : k==="open" ? "Take" : "Answer";
   const said=stmt.value.trim();
@@ -495,3 +496,11 @@ function renderBurners(){                                    // under the board,
     for(let n=rows.length; n>5 && L.offsetHeight>R.offsetHeight+6; ) rows[--n].remove(); }
 }
 const ONE_COL=matchMedia("(max-width:860px)"); ONE_COL.addEventListener("change",()=>renderBurners());
+// ---------- live: the open topic is read again every minute (cache first: one request when nothing changed), new blocks and mempool burns alike ----------
+setInterval(async()=>{
+  if(document.hidden||!synced) return;
+  const my=seq; await tipRefresh();
+  const r=await loadVotes(scope.name,{addr:scope.addr, cancelled:()=>my!==seq}); if(!r||r.error||my!==seq) return;
+  SEEN=r.votes.slice(); recount(); headTick();
+  const n=r.votes.length; status.innerHTML=`<span class="dot"></span> synced · block ${fmt(TIP)} · ${n?`${n} burn${n===1?"":"s"}`:"no burns yet"}`;
+},60000);
