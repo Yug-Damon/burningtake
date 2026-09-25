@@ -23,7 +23,7 @@ document.querySelectorAll("#xseg [data-win]").forEach(b=>{ b.setAttribute("aria-
 }; });
 function renderDir(){
   const searching=!!sq;
-  $("featuredstrip").hidden = searching || !DIRECTORY.length;          // browsing only: a search lists its matches in the rows
+  $("featuredstrip").hidden = searching || DIRREADY&&!DIRECTORY.length;   // browsing only: a search lists its matches in the rows; placeholders until the directory answers
   if(!searching) renderFeatured();
   const matches=renderRows();
   $("hotcol").hidden = $("colR").hidden = searching || !DIRECTORY.length;
@@ -34,7 +34,10 @@ function renderDir(){
 }
 // ---------- SPOTLIGHT: three different topics, one per kind of attention, each led by its icon badge: ✦ sponsored, a flame for most burned (window), a clock for the latest burn ----------
 // "Most burned" picks first so its label stays true; Sponsored and Latest burn then take the best topics not already shown
+// a spotlight card while its numbers load: the badge and the word, bars for the rest
+const ghostCard=(badge,label)=>`<div class="card fcard ghost" aria-hidden="true"><span class="fhead">${badge}<span class="ktype">${label}</span><span class="name"><span class="sk" style="width:55%;height:18px"></span></span></span><span class="big"><span class="sk" style="width:110px;height:22px"></span></span><span class="lead"><span class="sk" style="width:80%"></span></span></div>`;
 function renderFeatured(){
+  if(!DIRREADY){ $("scopegrid").innerHTML=ghostCard(iconBadge("feature",ICONS.feature),"Sponsored")+ghostCard(iconBadge("top",ICONS.top),"Most burned")+ghostCard(iconBadge("",ICONS.latest),"Latest burn"); return; }   // the directory is on its way
   const W=WINLABEL[win], used=new Set(), pick=list=>{ const d=list.find(x=>x&&!used.has(x.name))||list.find(Boolean); if(d) used.add(d.name); return d; };   // another topic per card while there are enough, the same one again when there are not
   const topD = loadedAll() ? pick(DIRECTORY.filter(d=>tally(d).sats>0).sort((a,b)=>tally(b).sats-tally(a).sats)) : null;   // none before every count is in
   const spons=new Map(); for(const v of rootBurns()) if(inWin(v)) spons.set(v.name,(spons.get(v.name)||0)+v.sats);   // sponsor score inside the window
@@ -54,7 +57,7 @@ function renderFeatured(){
   const out=[];
   if(featD) out.push(card(featD,"feat",iconBadge("feature",ICONS.feature),"Sponsored",fmt(featTop[1]),W,takes(featD)));
   if(topD) out.push(card(topD,"top",iconBadge("top",ICONS.top),"Most burned",fmt(tally(topD).sats),W,takes(topD)));
-  else if(!loadedAll()) out.push(`<div class="card fcard ghost"><span class="fhead">${iconBadge("top",ICONS.top)}<span class="ktype">Most burned</span><span class="name"><span class="sk" style="width:55%;height:18px"></span></span></span><span class="big"><span class="sk" style="width:110px;height:22px"></span></span><span class="lead"><span class="sk" style="width:80%"></span></span></div>`);
+  else if(!loadedAll()) out.push(ghostCard(iconBadge("top",ICONS.top),"Most burned"));
   if(recD){ const seenT=new Set(), L=allVotes(recD.name).slice().sort((a,b)=>H(b)-H(a)).filter(x=>{ const k=norm(x.t); if(seenT.has(k)) return false; seenT.add(k); return true; }).slice(0,3), v=L[0];   // its newest takes, one line each, the mempool first
     out.push(card(recD,"recent",iconBadge("",ICONS.latest),"Latest burn", v?fmt(v.sats):"—", v?"":"no burns yet",
       L.map(x=>`<span class="row3 lt"><b>${x.t?esc(x.t):"<i>no take</i>"}</b><span class="m">${x.h===null?"":"block "+fmt(x.h)}</span></span>`).join(""))); }
@@ -63,7 +66,9 @@ function renderFeatured(){
 // ---------- MOST BURNED (window) while browsing, or the matches of a search (all time) ----------
 function renderRows(){
   const host=$("scoperows"), all=loadedAll();
-  if(!DIRECTORY.length){ host.innerHTML=`<div class="emptybox">${!DIRREADY ? "Reading the directory…" : DIRERR ? `The explorer did not answer. <button type="button" class="linkbtn" data-retry>Retry</button>` : "No topics registered yet"}</div>`; return []; }
+  if(!DIRECTORY.length){ host.innerHTML= !DIRREADY   // the directory is on its way: the rows' shape, bars for the text
+    ? `<div class="divider">Most burned · ${WINLABEL[win]}</div>`+[46,62,38,54,42].map(w=>`<div class="srow ghost" aria-hidden="true"><span class="rank"></span><span class="nm"><span class="sk" style="width:${w}%"></span></span><span class="kl"><span class="sk" style="width:${w/2}%;height:9px"></span></span><span class="sats"><span class="sk" style="width:80px"></span></span><span class="v"><span class="sk" style="width:44px;height:9px"></span></span></div>`).join("")
+    : `<div class="emptybox">${DIRERR ? `The explorer did not answer. <button type="button" class="linkbtn" data-retry>Retry</button>` : "No topics registered yet"}</div>`; return []; }
   let list, head, sats, ranked;
   if(sq){ list=searchMatches(); sats=tallyAll; ranked=false;
     head=list.length?`<div class="divider">${list.length} matching topic${list.length===1?"":"s"} · all time</div>`:""; }
@@ -173,25 +178,26 @@ $("dirstatus").addEventListener("click",e=>{ if(e.target.closest("[data-retry]")
 setInterval(async()=>{ if(document.hidden) return; const was=TIP; await tipRefresh();
   if(TIP!==was) return dirSync({fresh:true, quiet:true});                   // a new block: count every topic again, one request each (cache first)
   await dirLoad(true); renderDir(); dirTopics({only:d=>!d.stats, onTopic:()=>renderDir()}); },60000);   // between blocks: the root topic alone, so a topic registered anywhere shows within a minute
-const spay=payPanel("spay"); PAY.push(spay);
+const spay=payPanel("spay",{speed:false}); PAY.push(spay);   // the fee speed sits in the fee view (Advanced)
+$("sqfeehost").innerHTML=feeSegHtml("sqfeeseg"); feeSegWire($("sqfeeseg"));
 $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copylisttip").dataset.copy=TIP_EFFECTIVE||""; $("copylisttip").disabled=!TIP_EFFECTIVE;
 // effective registration amounts: burn checkbox off = no registration output, tip checkbox off = no tip output
 const regSats=()=>Math.max(REG_SATS, Math.round(+$("sqamt").value||REG_SATS));   // 330 registers; more is an initial sponsorship (the footer's Sponsor)
-const regTipSats=()=>TIP_EFFECTIVE&&$("listtipon").checked ? Number($("listtip").value||0) : 0;   // no tip address on this network → never a tip output
+const regTipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("listtip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
 function updateList(){
   const n=$("listname").value.trim().toLowerCase();
   const data=enc.encode(n);
   $("listhex").textContent=toHex(opReturnScript(data));
-  const ton=!!TIP_EFFECTIVE&&$("listtipon").checked, t=regTipSats();
-  $("listtip").hidden=!ton; $("listtipoff").hidden=ton;
-  $("listtipusd").textContent=t?usdOf(t):"skipped";
+  const t=regTipSats();
+  $("listtipusd").textContent=t?usdOf(t):"";
   $("listtiprow").hidden=!t;
   spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});   // "…" until the root address is derived
 }
-$("listtipon").checked = !!TIP_EFFECTIVE && LS(NETKEY("bv.scope.tip"))!=="0";   // default: tip on — restored before the first updateList
-if(!tipEnabled()){ $("listtipon").disabled=true; $("listtipoff").textContent="no tip address yet on "+NET; $("listtipf").hidden=true; $("listtiprow").hidden=true; }   // no tip address on this network: every tip control disappears (regTipSats() is 0)
+const sqTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.scope.tipsats"),$("listtip").value); }, sqTipDefault=()=>{ const v=LS(NETKEY("bv.scope.tipsats")); return v==null||v===""?1000:+v; };   // registering: 1,000 unless another tip was chosen here
+const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }); sqTip.reset(sqTipDefault());
+if(!tipEnabled()){ $("listtipf").hidden=true; $("listtiprow").hidden=true; }   // no tip address on this network: every tip control disappears (regTipSats() is 0)
 deriveScope("").then(r=>{ $("rootaddr").textContent=r.addr; updateList(); });
-$("listtip").oninput=updateList;
+$("listtip").oninput=()=>{ sqTipSave(); updateList(); sqPaint(); };
 $("copyroot").onclick=()=>copyText($("rootaddr").textContent,$("copyroot"));
 updateList();
 $("copylisthex").onclick=()=>copyText($("listhex").textContent,$("copylisthex"));
@@ -212,25 +218,29 @@ function sqValid(n){
   const p=sqSpec();
   if(n===1) return !!p.q && $("sqq").value.trim().length<=40;   // the question label is capped at 40 chars (maxlength); options and modifiers may still push the name past it
   if(n===2) return sqtype==="open" || (sqtype==="opts"&&!!p.opts) || (sqtype==="range"&&!!p.range&&p.range[0]!==p.range[1]);
+  if(n===3) return +$("sqamt").value>=REG_SATS;   // the fee view: at least the registration
   return true;                                   // 4 Transaction: nothing to fill in
 }
 function sqGo(n){
   if(n===2 && !sqTouched && sqSug) applySuggestion(sqSug);          // untouched answers: take the guess, the user can still change it
   sqStep=n;
-  for(const k of [1,2,4]) $("sqstep-"+k).hidden=k!==n;
+  for(const k of [1,2,3,4]) $("sqstep-"+k).hidden=k!==n;
   sqPaint(); segThumbs();                                              // a seg inside the revealed step gets its thumb placed now
   $("scopedlg").querySelector(".dlg").scrollTop=0;
   const first=[...$("sqstep-"+n).querySelectorAll("input:not([type=hidden]):not(:disabled),textarea,select")].find(el=>!el.closest("[hidden]"));
-  (first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
+  (n===3 ? $("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt") : first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
 }
 const setDisabled=(a,off)=>{ a.classList.toggle("disabled",off); a.setAttribute("aria-disabled",String(off)); };   // anchors have no .disabled
 function sqPaint(){                              // the footer, idempotent, called by sqRender and sqGo
-  $("sqback").hidden=sqStep===1||spay.wallet.status()?.kind==="sent";
-  $("sqprice").hidden=sqStep!==1; dlgPrice($("sqprice"), regSats(), "registration fee"+($("sqsponsorf").hidden?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee());   // walletui.js; edit opens the amount
+  const s=spay.wallet.status(), editing=sqStep===2||sqStep===3;   // the rules and the fee views: Cancel or Apply, back to the topic
+  $("sqback").hidden=sqStep!==4||s?.kind==="sent";               // the transaction only
+  $("sqprice").hidden=sqStep!==1&&sqStep!==3; dlgPrice($("sqprice"), regSats(), "registration"+(sqStep===1?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee(), regTipSats()?[`+${fmt(regTipSats())} sats tip`]:[]);   // walletui.js; edit opens the fee view
+  $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
+  feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"));
   const p=sqSpec(), rules=[p.opts?p.opts.join(" | "):p.range?`${nfc(p.range[0])} – ${nfc(p.range[1])}`:null, p.deadline?`closes ${dlDate(p.deadline-TIP)}`:null, p.min?`min ${fmt(p.min)} sats`:null].filter(Boolean);
   $("sqrulesline").hidden=false; $("sqrulesline").innerHTML= rules.length ? `Rules · ${esc(rules.join(" · "))} <button type="button" class="linkbtn" data-editrules>edit</button>` : `<button type="button" class="linkbtn" data-editrules>Set custom rules</button>`;   // under the topic: the rules and edit, or the way to set them
   const tooLong=enc.encode(canonical(sqSpec())).length>80;   // root-scope statements are OP_RETURN payloads: 80 bytes. The Transaction step says so and its Done stays disabled
-  $("sqsendwrap").hidden=false;
+  $("sqsendwrap").hidden=editing;
   signMenu($("sqsend"), $("sqsendmenu"), spay.wallet, {label:"Validate topic", ok:sqValid(1)&&sqValid(2)&&!tooLong&&$("rootaddr").textContent.length>=20,
     show:()=>{ if(sqStep!==4){ updateList(); sqGo(4); } }, batch:sqBatch, tx: sqStep!==4 ? ()=>{ updateList(); sqGo(4); } : null, done:()=>$("scopedlg").close()});
 }
@@ -258,8 +268,8 @@ function openScopeDialog(prefill, reg=false){
   sqTouched=!!(p.opts||p.range||p.min); sqSug=null; $("sqhint").hidden=true; if(!sqTouched) sqHint();
   $("sqadv").open=false;                                         // collapsed on every open
   $("sqtitle").textContent=reg?"Register topic":"New topic";
-  $("listtipon").checked = !!TIP_EFFECTIVE && LS(NETKEY("bv.scope.tip"))!=="0";
-  $("sqsponsorf").hidden=true; sqAmt.reset(REG_SATS);          // every open: the plain 330 until its edit is asked for
+  sqTip.reset(sqTipDefault());
+  sqAmt.reset(REG_SATS); sqSnap=null; $("sqfeeadv").open=false;   // every open: the plain 330 until its edit is asked for
   sqRender(); updateList();
   sqOpener=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:$("newscope");
   $("scopedlg").showModal(); sqGo(1);
@@ -310,16 +320,24 @@ function applySuggestion(sg){
   }
   sqTouched=true; $("sqhint").hidden=true; sqRender();
 }
-$("sqhintuse").onclick=()=>{ applySuggestion(sqSug); if(!sqValid(2)) sqGo(2); };   // use it = take the guess (the rules line shows it); the rules view when it still needs values
+$("sqhintuse").onclick=()=>{ const s=sqRulesSnap(); applySuggestion(sqSug); if(!sqValid(2)){ sqSnap=s; sqGo(2); } };   // use it = take the guess (the rules line shows it); the rules view when it still needs values
 $("sqq").oninput=()=>{ sqRender(); sqHint(); };
 ["sqopts","sqlo","sqhi","sqdl","sqmin"].forEach(id=>$(id).oninput=()=>{ sqTouched=true; $("sqhint").hidden=true; sqRender(); });
 document.querySelectorAll("[data-sqtype]").forEach(b=>b.onclick=()=>{ sqtype=b.dataset.sqtype; sqTouched=true; $("sqhint").hidden=true; document.querySelectorAll("[data-sqtype]").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); sqRender(); });
-$("sqrulesline").onclick=e=>{ if(e.target.closest("[data-editrules]")) sqGo(2); };   // the rules first, the name later: no topic needed yet
+$("sqrulesline").onclick=e=>{ if(e.target.closest("[data-editrules]")){ sqSnap=sqRulesSnap(); sqGo(2); } };   // the rules first, the name later: no topic needed yet
+// the rules and the fee views change the values live; Cancel puts back what the view started from, Apply keeps them
+let sqSnap=null;
+const sqRulesSnap=()=>({type:sqtype, opts:$("sqopts").value, lo:$("sqlo").value, hi:$("sqhi").value, dl:$("sqdl").innerHTML, dlv:$("sqdl").value, min:$("sqmin").value, touched:sqTouched});
+function sqRulesPut(s){ sqtype=s.type; $("sqopts").value=s.opts; $("sqlo").value=s.lo; $("sqhi").value=s.hi; $("sqdl").innerHTML=s.dl; $("sqdl").value=s.dlv; $("sqmin").value=s.min; sqTouched=s.touched;
+  document.querySelectorAll("[data-sqtype]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.sqtype===sqtype))); if(!sqTouched) sqHint(); sqRender(); }
+const sqFeeSnap=()=>({amt:$("sqamt").value, tip:$("listtip").value, fee:feeSpeed()});
+function sqFeePut(s){ sqAmt.reset(s.amt); sqTip.reset(s.tip); sqTipSave(); LS(NETKEY("bv.fee"),s.fee); $("sqamtusd").textContent=usdOf(regSats()); updateList(); PAY.forEach(p=>p.paint()); }
+$("sqapply").onclick=()=>{ if(!sqValid(sqStep)) return; sqSnap=null; sqGo(1); };
+$("sqcancel").onclick=()=>{ const s=sqSnap; sqSnap=null; if(s) (sqStep===2?sqRulesPut:sqFeePut)(s); sqGo(1); };
 const sqAmt=amountChips($("sqamtseg"), $("sqamt"), ()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });   // the initial sponsorship: 330 registers, more ranks it at once
 $("sqamt").addEventListener("input",()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });
-$("sqprice").onclick=e=>{ if(!e.target.closest("[data-regfee]")) return; $("sqsponsorf").hidden=false; sqPaint(); if(sqStep!==1) sqGo(1); ($("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt")).focus({preventScroll:true}); };
+$("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } };
 $("sqback").onclick=()=>sqGo(1);
-$("listtipon").onchange=()=>{ LS(NETKEY("bv.scope.tip"),$("listtipon").checked?"1":"0"); updateList(); if($("listtipon").checked) $("listtip").focus({preventScroll:true}); };
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later
 const dirMine=vs=>{ dirAddPending(vs.map(cleanVote).filter(Boolean)); renderDir(); dirTopics({only:d=>!d.stats, onTopic:()=>renderDir()}); };

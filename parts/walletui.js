@@ -42,7 +42,7 @@ async function walletPaint(){
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:"explorer unreachable";
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`explorer unreachable · <button type="button" class="linkbtn" data-wretry>retry</button>`;
   }
   walletPill();
 }
@@ -99,9 +99,11 @@ walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
 if(WALLET) walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });
 
+document.addEventListener("click",e=>{ if(e.target.closest("[data-wretry]")) walletBalance(true).then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); if($("walletdlg")?.open) walletPaint(); }); });   // the wallet's balance: another try, when the reader asks
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
 const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
-function feeSegPaint(seg, off=false){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; }); }
+function feeSegPaint(seg, off=false, sum=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; });
+  if(sum) sum.textContent=`Advanced · mining fee · ${FEE_SPEEDS.find(x=>x[0]===sp)[1]} · ${r[sp]} sat/vB`; }   // sum: the <summary> of an edit view's Advanced
 const feeSegWire=seg=>{ seg.onclick=e=>{ const b=e.target.closest("[data-fee]"); if(!b||b.disabled) return; LS(NETKEY("bv.fee"),b.dataset.fee); PAY.forEach(p=>p.paint()); }; };
 // ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary). speed:false when the dialog sets the fee elsewhere ----------
 function walletTab(prefix, root, {speed=true}={}){
@@ -134,7 +136,7 @@ function walletTab(prefix, root, {speed=true}={}){
     const {total,fee,bal,mismatch}=calc();
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
-    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").textContent=`balance unknown: the explorer at ${esploraBase(NET)} is unreachable from this page`; return; }
+    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML=`balance unknown: the explorer at ${esc(esploraBase(NET))} is unreachable from this page · <button type="button" class="linkbtn" data-wretry>retry</button>`; return; }
     $$("msg").textContent = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
       : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. Fund it from the wallet chip in the top bar.`
       : "";                                                   // all is well: nothing to say

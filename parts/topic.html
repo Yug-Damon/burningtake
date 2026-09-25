@@ -93,9 +93,9 @@
           <input id="amt" class="mono" type="number" min="330" step="1" value="330" aria-label="Burn amount in sats" hidden>
         </div>
         <div class="field" id="vtipf">
-          <label for="vtipck" class="ck"><input type="checkbox" id="vtipck"><span>Tip the project</span><span class="mono" id="tipusd">≈ $1.00</span></label>
-          <input id="tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
-          <p class="minline mono" id="tipoff">no tip</p>
+          <label for="tip"><span>Tip the project</span><span class="mono" id="tipusd"></span></label>
+          <div class="seg amtseg" role="group" aria-label="Tip presets" id="vtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
+          <input id="tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
         </div>
         <details class="tech" id="vfeeadv"><summary id="vfeesum">Advanced · mining fee</summary><div id="vfeehost"></div></details>
       </section>
@@ -119,9 +119,9 @@
       </section>
 
       <div class="dlgfoot" id="vfoot">
-        <button type="button" class="btn" id="vback" hidden>← Back</button>
         <span class="dlgprice" id="vprice"></span>
         <span style="flex:1"></span>
+        <button type="button" class="btn" id="vcancel" hidden>Cancel</button><button type="button" class="btn primary" id="vapply" hidden>Apply</button>
         <span class="netwrap signwrap" id="vsendwrap" hidden><button type="button" class="btn primary" id="vsend" aria-haspopup="menu" aria-expanded="false" aria-controls="vsendmenu">Sign take and…</button><div class="netmenu" id="vsendmenu" role="menu" hidden><button type="button" role="menuitem" data-act="broadcast">Broadcast</button><button type="button" role="menuitem" data-act="batch">Add to batch</button><button type="button" role="menuitem" data-act="tx">See transaction</button></div></span>
       </div>
 </div></dialog>

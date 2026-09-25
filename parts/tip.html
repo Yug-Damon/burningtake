@@ -13,28 +13,33 @@
 
 <dialog id="tipdlg" hidden><div class="panel dlg">
   <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
-  <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned. Pick an amount, then sign it with the wallet in this browser.</p>
-  <div class="field">
-    <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
-    <div class="seg amtseg" role="group" aria-label="Tip amount" id="tipseg">
-      <button type="button" data-sats="1000" aria-pressed="false">1,000 sats</button>
-      <button type="button" data-sats="5000" aria-pressed="true">5,000 sats</button>
-      <button type="button" data-sats="21000" aria-pressed="false">21,000 sats</button>
-      <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
-    </div>
-    <input id="tipdamt" class="mono" type="number" min="330" step="1" value="5000" aria-label="Tip amount in sats" hidden style="margin-top:10px">
-  </div>
-  <div class="pay" id="tpay">
-    <div class="wtab" id="tpay-wallet"></div>
-    <div class="adv"><div class="divider">Advanced · do it yourself</div>
-      <div class="tabbox">
-        <div class="outs" id="tpay-outputs">
-          <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
-        </div>
-        <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
+  <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned.</p>
+  <section class="wstep" id="tstep-2" hidden>
+    <div class="field">
+      <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
+      <div class="seg amtseg" role="group" aria-label="Tip amount" id="tipseg">
+        <button type="button" data-sats="1000" aria-pressed="false">1,000 sats</button>
+        <button type="button" data-sats="5000" aria-pressed="true">5,000 sats</button>
+        <button type="button" data-sats="21000" aria-pressed="false">21,000 sats</button>
+        <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
       </div>
-      <p class="note" id="tpay-tipnote" hidden></p>
+      <input id="tipdamt" class="mono" type="number" min="330" step="1" value="5000" aria-label="Tip amount in sats" hidden style="margin-top:10px">
     </div>
-  </div>
-  <div class="dlgfoot"><span class="dlgprice" id="tprice"></span><span style="flex:1"></span><button type="button" class="btn" data-close="tipdlg">Close</button><button type="button" class="btn primary" id="tsend">Connect a wallet</button></div>
+    <details class="tech" id="tfeeadv"><summary id="tfeesum">Advanced · mining fee</summary><div id="tfeehost"></div></details>
+  </section>
+  <section class="wstep" id="tstep-4" hidden>
+    <div class="pay" id="tpay">
+      <div class="wtab" id="tpay-wallet"></div>
+      <div class="adv"><div class="divider">Advanced · do it yourself</div>
+        <div class="tabbox">
+          <div class="outs" id="tpay-outputs">
+            <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
+          </div>
+          <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
+        </div>
+        <p class="note" id="tpay-tipnote" hidden></p>
+      </div>
+    </div>
+  </section>
+  <div class="dlgfoot"><span class="dlgprice" id="tprice"></span><span style="flex:1"></span><button type="button" class="btn" id="tcancel" hidden>Cancel</button><button type="button" class="btn primary" id="tapply" hidden>Apply</button><span class="netwrap signwrap" id="tsendwrap"><button type="button" class="btn primary" id="tsend" aria-haspopup="menu" aria-expanded="false" aria-controls="tsendmenu">Validate tip</button><div class="netmenu" id="tsendmenu" role="menu" hidden><button type="button" role="menuitem" data-act="broadcast">Broadcast</button><button type="button" role="menuitem" data-act="batch">Add to batch</button><button type="button" role="menuitem" data-act="tx">See transaction</button></div></span></div>
 </div></dialog>

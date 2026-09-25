@@ -90,6 +90,7 @@ dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;displa
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 details.tech{flex:0 1 auto;min-width:0}
 details.tech[open]{flex-basis:100%}
+.wstep>.field+details.tech{display:block;margin-top:10px}   /* an Advanced after a field: the fields' own rhythm (16px, the summary pads the rest) */
 details.tech summary{cursor:pointer;list-style:none;display:inline-flex;align-items:flex-start;gap:6px;font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:8px 2px;line-height:1.4;border-radius:6px}
 details.tech summary::-webkit-details-marker{display:none}
 details.tech summary::before{content:"▸";font-size:10px;flex:none;margin-top:2px;transition:.15s}
@@ -240,6 +241,7 @@ section{padding-block:64px}
 .tier{margin-top:14px}
 .srow{display:grid;grid-template-columns:36px 1fr 150px 90px;gap:16px;align-items:center;padding:10px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;transition:.15s}
 .srow:hover{border-color:rgba(255,181,71,.35)}
+.srow.ghost{pointer-events:none}
 .srow.active{border-color:var(--ember)}
 .srow .rank{font-family:var(--font-d);font-weight:600;color:var(--ink3);font-size:13px}
 .srow .nm{font-weight:500}
@@ -499,7 +501,9 @@ nav .pill,.logo{white-space:nowrap}
 .hactions .netmenu button:hover svg,.hactions .netmenu button:focus-visible svg{color:var(--ember2)}
 
 /* burner page: placeholders while the cache and snapshots load, then the groups rise in */
-.bgroup.ghost{pointer-events:none}
+.bgroup.ghost,.bchip.ghost,.fr.ghost{pointer-events:none}
+.bgroup .st{grid-template-columns:36px minmax(0,1fr) 140px 80px}.bgroup .st.r1 .rank{color:var(--ember2)}   /* burner page: a take as its topic's board row, its rank there */
+.st .txt .mine{display:block;margin-top:3px;font-family:var(--font-m);font-size:11px;font-weight:400;color:var(--ink3)}
 .board.rise .bgroup{animation:rowin .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i,0)*70ms)}
 @keyframes rowin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.board.rise .bgroup{animation:none}}
@@ -550,7 +554,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
 @media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
 .wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
-#vpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
+#vpay .wsum,#spay .wsum,#tpay .wsum,#bpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
 .eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
 #votehead{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* "Burn for “…”": a long take stays on one line */
 .signwrap .btn .caret{margin-left:2px;flex:none}   /* "Validate take ▾": the primary opens a menu */

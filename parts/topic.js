@@ -199,7 +199,7 @@ async function loadScope(name){
       p.phase==="cache" ? (p.source ? `${spin} ${p.count} burn${p.count===1?"":"s"} from cache<span class="more"> · checking for burns after ${p.lastTx?p.lastTx.slice(0,8)+"…":"start"}</span>` : `${spin} opening cache…`)
     : p.phase==="snapshot" ? (p.source ? `${spin} ${p.count} burn${p.count===1?"":"s"} from snapshot · block ${fmt(p.height)}<span class="more"> · checking newer burns</span>` : `${spin} looking for a snapshot…`)
     : p.phase==="scan" ? `${spin} scanning<span class="more"> ${scope.addr.slice(0,14)}…</span> · request ${p.page} · ${p.count} burn${p.count===1?"":"s"}`
-    : p.phase==="error" ? `the explorer did not answer${p.count?` · ${p.count} burn${p.count===1?"":"s"} known to this browser`:""}`
+    : p.phase==="error" ? `the explorer did not answer${p.count?` · ${p.count} burn${p.count===1?"":"s"} known to this browser`:""} · <button type="button" class="linkbtn" data-retry>retry</button>`
     : !p.count ? `${dot} synced · block ${fmt(TIP)} · no burns yet`
     : `${dot} synced · block ${fmt(TIP)} · ${p.count} burn${p.count===1?"":"s"}`; },   // synced: block and burns only; source and requests show while loading
   });
@@ -209,6 +209,7 @@ async function loadScope(name){
 }
 // a burn signed in this browser (single or ballot) lands on the board at once as pending; the explorer takes over on the next scan
 globalThis.addPending=(name,votes)=>{ if(name===""){ dirAddPending(votes.map(cleanVote).filter(Boolean)); headMeta(); return; } if(name!==scope.name) return; (cache[name]||(cache[name]=[])).unshift(...votes); votes.forEach(addVote); S=Object.values(agg); render(); };
+status.addEventListener("click",e=>{ if(e.target.closest("[data-retry]")) go(); });   // the explorer did not answer: another try, when the reader asks
 list.addEventListener("toggle",e=>{ if(e.target.matches("details.others")) othersOpen=e.target.open; },true);   // the off-list line stays as the reader left it
 PHONE.addEventListener("change",()=>render());                                // 10 rows on desktop, 5 on phone
 document.querySelectorAll("#tseg [data-win]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.win===win)); b.onclick=()=>{
@@ -253,18 +254,18 @@ function update(){
   hexEl.textContent=toHex(opReturnScript(data));                 // 6a + direct push (<=75) or OP_PUSHDATA1
   const b=burnSats();
   usd.textContent="sats"+(usdOf(b)?" · "+usdOf(b):"");
-  const ton=!!TIP_EFFECTIVE&&$("vtipck").checked, t=tipSats();
-  $("tip").hidden=!ton; $("tipoff").hidden=ton;
-  $("tipusd").textContent=t?usdOf(t):"skipped";
+  const t=tipSats();
+  $("tipusd").textContent=t?usdOf(t):"";
   $("tiprow").hidden=!t; amt.setAttribute("aria-invalid",String(!vValid2()));
   vpay.set({burnAddr:featureMode&&ROOT?ROOT.addr:scope.addr, burnSats:b, statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});
   syncPollUI(); vPaint();
 }
 // effective amounts: the burn is the vote (never optional); tip only when ticked
 const burnSats=()=>regMode ? REG_SATS : Number(amt.value||0);   // registering burns the fixed amount; the amount chips stay as they were for the next burn
-const tipSats=()=>TIP_EFFECTIVE&&$("vtipck").checked ? Number($("tip").value||0) : 0;   // no tip address on this network → never a tip output
-$("vtipck").onchange=()=>{ LS(NETKEY("bv.vote.tip"),$("vtipck").checked?"1":"0"); update(); if($("vtipck").checked) $("tip").focus(); };
-$("tip").oninput=update;
+const tipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("tip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
+const vTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),$("tip").value); };   // the tip chosen here is the next burn's (the batch shares it)
+const vTip=amountChips($("vtipseg"), $("tip"), ()=>{ vTipSave(); update(); });
+$("tip").oninput=()=>{ vTipSave(); update(); };
 $("opts").onclick=e=>{const b=e.target.closest("[data-opt]"); if(!b||b.getAttribute("aria-disabled")==="true") return; vOther=false; stmt.value=b.dataset.opt; update();};
 $("num").oninput=()=>{ stmt.value=$("num").value; update(); };
 $("numrange").oninput=()=>{ $("num").value=$("numrange").value; stmt.value=$("num").value; update(); };
@@ -290,8 +291,8 @@ function syncPollUI(){
   $("otherans").hidden=!$("stmtfield").hidden||vLocked;
   document.querySelectorAll("#opts [data-opt]").forEach(b=>{ const sel=b.dataset.opt===norm(stmt.value); b.classList.toggle("primary",sel); b.setAttribute("aria-pressed",String(sel)); });
 }
-$("vtipck").checked=!!TIP_EFFECTIVE&&LS(NETKEY("bv.vote.tip"))==="1";   // default: tip off
-if(!tipEnabled()){ $("vtipck").disabled=true; $("tipoff").textContent="no tip address yet on "+NET; $("vtipf").hidden=true; $("tiprow").hidden=true; }   // no tip address on this network: every tip control disappears (tipSats() is 0)
+vTip.reset(+LS(NETKEY("bv.vote.tipsats"))||0);   // default: no tip
+if(!tipEnabled()){ $("vtipf").hidden=true; $("tiprow").hidden=true; }   // no tip address on this network: every tip control disappears (tipSats() is 0)
 vpay.onpaint=vPaint;                                    // the wallet block repaints (wallet created, unlocked, balance in) → the footer primary follows
 stmt.oninput=update; amt.oninput=update; update();
 
@@ -342,11 +343,12 @@ function vValid2(){ return burnSats()>=+(amt.min||330); }
 function vValid(n=vStep){ return n<=1 ? vValid1() : vValid1()&&vValid2(); }   // step n reachable when everything before it holds   // hoisted: update() runs at load, before this section
 function vPaint(){
   const first=2, sign=vStep>=first, s=vpay.wallet.status(), amtView=vStep===2&&(featureMode&&!regMode||vEdit);   // the first view: the take, or the amount in its place; the primary signs
-  const sent=!!(s&&s.kind==="sent"); $("vback").hidden=sent||vLocked||featureMode||!(vStep>first || vStep===2&&vEdit); $("vprice").hidden=sent;   // Back: New take only, from the amount or the transaction   // sent: Done alone. Review is the one secondary; the transaction sits in the primary's menu
-  $("vsendwrap").hidden=!sign; const t=tipSats();
+  const sent=!!(s&&s.kind==="sent"), editing=vStep===2&&vEdit&&!featureMode; $("vprice").hidden=sent;   // editing: the amount in place of the take, Apply or Cancel
+  $("vcancel").hidden=$("vapply").hidden=!editing; $("vapply").disabled=!vValid2();
+  $("vsendwrap").hidden=!sign||editing; const t=tipSats();
   const edit=!regMode&&!amtView&&!(s&&(s.kind==="sent"||s.kind==="busy"));   // edit: the amount and the fee speed, in place of the view
-  dlgPrice($("vprice"), burnSats(), (regMode?"registration fee":featureMode?"sponsorship":"burn")+(edit?` <button type="button" class="linkbtn" data-editamt>edit</button>`:""), vpay.wallet.fee(), t?[`+${fmt(t)} sats tip`]:[]);
-  const r=feeRates(), sp=feeSpeed(); feeSegPaint($("vfeeseg"), !!(s&&s.kind!=="err")); $("vfeesum").textContent=`Advanced · mining fee · ${FEE_SPEEDS.find(x=>x[0]===sp)[1]} · ${r[sp]} sat/vB`;
+  dlgPrice($("vprice"), burnSats(), (regMode?"registration":featureMode?"sponsorship":"burn")+(edit?` <button type="button" class="linkbtn" data-editamt>edit</button>`:""), vpay.wallet.fee(), t?[`+${fmt(t)} sats tip`]:[]);
+  feeSegPaint($("vfeeseg"), !!(s&&s.kind!=="err"), $("vfeesum"));
   if(sign) signMenu($("vsend"), $("vsendmenu"), vpay.wallet, {label: regMode?"Validate topic":featureMode?"Validate sponsorship":kind(scope.spec||{})==="open"?"Validate take":"Validate answer",
     ok:vValid(4)&&scope.addr.length>=20, show:()=>{ if(vStep!==4) vGo(4); }, batch:vBatch, tx: vStep!==4 ? ()=>vGo(4) : null, done:()=>$("votedlg").close()});
 }
@@ -357,8 +359,10 @@ function vGo(n){
   const first=[...document.querySelectorAll(`#vstep-1 :is(input,button.primary),#vstep-${n} :is(input,button.primary)`)].find(el=>!el.closest("[hidden]")&&!el.disabled&&!el.readOnly&&el.type!=="hidden"&&el.type!=="checkbox");
   (n===2&&amtView ? ($("vamtseg").hidden?amt:$("vamtseg").querySelector('[aria-pressed="true"]'))||amt : first||$("vsend")).focus({preventScroll:true});
 }
-$("vback").onclick=()=>{ if(vStep===2) vEdit=false; vGo(2); };   // from the amount: back to the take; from the transaction: back to the first view
-$("vprice").onclick=e=>{ if(e.target.closest("[data-editamt]")){ vEdit=true; vGo(2); } };
+let vSnap=null;                                              // what the amount view started from: Cancel puts it back
+$("vprice").onclick=e=>{ if(!e.target.closest("[data-editamt]")) return; if(!featureMode){ vSnap={amt:amt.value, tip:$("tip").value, fee:feeSpeed()}; vEdit=true; } vGo(2); };   // sponsoring: its amount is its first view
+$("vapply").onclick=()=>{ if(!vValid2()) return; vEdit=false; vGo(2); };
+$("vcancel").onclick=()=>{ const s=vSnap; vSnap=null; if(s){ vAmt.reset(s.amt); vTip.reset(s.tip); vTipSave(); LS(NETKEY("bv.fee"),s.fee); } vEdit=false; update(); PAY.forEach(p=>p.paint()); vGo(2); };
 function vLock(){                                      // per-row Burn +: the chosen answer is fixed until "change" is clicked; never blocks Next
   const k=kind(scope.spec||{}), v=norm(stmt.value), raw=stmt.value.trim();
   const onList = k==="number" ? raw!==""&&Number.isFinite(+raw) : !!scope.poll && scope.poll.includes(v);
@@ -388,7 +392,7 @@ function openVote(locked=false, feature=false, start=1){   // start 2: the take 
   vOpener=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:$("burnbtn");
   vLocked=!!locked; vLock(); if(!featureMode){ $("votehead").textContent=burnTitle(); $("votesub").textContent= vLocked ? ["in #"+scope.q+(scope.spec&&(scope.spec.opts||scope.spec.range)?"?":""), ...(scope.rules||[])].join(" · ") : scope.sub||""; }   // a given take: the topic it goes to, not the typing hint
   $("amtlabel").textContent=amtLabelText();
-  vEdit=false; $("vfeeadv").open=false; $("votedlg").showModal(); vGo(2); }   // sponsoring: the statement is the topic name, nothing to ask, straight to the amount
+  vEdit=false; vSnap=null; $("vfeeadv").open=false; $("votedlg").showModal(); vGo(2); }   // sponsoring: the statement is the topic name, nothing to ask, straight to the amount
 $("copylink").onclick=()=>copyText(location.href,$("copylink"));
 $("featurebtn").onclick=()=>{                          // register / sponsor = burn to the root topic with this topic's name, locked
   vOther=false; stmt.value=scope.name; openVote(true,true);

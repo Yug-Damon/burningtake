@@ -183,16 +183,16 @@ const ICONS = {
 const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
 // ---------- RECENT, the timeline on Explore (every topic) and on a topic page (that topic alone): the latest events whatever the window, four kinds, each with its icon and its word:
 // a take (an answer outside open topics), a new topic (a name's first root burn registers it), a sponsorship (the root burns after it), a new burner (an address's first burn in these topics) ----------
-function recentDigest(burns, roots){                         // burns: [{v, name}], roots: rootBurns() (loader.js; reg:true on a registration)
+function recentDigest(burns, roots, lim={burns:3, roots:2, joins:2, all:6}){   // burns: [{v, name}], roots: rootBurns() (loader.js; reg:true on a registration); lim: how many of each kind, and in all
   const H=v=>v.h===null?1e12:v.h, by=(a,b)=>b.at-a.at, first={};
   for(const b of burns) if(b.v.from && !(first[b.v.from] && H(first[b.v.from].v)<=H(b.v))) first[b.v.from]=b;   // each burner's first burn
-  return [...burns.map(b=>({kind:"burn", at:H(b.v), ...b})).sort(by).slice(0,3),
-    ...roots.map(v=>({kind:v.reg?"reg":"feature", at:H(v), v, name:v.name})).sort(by).slice(0,2),
-    ...Object.entries(first).map(([addr,b])=>({kind:"burner", at:H(b.v), ...b, addr})).sort(by).slice(0,2)].sort(by).slice(0,6);   // a digest: every kind gets a place, then time orders them
+  return [...burns.map(b=>({kind:"burn", at:H(b.v), ...b})).sort(by).slice(0,lim.burns),
+    ...roots.map(v=>({kind:v.reg?"reg":"feature", at:H(v), v, name:v.name})).sort(by).slice(0,lim.roots),
+    ...Object.entries(first).map(([addr,b])=>({kind:"burner", at:H(b.v), ...b, addr})).sort(by).slice(0,lim.joins)].sort(by).slice(0,lim.all);   // a digest: every kind gets a place, then time orders them
 }
 // every take and topic name links to its topic page. o.here: on the topic page a burn names its burner instead of the topic; o.take(html): the take with its top-take star, o.tag(v): late / below min
 function recentRow(x, o={}){
-  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from?addr(v.from)+" · ":"";
+  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
   const href=`topic.html#${esc(x.name)}`, tn=`<a href="${href}">${topicName(x.name)}</a>`, topic=(html,cls="")=>`<a class="fa${cls}" href="${href}">${html}</a>`;
   const row=(kind,icon,word,meta,what,right="")=>`<div class="fr ${kind}"><span class="fi" aria-hidden="true">${icon}</span><span class="fm"><span class="ft">${word}</span> · ${meta}</span>${right}${what}<b>${fmt(v.sats)} sats</b></div>`;
   if(x.kind==="burn") return row("burn", ICON_TAKE, kind(parseScope(x.name))==="open"?"take":"answer", (o.here?(v.from?addr(v.from):"unknown burner"):tn)+" · "+when+(o.tag?o.tag(v):""),
@@ -212,7 +212,7 @@ function tallyOf(name, votes){
     let key=norm(v.t), t=v.t, on=true;
     if(p.range){ const x=numOf(v.t); on=Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]; if(on){ key="n:"+x; t=String(x); } }
     else if(p.opts) on=p.opts.includes(key);
-    const r=rows[key]||(rows[key]={t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
+    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
     if(on){ sats+=v.sats; burns++; }
   }
   const list=Object.values(rows).sort((a,b)=>b.sats-a.sats);
@@ -236,7 +236,7 @@ async function deriveScope(name){
 // ---------- bech32 decoder + unsigned transaction + ready-to-sign payload (pure) ----------
 const BECH32M=0x2bc830a3;
 // ---------- tip configuration: put the project addresses here (bech32 / bech32m). null = no tip on that network, every tip UI stays hidden ----------
-const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:null };   // project tip addresses per network; null hides every tip control on that network
+const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}

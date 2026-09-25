@@ -57,9 +57,10 @@ async function open(){
   $("eview").innerHTML=`<p class="muted" id="eloading">Reading the chain…</p>`; $("estatus").textContent=""; post();
   const r=await loadVotes(name,{ cancelled:()=>my!==seq,
     onPage:vs=>{ vs.forEach(addVote); view(); },
-    onPhase:ph=>{ $("estatus").textContent= ph.phase==="done" ? `${NET} · block ${fmt(TIP)} · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="scan" ? `scanning · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="error" ? "the explorer did not answer" : ""; } });
+    onPhase:ph=>{ $("estatus").innerHTML= ph.phase==="done" ? `${NET} · block ${fmt(TIP)} · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="scan" ? `scanning · ${ph.count} burn${ph.count===1?"":"s"}` : ph.phase==="error" ? `the explorer did not answer · <button type="button" class="linkbtn" data-retry>retry</button>` : ""; } });
   if(!r||my!==seq) return;
   agg={}; late={sats:0,votes:0}; dust={sats:0,votes:0}; r.votes.forEach(addVote); view();   // the loader's list is the whole truth
 }
 addEventListener("hashchange",open); open();
+$("estatus").addEventListener("click",e=>{ if(e.target.closest("[data-retry]")) open(); });
 addEventListener("load",post);

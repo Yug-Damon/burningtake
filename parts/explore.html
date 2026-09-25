@@ -49,23 +49,7 @@
       <input id="sqq" placeholder="e.g. Bitcoin or not Bitcoin" maxlength="40" autocomplete="off" spellcheck="false" aria-describedby="sqqn">
     </div>
     <p class="note rulesline" id="sqrulesline" hidden></p>
-    <div class="field" id="sqsponsorf" hidden>
-      <label for="sqamt"><span>Registration fee</span><span class="mono" id="sqamtusd"></span></label>
-      <div class="seg amtseg" role="group" aria-label="Registration fee presets" id="sqamtseg">
-        <button type="button" data-sats="330" aria-pressed="true">330</button>
-        <button type="button" data-sats="1000" aria-pressed="false">1,000</button>
-        <button type="button" data-sats="5000" aria-pressed="false">5,000</button>
-        <button type="button" data-sats="10000" aria-pressed="false">10,000<span class="more"> sats</span></button>
-        <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
-      </div>
-      <input id="sqamt" class="mono" type="number" min="330" step="1" value="330" aria-label="Registration fee in sats" hidden>
-    </div>
     <p class="note" id="sqhint" hidden style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span id="sqhinttxt"></span><button type="button" class="copy" id="sqhintuse">use it</button></p>
-    <div class="field" id="listtipf">
-          <label for="listtipon" class="ck"><input type="checkbox" id="listtipon" checked><span>Tip the project</span><span class="mono" id="listtipusd">≈ $1.00</span></label>
-          <input id="listtip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats">
-          <p class="minline mono" id="listtipoff" hidden>no tip</p>
-        </div>
   </section>
 
   <!-- 2 · Rules -->
@@ -105,6 +89,27 @@
     <p class="note">Answers and rules become part of the name, so they are as permanent as the topic itself. Free text with no deadline and no minimum is the default.</p>
   </section>
 
+  <!-- 3 · Fee: the registration, the tip, the mining fee speed (the price's edit) -->
+  <section class="wstep" id="sqstep-3" hidden>
+    <div class="field" id="sqsponsorf">
+      <label for="sqamt"><span>Registration</span><span class="mono" id="sqamtusd"></span></label>
+      <div class="seg amtseg" role="group" aria-label="Registration presets" id="sqamtseg">
+        <button type="button" data-sats="330" aria-pressed="true">330</button>
+        <button type="button" data-sats="1000" aria-pressed="false">1,000</button>
+        <button type="button" data-sats="5000" aria-pressed="false">5,000</button>
+        <button type="button" data-sats="10000" aria-pressed="false">10,000<span class="more"> sats</span></button>
+        <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
+      </div>
+      <input id="sqamt" class="mono" type="number" min="330" step="1" value="330" aria-label="Registration in sats" hidden>
+    </div>
+    <div class="field" id="listtipf">
+      <label for="listtip"><span>Tip the project</span><span class="mono" id="listtipusd"></span></label>
+      <div class="seg amtseg" role="group" aria-label="Tip presets" id="listtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
+      <input id="listtip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
+    </div>
+    <details class="tech" id="sqfeeadv"><summary id="sqfeesum">Advanced · mining fee</summary><div id="sqfeehost"></div></details>
+  </section>
+
   <!-- 4 · Transaction: the registration burn, a fixed 330 sats (the amount is chosen when sponsoring) -->
   <section class="wstep" id="sqstep-4" hidden>
     <input id="listname" type="hidden" value="general">
@@ -132,6 +137,7 @@
     <button type="button" class="btn" id="sqback" hidden>← Back</button>
     <span class="dlgprice" id="sqprice"></span>
     <span style="flex:1"></span>
+    <button type="button" class="btn" id="sqcancel" hidden>Cancel</button><button type="button" class="btn primary" id="sqapply" hidden>Apply</button>
     <span class="netwrap signwrap" id="sqsendwrap" hidden><button type="button" class="btn primary" id="sqsend" aria-haspopup="menu" aria-expanded="false" aria-controls="sqsendmenu">Sign registration and…</button><div class="netmenu" id="sqsendmenu" role="menu" hidden><button type="button" role="menuitem" data-act="broadcast">Broadcast</button><button type="button" role="menuitem" data-act="batch">Add to batch</button><button type="button" role="menuitem" data-act="tx">See transaction</button></div></span>
   </div>
 </div></dialog>

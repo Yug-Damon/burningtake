@@ -9,11 +9,17 @@
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
       <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
-      <div class="field" id="b-tipf">
-        <label for="b-tipck" class="ck"><input type="checkbox" id="b-tipck"><span>Tip the project</span><span class="mono" id="b-tipusd">≈ $1.00</span></label>
-        <input id="b-tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
-      </div>
     </div>
+  </section>
+
+  <!-- 2 · Fees: the mining fee speed and the tip (the price's edit), Apply or Cancel -->
+  <section class="wstep" id="bstep-2" hidden>
+    <div class="field" id="b-tipf">
+      <label for="b-tip"><span>Tip the project</span><span class="mono" id="b-tipusd"></span></label>
+      <div class="seg amtseg" role="group" aria-label="Tip presets" id="b-tipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
+      <input id="b-tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
+    </div>
+    <details class="tech" id="bfeeadv" open><summary id="bfeesum">Advanced · mining fee</summary><div id="bfeehost"></div></details>
   </section>
 
   <!-- 3 · Transaction: one transaction for the whole batch -->
@@ -35,6 +41,7 @@
     <span class="dlgprice" id="bprice" hidden></span>
     <span style="flex:1"></span>
     <button type="button" class="btn ghost" id="b-clear">Clear</button>
+    <button type="button" class="btn" id="bcancel" hidden>Cancel</button><button type="button" class="btn primary" id="bapply" hidden>Apply</button>
     <button type="button" class="btn primary" id="bsend" hidden>Sign &amp; broadcast</button>
   </div>
 </div></dialog>

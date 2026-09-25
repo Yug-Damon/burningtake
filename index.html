@@ -97,6 +97,7 @@ dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;displa
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 details.tech{flex:0 1 auto;min-width:0}
 details.tech[open]{flex-basis:100%}
+.wstep>.field+details.tech{display:block;margin-top:10px}   /* an Advanced after a field: the fields' own rhythm (16px, the summary pads the rest) */
 details.tech summary{cursor:pointer;list-style:none;display:inline-flex;align-items:flex-start;gap:6px;font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:8px 2px;line-height:1.4;border-radius:6px}
 details.tech summary::-webkit-details-marker{display:none}
 details.tech summary::before{content:"▸";font-size:10px;flex:none;margin-top:2px;transition:.15s}
@@ -247,6 +248,7 @@ section{padding-block:64px}
 .tier{margin-top:14px}
 .srow{display:grid;grid-template-columns:36px 1fr 150px 90px;gap:16px;align-items:center;padding:10px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;transition:.15s}
 .srow:hover{border-color:rgba(255,181,71,.35)}
+.srow.ghost{pointer-events:none}
 .srow.active{border-color:var(--ember)}
 .srow .rank{font-family:var(--font-d);font-weight:600;color:var(--ink3);font-size:13px}
 .srow .nm{font-weight:500}
@@ -506,7 +508,9 @@ nav .pill,.logo{white-space:nowrap}
 .hactions .netmenu button:hover svg,.hactions .netmenu button:focus-visible svg{color:var(--ember2)}
 
 /* burner page: placeholders while the cache and snapshots load, then the groups rise in */
-.bgroup.ghost{pointer-events:none}
+.bgroup.ghost,.bchip.ghost,.fr.ghost{pointer-events:none}
+.bgroup .st{grid-template-columns:36px minmax(0,1fr) 140px 80px}.bgroup .st.r1 .rank{color:var(--ember2)}   /* burner page: a take as its topic's board row, its rank there */
+.st .txt .mine{display:block;margin-top:3px;font-family:var(--font-m);font-size:11px;font-weight:400;color:var(--ink3)}
 .board.rise .bgroup{animation:rowin .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i,0)*70ms)}
 @keyframes rowin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.board.rise .bgroup{animation:none}}
@@ -557,7 +561,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
 @media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
 .wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
-#vpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
+#vpay .wsum,#spay .wsum,#tpay .wsum,#bpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
 .eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
 #votehead{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* "Burn for “…”": a long take stays on one line */
 .signwrap .btn .caret{margin-left:2px;flex:none}   /* "Validate take ▾": the primary opens a menu */
@@ -720,30 +724,35 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 <dialog id="tipdlg" hidden><div class="panel dlg">
   <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
-  <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned. Pick an amount, then sign it with the wallet in this browser.</p>
-  <div class="field">
-    <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
-    <div class="seg amtseg" role="group" aria-label="Tip amount" id="tipseg">
-      <button type="button" data-sats="1000" aria-pressed="false">1,000 sats</button>
-      <button type="button" data-sats="5000" aria-pressed="true">5,000 sats</button>
-      <button type="button" data-sats="21000" aria-pressed="false">21,000 sats</button>
-      <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
-    </div>
-    <input id="tipdamt" class="mono" type="number" min="330" step="1" value="5000" aria-label="Tip amount in sats" hidden style="margin-top:10px">
-  </div>
-  <div class="pay" id="tpay">
-    <div class="wtab" id="tpay-wallet"></div>
-    <div class="adv"><div class="divider">Advanced · do it yourself</div>
-      <div class="tabbox">
-        <div class="outs" id="tpay-outputs">
-          <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
-        </div>
-        <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
+  <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned.</p>
+  <section class="wstep" id="tstep-2" hidden>
+    <div class="field">
+      <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
+      <div class="seg amtseg" role="group" aria-label="Tip amount" id="tipseg">
+        <button type="button" data-sats="1000" aria-pressed="false">1,000 sats</button>
+        <button type="button" data-sats="5000" aria-pressed="true">5,000 sats</button>
+        <button type="button" data-sats="21000" aria-pressed="false">21,000 sats</button>
+        <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
       </div>
-      <p class="note" id="tpay-tipnote" hidden></p>
+      <input id="tipdamt" class="mono" type="number" min="330" step="1" value="5000" aria-label="Tip amount in sats" hidden style="margin-top:10px">
     </div>
-  </div>
-  <div class="dlgfoot"><span class="dlgprice" id="tprice"></span><span style="flex:1"></span><button type="button" class="btn" data-close="tipdlg">Close</button><button type="button" class="btn primary" id="tsend">Connect a wallet</button></div>
+    <details class="tech" id="tfeeadv"><summary id="tfeesum">Advanced · mining fee</summary><div id="tfeehost"></div></details>
+  </section>
+  <section class="wstep" id="tstep-4" hidden>
+    <div class="pay" id="tpay">
+      <div class="wtab" id="tpay-wallet"></div>
+      <div class="adv"><div class="divider">Advanced · do it yourself</div>
+        <div class="tabbox">
+          <div class="outs" id="tpay-outputs">
+            <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
+          </div>
+          <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
+        </div>
+        <p class="note" id="tpay-tipnote" hidden></p>
+      </div>
+    </div>
+  </section>
+  <div class="dlgfoot"><span class="dlgprice" id="tprice"></span><span style="flex:1"></span><button type="button" class="btn" id="tcancel" hidden>Cancel</button><button type="button" class="btn primary" id="tapply" hidden>Apply</button><span class="netwrap signwrap" id="tsendwrap"><button type="button" class="btn primary" id="tsend" aria-haspopup="menu" aria-expanded="false" aria-controls="tsendmenu">Validate tip</button><div class="netmenu" id="tsendmenu" role="menu" hidden><button type="button" role="menuitem" data-act="broadcast">Broadcast</button><button type="button" role="menuitem" data-act="batch">Add to batch</button><button type="button" role="menuitem" data-act="tx">See transaction</button></div></span></div>
 </div></dialog>
 
 
@@ -812,11 +821,17 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
       <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
-      <div class="field" id="b-tipf">
-        <label for="b-tipck" class="ck"><input type="checkbox" id="b-tipck"><span>Tip the project</span><span class="mono" id="b-tipusd">≈ $1.00</span></label>
-        <input id="b-tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
-      </div>
     </div>
+  </section>
+
+  <!-- 2 · Fees: the mining fee speed and the tip (the price's edit), Apply or Cancel -->
+  <section class="wstep" id="bstep-2" hidden>
+    <div class="field" id="b-tipf">
+      <label for="b-tip"><span>Tip the project</span><span class="mono" id="b-tipusd"></span></label>
+      <div class="seg amtseg" role="group" aria-label="Tip presets" id="b-tipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
+      <input id="b-tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
+    </div>
+    <details class="tech" id="bfeeadv" open><summary id="bfeesum">Advanced · mining fee</summary><div id="bfeehost"></div></details>
   </section>
 
   <!-- 3 · Transaction: one transaction for the whole batch -->
@@ -838,6 +853,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
     <span class="dlgprice" id="bprice" hidden></span>
     <span style="flex:1"></span>
     <button type="button" class="btn ghost" id="b-clear">Clear</button>
+    <button type="button" class="btn" id="bcancel" hidden>Cancel</button><button type="button" class="btn primary" id="bapply" hidden>Apply</button>
     <button type="button" class="btn primary" id="bsend" hidden>Sign &amp; broadcast</button>
   </div>
 </div></dialog>
@@ -1043,16 +1059,16 @@ const ICONS = {
 const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
 // ---------- RECENT, the timeline on Explore (every topic) and on a topic page (that topic alone): the latest events whatever the window, four kinds, each with its icon and its word:
 // a take (an answer outside open topics), a new topic (a name's first root burn registers it), a sponsorship (the root burns after it), a new burner (an address's first burn in these topics) ----------
-function recentDigest(burns, roots){                         // burns: [{v, name}], roots: rootBurns() (loader.js; reg:true on a registration)
+function recentDigest(burns, roots, lim={burns:3, roots:2, joins:2, all:6}){   // burns: [{v, name}], roots: rootBurns() (loader.js; reg:true on a registration); lim: how many of each kind, and in all
   const H=v=>v.h===null?1e12:v.h, by=(a,b)=>b.at-a.at, first={};
   for(const b of burns) if(b.v.from && !(first[b.v.from] && H(first[b.v.from].v)<=H(b.v))) first[b.v.from]=b;   // each burner's first burn
-  return [...burns.map(b=>({kind:"burn", at:H(b.v), ...b})).sort(by).slice(0,3),
-    ...roots.map(v=>({kind:v.reg?"reg":"feature", at:H(v), v, name:v.name})).sort(by).slice(0,2),
-    ...Object.entries(first).map(([addr,b])=>({kind:"burner", at:H(b.v), ...b, addr})).sort(by).slice(0,2)].sort(by).slice(0,6);   // a digest: every kind gets a place, then time orders them
+  return [...burns.map(b=>({kind:"burn", at:H(b.v), ...b})).sort(by).slice(0,lim.burns),
+    ...roots.map(v=>({kind:v.reg?"reg":"feature", at:H(v), v, name:v.name})).sort(by).slice(0,lim.roots),
+    ...Object.entries(first).map(([addr,b])=>({kind:"burner", at:H(b.v), ...b, addr})).sort(by).slice(0,lim.joins)].sort(by).slice(0,lim.all);   // a digest: every kind gets a place, then time orders them
 }
 // every take and topic name links to its topic page. o.here: on the topic page a burn names its burner instead of the topic; o.take(html): the take with its top-take star, o.tag(v): late / below min
 function recentRow(x, o={}){
-  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from?addr(v.from)+" · ":"";
+  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
   const href=`topic.html#${esc(x.name)}`, tn=`<a href="${href}">${topicName(x.name)}</a>`, topic=(html,cls="")=>`<a class="fa${cls}" href="${href}">${html}</a>`;
   const row=(kind,icon,word,meta,what,right="")=>`<div class="fr ${kind}"><span class="fi" aria-hidden="true">${icon}</span><span class="fm"><span class="ft">${word}</span> · ${meta}</span>${right}${what}<b>${fmt(v.sats)} sats</b></div>`;
   if(x.kind==="burn") return row("burn", ICON_TAKE, kind(parseScope(x.name))==="open"?"take":"answer", (o.here?(v.from?addr(v.from):"unknown burner"):tn)+" · "+when+(o.tag?o.tag(v):""),
@@ -1072,7 +1088,7 @@ function tallyOf(name, votes){
     let key=norm(v.t), t=v.t, on=true;
     if(p.range){ const x=numOf(v.t); on=Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]; if(on){ key="n:"+x; t=String(x); } }
     else if(p.opts) on=p.opts.includes(key);
-    const r=rows[key]||(rows[key]={t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
+    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
     if(on){ sats+=v.sats; burns++; }
   }
   const list=Object.values(rows).sort((a,b)=>b.sats-a.sats);
@@ -1096,7 +1112,7 @@ async function deriveScope(name){
 // ---------- bech32 decoder + unsigned transaction + ready-to-sign payload (pure) ----------
 const BECH32M=0x2bc830a3;
 // ---------- tip configuration: put the project addresses here (bech32 / bech32m). null = no tip on that network, every tip UI stays hidden ----------
-const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:null };   // project tip addresses per network; null hides every tip control on that network
+const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
@@ -1813,7 +1829,7 @@ async function walletPaint(){
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:"explorer unreachable";
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`explorer unreachable · <button type="button" class="linkbtn" data-wretry>retry</button>`;
   }
   walletPill();
 }
@@ -1870,9 +1886,11 @@ walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
 if(WALLET) walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });
 
+document.addEventListener("click",e=>{ if(e.target.closest("[data-wretry]")) walletBalance(true).then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); if($("walletdlg")?.open) walletPaint(); }); });   // the wallet's balance: another try, when the reader asks
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
 const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
-function feeSegPaint(seg, off=false){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; }); }
+function feeSegPaint(seg, off=false, sum=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; });
+  if(sum) sum.textContent=`Advanced · mining fee · ${FEE_SPEEDS.find(x=>x[0]===sp)[1]} · ${r[sp]} sat/vB`; }   // sum: the <summary> of an edit view's Advanced
 const feeSegWire=seg=>{ seg.onclick=e=>{ const b=e.target.closest("[data-fee]"); if(!b||b.disabled) return; LS(NETKEY("bv.fee"),b.dataset.fee); PAY.forEach(p=>p.paint()); }; };
 // ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary). speed:false when the dialog sets the fee elsewhere ----------
 function walletTab(prefix, root, {speed=true}={}){
@@ -1905,7 +1923,7 @@ function walletTab(prefix, root, {speed=true}={}){
     const {total,fee,bal,mismatch}=calc();
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
-    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").textContent=`balance unknown: the explorer at ${esploraBase(NET)} is unreachable from this page`; return; }
+    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML=`balance unknown: the explorer at ${esc(esploraBase(NET))} is unreachable from this page · <button type="button" class="linkbtn" data-wretry>retry</button>`; return; }
     $$("msg").textContent = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
       : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. Fund it from the wallet chip in the top bar.`
       : "";                                                   // all is well: nothing to say
@@ -2013,9 +2031,10 @@ function download(name,text,type){                        // a file from text; a
 
 // ---------- batch: several burns kept aside (shared.js ballotGet/ballotAdd…), cast as ONE transaction from buildBallotPayload ----------
 // The nav pill (#ballotbtn) counts the entries; the dialog lists them, compares one fee with N, and signs through the same wallet block as a single burn.
-const bwt=walletTab("bpay",$("bpay-wallet"));
-let bLast=null, bSent=null, bStep=1;                        // bStep: 1 · Burns (the list, the tip), 3 · Transaction                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
-const bTipSats=()=>tipEnabled()&&$("b-tipck").checked ? Number($("b-tip").value||0) : 0;
+const bwt=walletTab("bpay",$("bpay-wallet"),{speed:false});   // the fee speed sits in the fees view (the price's edit)
+$("bfeehost").innerHTML=feeSegHtml("bfeeseg"); feeSegWire($("bfeeseg"));
+let bLast=null, bSent=null, bStep=1, bSnap=null;            // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
+const bTipSats=()=>tipEnabled() ? Math.max(0,Math.round(Number($("b-tip").value||0))) : 0;   // "No tip" is 0
 function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
 addEventListener("resize",ballotPill);
 function bSync(){                                            // rebuild the payload from storage and hand it to the wallet block (clears a "sent" state)
@@ -2025,11 +2044,12 @@ function bSync(){                                            // rebuild the payl
 }
 function bPaint(){
   const s=bwt.status(), sent=!!(s&&s.kind==="sent"), e=sent?(bSent||[]):ballotGet(), n=e.length;
-  if(!n && bStep!==1){ bStep=1; for(const k of [1,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
+  if(!n && bStep!==1){ bStep=1; for(const k of [1,2,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
   $("b-empty").hidden=!!n; $("b-body").hidden=!n;
   $("bstepn").textContent = n ? " · "+n : "";
   $("b-clear").hidden = bStep!==1 || !n || sent;
-  $("bback").hidden = bStep===1 || sent; $("bsend").hidden = !n;                                             // the primary signs from the list on
+  const editing=bStep===2, busy=!!(s&&s.kind==="busy");
+  $("bback").hidden = bStep!==3 || sent; $("bsend").hidden = !n || editing; $("bcancel").hidden = $("bapply").hidden = !editing;   // the primary signs from the list on; the fees view applies or cancels
   ballotPill();
   $("bprice").hidden=!n||sent;
   if(!n) return;
@@ -2041,8 +2061,9 @@ function bPaint(){
       ${sent?`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
     </div>`).join("");
   const tip=bTipSats();
-  dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`, bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
-  $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?usdOf(tip):"skipped";
+  dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+(!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:""), bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
+  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"));
+  $("b-tipf").hidden=!tipEnabled(); $("b-tipusd").textContent=tip?usdOf(tip):"";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";
@@ -2061,17 +2082,20 @@ bwt.onsent=({txid})=>{                                       // one transaction,
 $("b-list").onclick=e=>{ const b=e.target.closest("[data-brm]"); if(!b) return; const n=ballotRemove(+b.dataset.brm); bSync(); toast(n?`Removed · ${n} left`:"Batch is empty"); };
 $("b-clear").onclick=()=>{ ballotClear(); bSync(); toast("Batch cleared"); };
 $("b-tipf").hidden=!tipEnabled();                            // no tip address on this network: the ballot's tip line is never shown
-$("b-tipck").checked=tipEnabled()&&LS(NETKEY("bv.vote.tip"))==="1";
-$("b-tipck").onchange=()=>{ LS(NETKEY("bv.vote.tip"),$("b-tipck").checked?"1":"0"); bSync(); if($("b-tipck").checked) $("b-tip").focus(); };
-$("b-tip").oninput=bSync;
+const bTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),$("b-tip").value); };   // shared with the burn dialogs
+const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(+LS(NETKEY("bv.vote.tipsats"))||0);
+$("b-tip").oninput=()=>{ bTipSave(); bSync(); };
 $("bpay-copy").onclick=()=>{ if(bLast) copyText(bLast.rawHex,$("bpay-copy")); };
 function bGo(n){                                             // show a step; focus its first action
-  bStep=n; for(const k of [1,3]) $("bstep-"+k).hidden=n!==k; bPaint(); segThumbs();
+  bStep=n; for(const k of [1,2,3]) $("bstep-"+k).hidden=n!==k; bPaint(); segThumbs();
   $("ballotdlg").querySelector(".dlg").scrollTop=0;
-  if($("ballotdlg").open) $("bsend").focus({preventScroll:true});
+  if($("ballotdlg").open) (n===2?$("bfeeseg").querySelector('[aria-pressed="true"]'):$("bsend")).focus({preventScroll:true});
 }
 $("bback").onclick=()=>bGo(1);
-function ballotOpen(){ bSent=null; bStep=1; bSync(); $("ballotdlg").showModal(); bGo(1); }
+$("bprice").onclick=e=>{ if(!e.target.closest("[data-editfee]")) return; bSnap={tip:$("b-tip").value, fee:feeSpeed()}; bGo(2); };
+$("bapply").onclick=()=>{ bSnap=null; bGo(1); };
+$("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ bTip.reset(s.tip); bTipSave(); LS(NETKEY("bv.fee"),s.fee); } bSync(); PAY.forEach(p=>p.paint()); bGo(1); };
+function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
 ballotPill();
@@ -2199,11 +2223,13 @@ segThumbs();
 
 
 
-// ---------- tip dialog: a plain payment to the project, same transaction panel ----------
+// ---------- tip dialog: a plain payment to the project, the burn dialogs' logic: the note, the price (edit: the amount and the fee speed), Validate tip ▾ ----------
 // #tipcard and #tipdlg ship with the hidden attribute: without a tip address on this network (TIP_ADDRESSES in shared.js) nothing tip-related is ever shown or wired.
 if(tipEnabled()){
   $("tipcard").hidden=false; $("tipdlg").hidden=false;
-  const tpay=payPanel("tpay"); PAY.push(tpay);
+  const tpay=payPanel("tpay",{speed:false}); PAY.push(tpay);
+  $("tfeehost").innerHTML=feeSegHtml("tfeeseg"); feeSegWire($("tfeeseg"));
+  let tStep=2, tEdit=false, tSnap=null;                     // 2: the note (the amount when editing), 4: the transaction; tSnap: what the amount view started from
   const tipAmount=()=>Number($("tipdamt").value||0);
   const tipRender=()=>{
     const sats=tipAmount();
@@ -2212,10 +2238,22 @@ if(tipEnabled()){
     tpay.set({burnAddr:TIP_EFFECTIVE, burnSats:sats, statementBytes:null, tipAddr:null, tipSats:0, burnLabel:"tip"});
   };
   const tAmt=amountChips($("tipseg"), $("tipdamt"), tipRender); tAmt.reset(5000);   // presets over #tipdamt, same chips as the burn dialogs
-  tpay.onpaint=()=>{ walletPrimary($("tsend"), tpay.wallet, ()=>$("tipdlg").close()); dlgPrice($("tprice"), tipAmount(), "tip", tpay.wallet.fee()); $("tprice").hidden=tpay.wallet.status()?.kind==="sent"; };   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, and the cost
+  const tGo=n=>{ tStep=n; $("tstep-2").hidden=!(n===2&&tEdit); $("tstep-4").hidden=n!==4; tPaint(); segThumbs(); };
+  function tPaint(){
+    const s=tpay.wallet.status(), editing=tStep===2&&tEdit, ok=tipAmount()>=330;
+    $("tprice").hidden=s?.kind==="sent";
+    dlgPrice($("tprice"), tipAmount(), "tip"+(!editing&&!(s&&(s.kind==="sent"||s.kind==="busy"))?` <button type="button" class="linkbtn" data-edittip>edit</button>`:""), tpay.wallet.fee());
+    feeSegPaint($("tfeeseg"), !!(s&&s.kind!=="err"), $("tfeesum"));
+    $("tcancel").hidden=$("tapply").hidden=!editing; $("tapply").disabled=!ok; $("tsendwrap").hidden=editing;
+    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
+  }
+  tpay.onpaint=tPaint;
+  $("tprice").onclick=e=>{ if(!e.target.closest("[data-edittip]")) return; tSnap={amt:$("tipdamt").value, fee:feeSpeed()}; tEdit=true; tGo(2); };
+  $("tapply").onclick=()=>{ if(tipAmount()<330) return; tEdit=false; tGo(2); };
+  $("tcancel").onclick=()=>{ const s=tSnap; tSnap=null; if(s){ tAmt.reset(s.amt); LS(NETKEY("bv.fee"),s.fee); } tEdit=false; tipRender(); PAY.forEach(p=>p.paint()); tGo(2); };
   $("tipdamt").oninput=tipRender;
   $("copytipd").onclick=()=>copyText(TIP_EFFECTIVE,$("copytipd"));
-  $("tipbtn").onclick=()=>{ tipRender(); $("tipdlg").showModal(); };
+  $("tipbtn").onclick=()=>{ tEdit=false; tSnap=null; $("tfeeadv").open=false; tipRender(); $("tipdlg").showModal(); tGo(2); };
   segThumbs();
 }
 // ---------- footer data source (foot.html + foot.js on every app page, not the embed): which Esplora API this browser reads the chain through, per network, read by wallet.js too ----------

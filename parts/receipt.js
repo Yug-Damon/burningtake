@@ -25,10 +25,10 @@ function unknown(txid, why){                               // why: "bad" (not a 
   const T={bad:["That is not a transaction id","A receipt link ends with the 64 hex characters of a transaction id: receipt.html#<txid>."],
     missing:["No such transaction","The explorer knows no transaction with this id, confirmed or in the mempool."],
     other:["Not a burn in a registered topic","This transaction pays no topic this page can name. If it burns in a topic nobody registered, open that topic by its name and the burn shows there."],
-    offline:["The explorer did not answer","Try again in a moment, or pick another explorer at the bottom of the page."]}[why];
+    offline:["The explorer did not answer","Try again, or pick another explorer at the bottom of the page."]}[why];
   $("rcard").hidden=true; $("runknown").hidden=false;
   $("runkt").textContent=T[0]; $("runkp").textContent=T[1];
-  $("rfind").hidden=why!=="other"; $("runkexpp").hidden=why==="bad"; if(why!=="bad") $("runkexp").href=TXURL(txid);
+  $("rfind").hidden=why!=="other"; $("rretryp").hidden=why!=="offline"; $("runkexpp").hidden=why==="bad"; if(why!=="bad") $("runkexp").href=TXURL(txid);
   document.title="Receipt · Burning Take";
 }
 async function load(){
@@ -51,6 +51,7 @@ async function load(){
   status.innerHTML=`<span class="dot"></span> found · block ${fmt(TIP)}`;
 }
 addEventListener("hashchange",load); load();
+$("rretry").onclick=()=>load();
 $("rgo").onclick=()=>{ const v=$("rq").value.trim(); if(v) location.href="topic.html#"+encodeURIComponent(canonical(parseScope(v.toLowerCase()))); };
 $("rq").onkeydown=e=>{ if(e.key==="Enter") $("rgo").click(); };
 $("rcopytx").onclick=()=>copyText(R.txid,$("rcopytx"));
