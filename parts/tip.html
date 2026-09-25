@@ -12,7 +12,7 @@
 
 
 <dialog id="tipdlg" hidden><div class="panel dlg">
-  <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close">✕</button></h3>
+  <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
   <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned. Pick an amount, then sign it with the wallet in this browser.</p>
   <div class="field">
     <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
@@ -26,17 +26,15 @@
   </div>
   <div class="pay" id="tpay">
     <div class="wtab" id="tpay-wallet"></div>
-    <details class="tech">
-      <summary>Advanced · do it yourself</summary>
+    <div class="adv"><div class="divider">Advanced · do it yourself</div>
       <div class="tabbox">
         <div class="outs" id="tpay-outputs">
           <div class="kv"><span class="k">1 · tip</span><code id="tipdaddr">…</code><button class="copy" id="copytipd">copy</button></div>
         </div>
         <div class="body"><span class="k">Raw transaction</span><pre id="tpay-text">…</pre><button type="button" class="copy" id="tpay-copy">copy</button></div>
       </div>
-      <p class="note">Unsigned and without inputs. Any wallet adds inputs, change and fee, then signs.<span id="tpay-tipnote" hidden></span></p>
-    </details>
-    <p class="note" id="tipdemo">Demo address on signet until the real tip address is set.</p>
+      <p class="note" id="tpay-tipnote" hidden></p>
+    </div>
   </div>
-  <div class="dlgfoot"><button type="button" class="btn" data-close="tipdlg">Close</button><span style="flex:1"></span><button type="button" class="btn primary" id="tsend">Connect a wallet</button></div>
+  <div class="dlgfoot"><span class="dlgprice" id="tprice"></span><span style="flex:1"></span><button type="button" class="btn" data-close="tipdlg">Close</button><button type="button" class="btn primary" id="tsend">Connect a wallet</button></div>
 </div></dialog>

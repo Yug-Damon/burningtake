@@ -62,7 +62,7 @@ dialog[open] .dlg{box-shadow:0 40px 120px -30px rgba(255,106,26,.35),0 30px 80px
 @media (prefers-reduced-motion:reduce){dialog[open],dialog[open]::backdrop{animation:none}}
 dialog textarea,dialog select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--ink)}
 dialog .dlg>h3{font-size:18px;letter-spacing:-.01em}
-dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;display:inline-grid;place-items:center}
+dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;display:inline-grid;place-items:center;color:var(--ink2)}   /* close: an 18px X */
 /* stepped scope dialog (classes are .stepper/.wstep so they do not collide with #how .steps/.step) */
 .stepper{display:flex;gap:0;list-style:none;margin:14px 0 2px;padding:0;overflow:hidden}
 .stepper li{display:flex;align-items:center;min-width:0}
@@ -93,10 +93,6 @@ dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;displa
 .field label.ck .mono{margin-left:auto;white-space:nowrap}
 .minline{margin:0;font-size:12px;color:var(--ink3);padding:12px 14px;border:1px dashed var(--line);border-radius:10px;letter-spacing:.04em}
 /* review step: what the user typed, not the wire format */
-.review{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px 12px;margin:16px 0 0;font-size:14px}
-.review dt{color:var(--ink3);font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding-top:3px}
-.review dd{margin:0;overflow-wrap:anywhere}
-.review dd.q{font-family:var(--font-d);font-weight:600;font-size:16px;letter-spacing:-.01em;line-height:1.3}
 .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 details.tech{flex:0 1 auto;min-width:0}
@@ -110,9 +106,8 @@ details.tech .out{margin-top:6px}
 #sqadv{margin-top:14px}
 /* transaction panel (one per dialog): the wallet block on top, "Advanced · do it yourself" folds the outputs + raw hex under it */
 .pay{margin-top:16px;display:grid;gap:8px}
-.pay .wtab{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px}
-.pay details.tech{justify-self:start}
-.pay details.tech[open]{justify-self:stretch}
+.pay .wtab{min-width:0}   /* the metric tiles stand on their own, no card around them */
+.pay .adv{display:grid;gap:2px}.pay .adv>.divider{margin:10px 0 0}   /* the raw outputs and transaction, always shown */
 .pay .tabbox{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px;margin-top:4px;display:grid;gap:12px}
 .pay .outs{display:grid;gap:10px}
 .pay .body{position:relative;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:6px}
@@ -142,9 +137,6 @@ details.tech .out{margin-top:6px}
   #sqstep-4>p.note:first-of-type,#tipdlg .dlg>p.note{display:none}
   .dlgfoot>span{display:none}
   .dlgfoot .btn{justify-content:center;min-height:44px}
-  .review{grid-template-columns:1fr;gap:2px 0}
-  .review dt{padding-top:12px}
-  .review dt:first-of-type{padding-top:0}
   .seg.amtseg{display:grid;grid-template-columns:repeat(3,1fr);border-radius:14px;width:100%}
   .seg.amtseg button{text-align:center;padding:9px 4px;min-height:40px;font-size:12px}
   #tipseg{grid-template-columns:1fr 1fr}
@@ -272,7 +264,7 @@ section{padding-block:64px}
 .divider{display:flex;align-items:center;gap:12px;margin:14px 0 4px;font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 .divider::after{content:"";flex:1;height:1px;background:var(--line)}
 .st.other{opacity:.7}.st.other .txt{font-weight:400}
-.st{display:grid;grid-template-columns:36px minmax(0,1fr) 120px 52px 80px 110px;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:.15s;position:relative;overflow:hidden}
+.st{display:grid;grid-template-columns:36px minmax(0,1fr) 140px 80px 110px;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:.15s;position:relative;overflow:hidden}
 .st:hover{border-color:rgba(255,181,71,.35);background:rgba(255,255,255,.05)}
 .st .rank{font-family:var(--font-d);font-weight:600;color:var(--ink3);font-size:14px}
 .st:nth-child(1) .rank{color:var(--ember2)}
@@ -280,9 +272,9 @@ section{padding-block:64px}
 .st .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--ember2),var(--ember));opacity:.8;transition:width .4s ease}
 @media (prefers-reduced-motion:reduce){.st .bar{transition:none}}
 .st .sats{font-family:var(--font-d);font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
-.st .sats small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3)}
+.st .sats small{display:inline;margin-left:4px;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3)}
 .st .votes{font-family:var(--font-m);font-size:13px;color:var(--ink2);text-align:right}
-.st .act{text-align:right}.st .share{font-family:var(--font-m);font-size:13px;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums}.st .plus{display:none}
+.st .act{text-align:right}.st .plus{display:none}
 .st.newrow{border-style:dashed}
 .board .showall{display:block;width:100%;padding:10px;border:1px dashed var(--line);border-radius:12px;background:transparent;color:var(--ink2);font:inherit;font-size:13px;cursor:pointer}.board .showall:hover{color:var(--ink);border-color:rgba(255,181,71,.35)}
 .others{border:1px solid var(--line);border-radius:12px;color:var(--ink3)}.others summary{min-height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;cursor:pointer;list-style:none;font-family:var(--font-m);font-size:12px}
@@ -327,8 +319,8 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
   #scopebox{grid-template-columns:1fr!important}
   .two{grid-template-columns:1fr}
   nav .links{display:none}
-  .st{grid-template-columns:28px minmax(0,1fr) auto auto;grid-template-areas:"r t s a" "r v h a"}
-  .st .rank{grid-area:r}.st .txt{grid-area:t}.st .sats{grid-area:s}.st .votes{grid-area:v;text-align:left}.st .share{grid-area:h}.st .act{grid-area:a}.st .plus{grid-area:p}
+  .st{grid-template-columns:28px minmax(0,1fr) auto auto;grid-template-areas:"r t s a" "r v v a"}
+  .st .rank{grid-area:r}.st .txt{grid-area:t}.st .sats{grid-area:s}.st .votes{grid-area:v;text-align:left}.st .act{grid-area:a}.st .plus{grid-area:p}
   .source{grid-template-columns:1fr}.source select,.source input{width:100%;min-width:0}
   footer .footep{width:100%}footer .footep select{flex:1}footer input{width:100%}
   .kv{grid-template-columns:1fr auto}.kv .k{grid-column:1/-1}
@@ -406,7 +398,7 @@ nav .pill,.logo{white-space:nowrap}
 .badge.feat{color:#ffd88a;border-color:rgba(255,216,138,.4);background:linear-gradient(135deg,rgba(255,181,71,.16),rgba(255,106,26,.06))}
 /* top burners under the board */
 .burners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 40px;margin-top:18px;align-items:start}   /* topic page: [biggest burns] | [latest burns, top burners], stacked up to tablet */
-.burners>.col{display:grid;gap:18px;align-content:start;min-width:0}.burners.solo{grid-template-columns:minmax(0,1fr)}
+.burners>.col{display:grid;gap:18px;align-content:start;min-width:0}
 .burners .col>.burnercol>.divider:first-child{margin-top:0}
 .bchip.lb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
 .lb .lbt{font-family:var(--font-b);font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -422,11 +414,6 @@ nav .pill,.logo{white-space:nowrap}
 .bent .stmt{min-width:0;overflow-wrap:anywhere}.bent .stmt i{color:var(--ink3)}
 .bent b{font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap}.bent b small{font-family:var(--font-m);font-weight:400;font-size:10px;color:var(--ink3)}
 .bent.sent{border-style:dashed;opacity:.75}
-.bsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.bsum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.bsum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
-.bsum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
-.bsum div:last-child b{color:var(--ok)}
 #b-outs .kv{grid-template-columns:100px 1fr auto}
 /* toast */
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:40;pointer-events:none;background:var(--bg2);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:9px 16px;font-family:var(--font-m);font-size:12px;color:var(--ink);box-shadow:0 18px 40px -12px rgba(255,106,26,.45),0 10px 30px rgba(0,0,0,.5);transition:transform .25s ease,opacity .25s ease;max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -442,7 +429,7 @@ nav .pill,.logo{white-space:nowrap}
   .more{display:none} .less{display:inline}
   footer a{display:inline-block;padding:8px 0}footer .footlinks b{display:none}   /* the brand is in the nav already */
   .titlerow h2{overflow-wrap:anywhere}
-  .st{padding:12px 14px;gap:4px 10px;grid-template-columns:24px minmax(0,1fr) auto 14px;grid-template-areas:"r t s p" "r v h p";cursor:pointer}.st .act{display:none}.st .plus{display:block;color:var(--ember2);font-weight:600;text-align:right}.st.ghost .plus,.st.other .plus{display:none}.st .sats small{display:inline;margin-left:3px}.st .txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.st .rank{font-size:12px}.st .txt{font-size:15px}.st .sats{font-size:14px}.st .sats small{font-size:12px}
+  .st{padding:12px 14px;gap:4px 10px;grid-template-columns:24px minmax(0,1fr) auto 14px;grid-template-areas:"r t s p" "r v v p";cursor:pointer}.st .act{display:none}.st .plus{display:block;color:var(--ember2);font-weight:600;text-align:right}.st.ghost .plus,.st.other .plus{display:none}.st .sats small{display:inline;margin-left:3px}.st .txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.st .rank{font-size:12px}.st .txt{font-size:15px}.st .sats{font-size:14px}.st .sats small{font-size:12px}
   .srow{gap:4px 12px;padding:10px 14px}.srow .sats{font-size:13px}
   .card .meta{font-size:12px}.recent .btn:nth-child(n+5){display:none}
   .numstats{gap:6px}.numstats div{padding:8px 10px}.numstats b{font-size:15px}.numstats>div>span{letter-spacing:.04em}
@@ -463,7 +450,6 @@ nav .pill,.logo{white-space:nowrap}
   .thead .titlerow h2{font-size:20px}
   .badge{font-size:12px;padding:5px 10px}
   .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent>span.mono{grid-area:r;justify-self:end}
-  .bsum{grid-template-columns:1fr 1fr}.bsum div:first-child{grid-column:1/-1}.bsum b{font-size:14px}
   #b-outs .kv{grid-template-columns:1fr auto}
   nav .pill.ballot{padding:3px 8px}
 }
@@ -475,7 +461,7 @@ nav .pill,.logo{white-space:nowrap}
 
 /* ===== burner + receipt pages ===== */
 .thead-main.one{grid-template-columns:1fr}
-.thead .titlerow h2.addrtitle{font-family:var(--font-m);font-weight:500;font-size:clamp(14px,2vw,19px);letter-spacing:0;overflow-wrap:anywhere;color:var(--ember2);line-height:1.4}
+.thead .titlerow h2.addrtitle{font-family:var(--font-m);font-weight:500;font-size:clamp(17px,2.4vw,22px);letter-spacing:0;overflow-wrap:anywhere;color:var(--ink);line-height:1.4}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tiles div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(11,10,14,.5)}
 .tiles b{display:block;font-family:var(--font-d);font-weight:600;font-size:22px;color:var(--ember2);font-variant-numeric:tabular-nums}
@@ -503,7 +489,7 @@ nav .pill,.logo{white-space:nowrap}
 .rpreview img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
 .ralso{font-size:13px;color:var(--ink2);margin:0}.ralso a{color:var(--ember2)}.ralso i{color:var(--ink3)}
 @media (max-width:860px){.rgrid{grid-template-columns:1fr}}
-@media (max-width:480px){.tiles{grid-template-columns:1fr 1fr}.tiles div:first-child{grid-column:1/-1}.tiles b{font-size:18px}.rcard{padding:18px 16px;border-radius:16px;gap:12px}.ractions .btn{flex:1;justify-content:center;min-height:44px}.empty{padding:22px 14px}.thead .titlerow h2.addrtitle{font-size:13px}.rgrid .qrow .copy{min-height:36px}}
+@media (max-width:480px){.tiles{grid-template-columns:1fr 1fr}.tiles div:first-child{grid-column:1/-1}.tiles b{font-size:18px}.rcard{padding:18px 16px;border-radius:16px;gap:12px}.ractions .btn{flex:1;justify-content:center;min-height:44px}.empty{padding:22px 14px}.rgrid .qrow .copy{min-height:36px}}
 
 /* burners on Explore: three short columns */
 .burnercols{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 40px;margin-top:14px}
@@ -542,14 +528,14 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   .tactions{justify-content:flex-start}.tactions .btn{min-height:44px}
 }
 @media (max-width:480px){ #board{padding-top:14px} .stand-head .seg{width:100%} .stand-head .seg button{flex:1} }
-/* timeline (Explore Recent, topic Latest burns): a vertical timeline. A rail runs through the nodes (the kind icons); each entry reads kind and time first, then what happened */
+/* timeline (Recent, on Explore and the topic page): a vertical timeline. A rail runs through the nodes (the kind icons); each entry reads kind and time first, then what happened */
 .tl{position:relative;display:grid}
 .tl::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--line) 75%,transparent);transform:translateX(-50%)}
 .fr{display:grid;grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i m x" "i a s";gap:2px 12px;align-items:center;padding:8px 0}
 .fi{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-d);font-size:15px;line-height:1;letter-spacing:0;background:color-mix(in srgb,var(--ember) 24%,var(--bg));color:var(--ember2)}   /* the icon badge, always a flat disc: shape = what, tint = which burn */
 .fi.feature,.fr.feature .fi{background:color-mix(in srgb,#ffd88a 20%,var(--bg));color:#ffd88a}
 .fi.burner,.fr.burner .fi{background:color-mix(in srgb,#7a91b0 26%,var(--bg));color:#c3d1e2}
-.fi.reg{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
+.fi.reg,.fr.reg .fi{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
 .fi.top{background:color-mix(in srgb,#ff3b30 24%,var(--bg));color:#ff8f7a}   /* most burned: hotter than a take */
 .fi.sm{width:20px;height:20px;font-size:11px}.fi.sm svg{width:12px;height:12px}
 .fr .fi{grid-area:i;align-self:start;position:relative;z-index:1;box-shadow:0 0 0 4px var(--bg)}
@@ -558,14 +544,29 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .fr .frx{grid-area:x;font-family:var(--font-m);font-size:11.5px;color:var(--ink3);text-align:right;white-space:nowrap}.fr .frx:hover{color:var(--ink)}
 .fr .fa{grid-area:a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:15px}.fr a.fa:hover{color:var(--ember2)}
 .fr b{grid-area:s;font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;text-align:right}
-.fr.burn .ft{color:var(--ember2)}.fr.feature .ft{color:#ffd88a}.fr.burner .ft{color:#b3c3d6}
+.fr.burn .ft{color:var(--ember2)}.fr.feature .ft{color:#ffd88a}.fr.burner .ft{color:#b3c3d6}.fr.reg .ft{color:var(--ink2)}
 .fr .fa.has-rk{display:flex;align-items:center;gap:8px}.fr .fa.has-rk>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rk1{flex:none;font:600 10px/1 var(--font-d);color:var(--ember2);background:var(--ember-dim);border-radius:999px;padding:4px 7px}   /* a burn for the take ranked 01, like the board */
+.rk1{flex:none;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:var(--ember2);background:var(--ember-dim)}   /* a burn for the topic's top take: a star, the icon badge language */
 /* list rows lead with their icon badge */
 .bchip.ic{column-gap:12px}.bchip.lb.ic{grid-template-columns:28px minmax(0,1fr) auto}.bchip.lb.ic>.fi{grid-row:span 2}.bchip.lb.ic>.m:nth-child(4):last-child{grid-column:2/-1}   /* no right cell on line 2: the meta takes it */
 .bchip.br.ic{grid-template-columns:28px auto minmax(0,1fr) auto;padding-block:6px}
 .badge>.fi.sm{width:16px;height:16px;margin:-2px 0 -2px -6px}.badge>.fi.sm svg{width:10px;height:10px}
 .rkind{display:flex;align-items:center;gap:10px}
+/* the dialogs' primary action from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch, upward from the footer */
+.signwrap .netmenu{top:auto;bottom:calc(100% + 6px);min-width:100%}
+.signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
+@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
+.wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
+#vpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
+.eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
+#votehead{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* "Burn for “…”": a long take stays on one line */
+.signwrap .btn .caret{margin-left:2px;flex:none}   /* "Validate take ▾": the primary opens a menu */
+.amtcustom{position:relative;display:block}.amtcustom input{width:100%;padding-right:44px}   /* Custom amount: the input in the chips' place */
+.amtx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--ink3);cursor:pointer;font-size:13px}.amtx:hover,.amtx:focus-visible{color:var(--ink);background:rgba(255,255,255,.06)}
+.dlgprice{display:inline-grid;gap:1px;font-family:var(--font-m);font-size:12px;color:var(--ink2)}.dlgprice .w{margin-left:8px}.dlgprice .w .linkbtn{margin-left:6px}.dlgprice small{font-size:11px;color:var(--ink3);white-space:nowrap}.dlgprice b{font-family:var(--font-d);font-weight:600;font-size:15px;color:var(--ink)}   /* what signing costs, at the footer's left: the amount, then one line per extra (tip, mining fees) */
+.rulesline{margin:10px 0 0}.rulesline .linkbtn{font-size:12px}
+@media (max-width:480px){.dlgfoot .dlgprice{display:inline-grid;justify-content:center;text-align:center;padding:4px 0;order:9}}   /* phone: the cost over the stacked buttons */
+.feeseg{margin-top:10px;width:100%}.feeseg button{flex:1;white-space:nowrap}.feeseg button span{color:var(--ink3);font-size:11px}   /* the mining fee speed under the tiles */
 </style>
 
 <nav><div class="wrap">
@@ -586,11 +587,10 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
     </div>
     <div class="thead-main one">
       <div class="thead-txt">
-        <span class="eyebrow">Burner</span>
+        <div class="eyerow"><span class="eyebrow">Burner</span><span class="badge" id="bmine" hidden><span class="fi sm burner" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>This is your wallet</span></div>
         <div class="titlerow"><h2 class="addrtitle mono" id="baddr">…</h2><button type="button" class="btn sm icon" id="bcopy" aria-label="Copy address" title="Copy address"><svg class="g-link" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><svg class="g-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button></div>
         <div class="status" id="status"></div>
         <div class="hmeta" id="bmeta">
-          <span class="badge" id="bmine" hidden><span class="fi sm burner" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>the wallet in this browser</span>
           <span class="badge" id="bwrong" hidden>not an address on this network</span>
         </div>
       </div>
@@ -611,7 +611,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 
 <dialog id="walletdlg" aria-labelledby="w-title"><div class="panel dlg">
-  <h3><span id="w-title">Your wallet</span> <button class="copy" data-close="walletdlg" aria-label="Close">✕</button></h3>
+  <h3><span id="w-title">Your wallet</span> <button class="copy" data-close="walletdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
 
   <section id="w-none">
     <p class="note wintro">A small wallet that lives in this browser, for burning. The keys stay on this device, so fund it only with sats you plan to burn.</p>
@@ -665,58 +665,42 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 </div></dialog>
 
 <dialog id="ballotdlg" aria-labelledby="b-title"><div class="panel dlg">
-  <h3><span id="b-title">Your batch</span> <button class="copy" data-close="ballotdlg" aria-label="Close">✕</button></h3>
+  <h3><span><span id="b-title">Your batch</span><span id="bstepn"></span></span> <button class="copy" data-close="ballotdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
   <p class="note wintro">Burns kept aside, burned in one transaction: each burn is its own output, the takes share one OP_RETURN. One mining fee instead of several. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
-  <ol class="stepper compact" id="bsteps" aria-label="Steps">
-    <li data-state="current"><button type="button" data-bstep="1" aria-current="step"><i>1</i><span>Burns</span><em id="bstepn"></em></button></li>
-    <li data-state="todo"><button type="button" data-bstep="2" aria-disabled="true" tabindex="-1"><i>2</i><span>Review</span></button></li>
-    <li data-state="todo"><button type="button" data-bstep="3" aria-disabled="true" tabindex="-1"><i>3</i><span>Transaction</span></button></li>
-  </ol>
 
   <!-- 1 · Burns: what the batch holds -->
   <section class="wstep" id="bstep-1">
     <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> in its Transaction step instead of signing right away.</p>
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
-    </div>
-  </section>
-
-  <!-- 2 · Review: what the batch costs together -->
-  <section class="wstep" id="bstep-2" hidden>
-    <div class="bsum" id="b-sum">
-        <div><b id="b-sats">…</b><span>burned</span></div>
-        <div><b id="b-fee">…</b><span>fee<span class="more"> · one transaction</span></span></div>
-        <div><b id="b-save">…</b><span>saved<span class="more"> vs separate burns</span></span></div>
-      </div>
-    <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
-    <div class="field" id="b-tipf">
+      <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
+      <div class="field" id="b-tipf">
         <label for="b-tipck" class="ck"><input type="checkbox" id="b-tipck"><span>Tip the project</span><span class="mono" id="b-tipusd">≈ $1.00</span></label>
         <input id="b-tip" class="mono" type="number" min="0" step="1" value="1000" aria-label="Tip amount in sats" hidden>
       </div>
+    </div>
   </section>
 
   <!-- 3 · Transaction: one transaction for the whole batch -->
   <section class="wstep" id="bstep-3" hidden>
     <div class="pay" id="bpay">
         <div class="wtab" id="bpay-wallet"></div>
-        <details class="tech">
-          <summary>Advanced · do it yourself</summary>
+        <div class="adv"><div class="divider">Advanced · do it yourself</div>
           <div class="tabbox">
             <div class="outs" id="b-outs"></div>
             <div class="body"><span class="k">Raw transaction</span><pre id="bpay-text">…</pre><button type="button" class="copy" id="bpay-copy">copy</button></div>
           </div>
-          <p class="note">Unsigned and without inputs. Paste it into any wallet: it adds the inputs, change and mining fee, then signs.<span id="bpay-tipnote" hidden> Tip left out: the project tip address is not set yet.</span></p>
-        </details>
+          <p class="note" id="bpay-tipnote" hidden>Tip left out: the project tip address is not set yet.</p>
+        </div>
       </div>
   </section>
 
   <div class="dlgfoot" id="bfoot">
-    <button type="button" class="btn ghost" id="b-clear">Clear</button>
     <button type="button" class="btn" id="bback" hidden>← Back</button>
+    <span class="dlgprice" id="bprice" hidden></span>
     <span style="flex:1"></span>
-    <button type="button" class="btn" id="bclose" data-close="ballotdlg">Close</button>
-    <button type="button" class="btn primary" id="bnext">Next →</button>
-    <button type="button" class="btn primary" id="bsend" hidden>Burn the batch</button>
+    <button type="button" class="btn ghost" id="b-clear">Clear</button>
+    <button type="button" class="btn primary" id="bsend" hidden>Sign &amp; broadcast</button>
   </div>
 </div></dialog>
 
@@ -816,6 +800,21 @@ let TIPP=null, PRICEP=null;
 const tipReady=()=>TIPP||(TIPP=tipRefresh());                          // started by loader.js on every app page
 const priceReady=()=>PRICEP||(PRICEP=NET!=="mainnet"||chainBases()[0]!==ESPLORA_PRESETS.mempool.mainnet ? Promise.resolve() : chainGet("/v1/prices").then(j=>{ if(+j.USD>0) BTCUSD=+j.USD; },()=>{}));   // only mempool.space serves a USD price: with another explorer the dollar hints stay hidden
 const usdOf=sats=>BTCUSD ? "≈ $"+(sats/1e8*BTCUSD).toFixed(2) : "";
+// ---------- the mining fee: the explorer's live estimates (Esplora /fee-estimates: {blocks ahead: sat/vB}), one speed chosen per network ----------
+// Signet miners have been taking only 2 sat/vB and up while the estimates said 1: a burn at the minimum waited for days. Signet gets a floor of 2.
+const FEE_SPEEDS=[["fast","Fast",1],["normal","Normal",6],["eco","Economy",144]];   // [id, label, target in blocks]
+const FEE_FLOOR=NET==="signet"?2:1, FEE_FALLBACK=NET==="signet"?{fast:4,normal:3,eco:2}:{fast:5,normal:3,eco:1};   // no estimates: a guess that still confirms
+let FEES=null, FEESAT=0, FEEP=null;
+const feeRefresh=async()=>{ FEESAT=Date.now();
+  try{ const j=await chainGet("/fee-estimates"), ks=Object.keys(j).map(Number).filter(n=>+j[n]>0).sort((a,b)=>a-b); if(!ks.length) return FEES;
+    let prev=Infinity; const out={};
+    for(const [id,,t] of FEE_SPEEDS){ const k=ks.find(n=>n>=t)??ks[ks.length-1]; out[id]=prev=Math.min(prev, Math.max(FEE_FLOOR, Math.ceil(+j[k]*10)/10)); }   // rounded up, never faster for less
+    FEES=out; }catch{}
+  return FEES; };
+const feeReady=()=>{ if(!FEEP||Date.now()-FEESAT>120000) FEEP=feeRefresh(); return FEEP; };   // at most every two minutes
+const feeRates=()=>FEES||FEE_FALLBACK;
+const feeSpeed=()=>{ const s=LS(NETKEY("bv.fee")); return FEE_SPEEDS.some(f=>f[0]===s) ? s : "normal"; };
+const feeRate=()=>feeRates()[feeSpeed()];
 // ---------- one transaction -> its burns (spec §4): the outputs paying known topic addresses, each with its statement ----------
 // Statements: the OP_RETURN payloads in output order, split on 0x1F, the pieces handed in order to the P2WSH outputs (every topic address is P2WSH).
 // Several outputs to one topic are summed and take the first one's piece. No piece, or an empty one: an abstain.
@@ -848,7 +847,8 @@ async function scanAddress(addr,{stopTx=null,maxPages=Infinity,onPage=()=>{},can
 }
 // a registration states a topic's canonical name, as the app writes it (spec §7): lowercase, no whitespace, modifiers in canonical order.
 // The root topic's address is also a well-known generic burn address: anything else burned there is some other burn, not a registration.
-const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
+// A name is text: binary payloads decode to U+FFFD and control characters (seen on signet), and invisible or unassigned characters are not a name either (the joiner inside emoji is fine).
+const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)||/[\p{C}\uFFFD]/u.test(s.replace(/\u200d/g,""))) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
 try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
 // ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
 const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]
@@ -864,13 +864,6 @@ const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); retur
 const ballotClear=()=>ballotSave([]);
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
 const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
-const ballotFee=(nIn=1,feeRate=2,entries=ballotGet(),tipSats=0)=>{                                // -> {vsize, fee}: P2WPKH inputs, P2WSH burns, OP_RETURN(s), tip, change
-  const stm=entries.map(e=>enc.encode(e.statement||""));
-  const joined=stm.reduce((a,b)=>a+b.length,0)+Math.max(0,stm.length-1), shared=joined<=80;
-  const opret= !stm.some(b=>b.length) ? 0 : shared ? 9+joined+(joined<=75?0:1) : stm.reduce((a,b)=>a+(b.length?9+b.length+(b.length<=75?0:1):10),0);
-  const vsize=11+68*nIn+43*entries.length+opret+(tipSats>0?31:0)+31;
-  return {vsize, fee:Math.ceil(vsize*feeRate)};
-};
 
 // ---------- closed questions: "question?a|b|c" in the scope name ----------
 function parseScope(name){
@@ -910,6 +903,26 @@ const ICONS = {
   reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
 };
 const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
+// ---------- RECENT, the timeline on Explore (every topic) and on a topic page (that topic alone): the latest events whatever the window, four kinds, each with its icon and its word:
+// a take (an answer outside open topics), a new topic (a name's first root burn registers it), a sponsorship (the root burns after it), a new burner (an address's first burn in these topics) ----------
+function recentDigest(burns, roots){                         // burns: [{v, name}], roots: rootBurns() (loader.js; reg:true on a registration)
+  const H=v=>v.h===null?1e12:v.h, by=(a,b)=>b.at-a.at, first={};
+  for(const b of burns) if(b.v.from && !(first[b.v.from] && H(first[b.v.from].v)<=H(b.v))) first[b.v.from]=b;   // each burner's first burn
+  return [...burns.map(b=>({kind:"burn", at:H(b.v), ...b})).sort(by).slice(0,3),
+    ...roots.map(v=>({kind:v.reg?"reg":"feature", at:H(v), v, name:v.name})).sort(by).slice(0,2),
+    ...Object.entries(first).map(([addr,b])=>({kind:"burner", at:H(b.v), ...b, addr})).sort(by).slice(0,2)].sort(by).slice(0,6);   // a digest: every kind gets a place, then time orders them
+}
+// every take and topic name links to its topic page. o.here: on the topic page a burn names its burner instead of the topic; o.take(html): the take with its top-take star, o.tag(v): late / below min
+function recentRow(x, o={}){
+  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from?addr(v.from)+" · ":"";
+  const href=`topic.html#${esc(x.name)}`, tn=`<a href="${href}">${topicName(x.name)}</a>`, topic=(html,cls="")=>`<a class="fa${cls}" href="${href}">${html}</a>`;
+  const row=(kind,icon,word,meta,what,right="")=>`<div class="fr ${kind}"><span class="fi" aria-hidden="true">${icon}</span><span class="fm"><span class="ft">${word}</span> · ${meta}</span>${right}${what}<b>${fmt(v.sats)} sats</b></div>`;
+  if(x.kind==="burn") return row("burn", ICON_TAKE, kind(parseScope(x.name))==="open"?"take":"answer", (o.here?(v.from?addr(v.from):"unknown burner"):tn)+" · "+when+(o.tag?o.tag(v):""),
+    o.take?o.take(v,topic):topic(v.t?esc(v.t):"<i>no take</i>"), `<a class="frx" href="receipt.html#${esc(v.txid)}">receipt →</a>`);
+  if(x.kind==="reg") return row("reg", ICONS.reg, "new topic", by+when, topic(topicName(x.name)+" registered"));
+  if(x.kind==="feature") return row("feature", ICONS.feature, "sponsor", by+when, topic(topicName(x.name)+" sponsored"));
+  return row("burner", ICONS.join, "new burner", `first burn in ${tn} · ${when}`, `<a class="fa" href="burner.html#${esc(x.addr)}" title="${esc(x.addr)}">${esc(x.addr.slice(0,6)+"…"+x.addr.slice(-4))} joined</a>`);
+}
 const satsShort = n => n<1e3 ? String(n) : n<1e4 ? (n/1e3).toFixed(1).replace(/\.0$/,"")+"k" : n<1e6 ? Math.round(n/1e3)+"k" : (n/1e6).toFixed(1).replace(/\.0$/,"")+"M";   // "210k" on buttons
 // counted burns of one topic, with the topic page's rules: late and below-minimum burns do not count; poll and number answers
 // are kept apart from off-list ones (on:false), and number answers merge by value ("150k" and "150000" are one row)
@@ -1045,9 +1058,9 @@ function buildBallotPayload(entries, {tipAddr=null, tipSats=0}={}){
 // ---------- transaction panel, one instance per dialog: the wallet block on top, the outputs + raw hex under "Advanced" ----------
 // payPanel(prefix): {set(args), paint(), wallet, onpaint}. set() builds the payload, paints the outputs + raw hex and hands it to the wallet block;
 // onpaint (set by the page) repaints the dialog footer, whose primary button is the wallet action (walletPrimary).
-function payPanel(prefix){
+function payPanel(prefix, opts){
   const pre=$(prefix+"-text"), tipnote=$(prefix+"-tipnote"), copy=$(prefix+"-copy"), wal=$(prefix+"-wallet");
-  const wtab=wal?walletTab(prefix,wal):null;
+  const wtab=wal?walletTab(prefix,wal,opts):null;
   let last=null;
   const api={wallet:wtab, onpaint:null};
   const paint=()=>{ pre.textContent=last?last.rawHex:"…"; copy.disabled=!last; if(wtab) wtab.paint(); if(api.onpaint) api.onpaint(); };
@@ -1061,18 +1074,24 @@ const PAY=[];                                          // every panel on the pag
 
 // ---------- amount chips: a .seg of presets over a number input; Custom reveals the input, an off-preset value keeps it visible ----------
 function amountChips(seg, input, onchange){
-  let custom=false;
+  let custom=false, last=null;                              // last: the preset to come back to
   const chips=[...seg.querySelectorAll("[data-sats]")];
+  const wrap=document.createElement("span"), x=document.createElement("button");   // Custom: the input with a ✕ stands in for the chips
+  wrap.className="amtcustom"; input.before(wrap); wrap.append(input); input.hidden=false; input.style.marginTop="";
+  x.type="button"; x.className="amtx"; x.setAttribute("aria-label","Back to the presets"); x.textContent="✕"; wrap.append(x);
   const sync=()=>{
     const v=Number(input.value||0), min=+input.min||0; let hit=null;
     for(const b of chips){ if(b.dataset.sats==="custom") continue; b.disabled=+b.dataset.sats<min; if(!b.disabled&&+b.dataset.sats===v) hit=b; }   // below the minimum: greyed out
     for(const b of chips) b.setAttribute("aria-pressed",String(b===hit || (!hit&&b.dataset.sats==="custom")));
-    input.hidden=!!hit&&!custom;
+    if(hit) last=hit.dataset.sats;
+    const own=custom||!hit; seg.hidden=own; wrap.hidden=!own;
   };
   seg.onclick=e=>{ const b=e.target.closest("[data-sats]"); if(!b||b.disabled) return;
     if(b.dataset.sats==="custom"){ custom=true; sync(); input.focus(); input.select(); return; }
     custom=false; input.value=b.dataset.sats; sync(); onchange(); };
   input.addEventListener("input",sync);
+  x.onclick=()=>{ custom=false; const b=chips.find(c=>c.dataset.sats===last&&!c.disabled)||chips.find(c=>c.dataset.sats!=="custom"&&!c.disabled);
+    if(b) input.value=b.dataset.sats; sync(); onchange(); (seg.querySelector('[aria-pressed="true"]')||seg).focus?.(); };
   const reset=def=>{ custom=false; input.value=Math.max(+def,+input.min||0); sync(); };   // the default, or the minimum when that is higher
   sync();
   return {sync, reset};
@@ -1648,7 +1667,7 @@ async function walletPaint(){
   const ledger=walletIsLedger();
   $("w-title").textContent= st==="none"?"Connect a wallet" : st==="locked"?"Unlock wallet" : ledger?"Your Ledger" : "Your wallet";
   if(st==="ready"||st==="sealed"){
-    const a=WALLET.addr; $("w-addr").textContent=a; $("w-netlabel").textContent=NET;
+    const a=WALLET.addr; $("w-addr").textContent=a.slice(0,10)+"…"+a.slice(-6); $("w-addr").title=a; $("w-netlabel").textContent=NET;   // condensed; copy and the QR carry the full address
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
     $("w-fundnote").textContent= ledger ? "Burns spend from this address only (the account's first receive address). Send sats here from Ledger Live or anywhere." : "Fund it by sending sats to this address.";
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
@@ -1713,37 +1732,45 @@ walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
 if(WALLET) walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });
 
-// ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary) ----------
-function walletTab(prefix, root){
+// ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
+const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
+function feeSegPaint(seg, off=false){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; }); }
+const feeSegWire=seg=>{ seg.onclick=e=>{ const b=e.target.closest("[data-fee]"); if(!b||b.disabled) return; LS(NETKEY("bv.fee"),b.dataset.fee); PAY.forEach(p=>p.paint()); }; };
+// ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary). speed:false when the dialog sets the fee elsewhere ----------
+function walletTab(prefix, root, {speed=true}={}){
   const id=k=>prefix+"-w-"+k;
   root.innerHTML=`<div class="wpay">
     <div id="${id("none")}"><p class="note" style="margin:0">No wallet in this browser yet. Connect one below<span class="more">: a small burner wallet whose keys stay on this device (fund it only with sats you plan to burn), or your Ledger</span>.</p></div>
     <div id="${id("locked")}" hidden><p class="note" style="margin:0">Your wallet is locked. Unlock it to sign from here.</p></div>
     <div id="${id("ready")}" hidden>
-      <div class="wsum"><div><b id="${id("total")}">…</b><span>to send</span></div><div><b id="${id("fee")}">…</b><span>mining fee<span class="more"> · 1 sat/vB</span></span></div><div><b id="${id("after")}">…</b><span>balance after</span></div></div>
+      <div class="wsum"><div><b id="${id("total")}">…</b><span>to send</span></div><div><b id="${id("fee")}">…</b><span>mining fee<span class="more" id="${id("rate")}"></span></span></div><div><b id="${id("after")}">…</b><span>balance after</span></div></div>
+      ${speed?feeSegHtml(id("speed")):""}
       <p class="note mono" id="${id("msg")}" style="margin:8px 0 0" aria-live="polite"></p>
       <p class="note mono" id="${id("result")}" style="margin:6px 0 0" aria-live="polite" hidden></p>
     </div></div>`;
   const $$=k=>$(id(k)); let last=null, status=null;   // status: null | {kind:"busy"} | {kind:"sent", txid} | {kind:"err", msg}
   const api={ update(p){ last=p; if(!status||status.kind!=="busy") status=null; }, onsent:null };   // onsent({txid, outputs, hex}): the page records what went out (pending burns for the receipt page); status.msg: the Ledger stage
-  const calc=()=>{ const total=last.outputs.reduce((a,o)=>a+o.sats,0), fee=Math.ceil(estimateVsize((walletUtxos||[]).length||1,last.outputs.length+1)); let mismatch=true; try{ mismatch=bech32Decode(last.outputs[0].addr).hrp!==HRP; }catch{} return {total, fee, bal:walletSats(), mismatch}; };
+  const calc=()=>{ const total=last.outputs.reduce((a,o)=>a+o.sats,0), fee=Math.ceil(feeRate()*walletVsize(Math.max(1,(walletUtxos||[]).length),[...last.outputs.map(o=>fromHex(o.scriptHex)),new Uint8Array(22)])); let mismatch=true; try{ mismatch=bech32Decode(last.outputs[0].addr).hrp!==HRP; }catch{} return {total, fee, bal:walletSats(), mismatch}; };   // priced like the signers: every coin in, the real output scripts, a P2WPKH change
   const canSend=()=>{ if(walletState()!=="ready"||!last||!walletUtxos||(status&&status.kind!=="err")) return false; const c=calc(); return !c.mismatch && c.bal>=c.total+c.fee; };   // after an error the button stays live: open the Ledger app, plug it back in, try again
   const paint=()=>{
-    const st=walletState();
+    const st=walletState(), sent=!!(status&&status.kind==="sent");
+    root.closest(".pay")?.classList.toggle("sent",sent);   // sent: the txid and the receipt link stay, the rest goes (base.css)
     $$("none").hidden=st!=="none"; $$("locked").hidden=!(st==="locked"||st==="sealed"); $$("ready").hidden=st!=="ready";
     $$("result").hidden=!status||status.kind==="busy";
     if(status&&status.kind==="sent") $$("result").innerHTML=`broadcast · <a href="${TXURL(status.txid)}" target="_blank" rel="noopener" style="color:var(--ember2)">${status.txid.slice(0,10)}…${status.txid.slice(-6)}</a>${api.onsent?` · <a class="receipt" href="receipt.html#${status.txid}">View receipt →</a>`:""}`;   // a receipt only where the page recorded a burn (not for a plain tip)
     else if(status&&status.kind==="err") $$("result").textContent=status.msg;
     if(st!=="ready") return;
+    const r=feeRates(), sp=feeSpeed(); $$("rate").textContent=` · ${r[sp]} sat/vB`;
+    if(speed) feeSegPaint($$("speed"), !!(status&&status.kind!=="err"));
     if(!last){ $$("total").textContent=$$("fee").textContent=$$("after").textContent="—"; $$("msg").textContent="Nothing to send yet."; return; }
-    if(status&&status.kind==="sent"){ $$("msg").textContent="Signed here and sent to the network."; return; }   // the tiles keep the numbers of the transaction that went out
+    if(sent){ $$("msg").textContent=""; return; }
     const {total,fee,bal,mismatch}=calc();
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
     if(!walletUtxos){ $$("after").textContent="—"; $$("msg").textContent=`balance unknown: the explorer at ${esploraBase(NET)} is unreachable from this page`; return; }
     $$("msg").textContent = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
       : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. Fund it from the wallet chip in the top bar.`
-      : `Spends ${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}; change comes back to this wallet.`+(walletIsLedger()?" Each output is confirmed on the Ledger.":"");
+      : "";                                                   // all is well: nothing to say
   };
   const send=async()=>{
     if(!canSend()) return;
@@ -1753,8 +1780,8 @@ function walletTab(prefix, root){
       await walletBalance(true);
       if(!walletUtxos) throw new Error(`balance unknown: the explorer at ${esploraBase(NET)} is unreachable from this page`);
       const r= walletIsLedger()
-        ? await ledgerSign({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:1, wallet:WALLET, network:NET, onstage:m=>{ status={kind:"busy", msg:m}; PAY.forEach(p=>p.paint()); }})   // the device signs; the stage shows in the tiles' message
-        : await signP2wpkh({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:1, key:wKey});
+        ? await ledgerSign({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:feeRate(), wallet:WALLET, network:NET, onstage:m=>{ status={kind:"busy", msg:m}; PAY.forEach(p=>p.paint()); }})   // the device signs; the stage shows in the tiles' message
+        : await signP2wpkh({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:feeRate(), key:wKey});
       const b=await broadcastTx(r.hex, NET);
       if(b.error) throw new Error(b.error);                // the explorer's rejection, verbatim
       status={kind:"sent", txid:b.txid||r.txid};
@@ -1763,7 +1790,29 @@ function walletTab(prefix, root){
     }catch(e){ status={kind:"err", msg:walletIsLedger()?ledgerError(e).message:e.message}; }
     PAY.forEach(p=>p.paint());
   };
-  return Object.assign(api, { paint, send, canSend, status:()=>status });
+  if(speed) feeSegWire($$("speed"));
+  const fee=()=>walletState()==="ready"&&last&&walletUtxos ? calc().fee : null;
+  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, status:()=>status });
+}
+// the dialogs' primary from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch (batch null: no batch item).
+// Broadcast walks the wallet (connect, unlock), brings up the Transaction step (show), where progress and errors show, then signs and sends; once sent the button is Done.
+const CARET='<svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+function signMenu(btn, menu, wt, {label, ok=true, show=()=>{}, batch=null, tx=null, done}){   // tx: bring up the transaction details (null: already there)
+  if(!btn._close){ btn._close=dropMenu(btn,menu); btn._toggle=btn.onclick; }       // the menu's toggle, outside click and Escape: wired once
+  const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]');
+  if(s&&s.kind==="sent"){ btn._close(); btn.textContent="Done"; btn.disabled=false; btn.removeAttribute("aria-haspopup"); btn.onclick=done; return; }
+  btn.setAttribute("aria-haspopup","menu"); btn.onclick=btn._toggle;
+  if(s&&s.kind==="busy"){ btn._close(); btn.textContent=walletIsLedger()?"On the Ledger…":"Signing…"; btn.disabled=true; return; }
+  btn.innerHTML=label+CARET; btn.disabled=!ok;
+  bc.textContent= st==="none" ? "Broadcast · connect a wallet first" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
+  bc.onclick=()=>{ btn._close(); if(st!=="ready") return walletOpen(); show(); if(wt.canSend()) wt.send(); };
+  ba.hidden=!batch; ba.onclick=()=>{ btn._close(); if(batch) batch(); };
+  tt.hidden=!tx; tt.onclick=()=>{ btn._close(); if(tx) tx(); };
+}
+// the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the wallet can build it)
+function dlgPrice(host, sats, word, fee, extra=[]){
+  const h=`<span><b>${fmt(sats)} sats</b><span class="w">${word}</span></span>${[...extra, fee!=null?`+${fmt(fee)} sats mining fees`:"+ mining fees"].map(x=>`<small>${x}</small>`).join("")}`;
+  if(host._h!==h){ host._h=h; host.innerHTML=h; }             // unchanged: left alone, a focused link keeps its focus
 }
 // the dialog footer's primary button, from the wallet state: none → Connect a wallet, locked → Unlock wallet, ready → Sign & broadcast (Sign on Ledger), sent → Done
 function walletPrimary(btn, wt, done, ok=true){
@@ -1827,7 +1876,7 @@ function download(name,text,type){                        // a file from text; a
 // ---------- batch: several burns kept aside (shared.js ballotGet/ballotAdd…), cast as ONE transaction from buildBallotPayload ----------
 // The nav pill (#ballotbtn) counts the entries; the dialog lists them, compares one fee with N, and signs through the same wallet block as a single burn.
 const bwt=walletTab("bpay",$("bpay-wallet"));
-let bLast=null, bSent=null, bStep=1;                        // bStep: 1 · Burns (the list), 2 · Review (totals), 3 · Transaction                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
+let bLast=null, bSent=null, bStep=1;                        // bStep: 1 · Burns (the list, the tip), 3 · Transaction                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
 const bTipSats=()=>tipEnabled()&&$("b-tipck").checked ? Number($("b-tip").value||0) : 0;
 function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
 addEventListener("resize",ballotPill);
@@ -1838,18 +1887,13 @@ function bSync(){                                            // rebuild the payl
 }
 function bPaint(){
   const s=bwt.status(), sent=!!(s&&s.kind==="sent"), e=sent?(bSent||[]):ballotGet(), n=e.length;
-  if(!n && bStep!==1){ bStep=1; for(const k of [1,2,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
-  $("b-empty").hidden=!!n; $("b-body").hidden=!n; $("bsteps").hidden=!n;
-  document.querySelectorAll("#bsteps li").forEach((li,i)=>{ const k=i+1, b=li.firstElementChild;   // same breadcrumb as the burn dialog
-    li.dataset.state = k===bStep?"current" : k<bStep?"done":"todo";
-    if(k===bStep) b.setAttribute("aria-current","step"); else b.removeAttribute("aria-current");
-    const off = k!==bStep && (sent || (k>=2 && !bLast)); b.setAttribute("aria-disabled",String(off)); b.tabIndex=off?-1:0;   // once sent, the list is history
-  });
+  if(!n && bStep!==1){ bStep=1; for(const k of [1,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
+  $("b-empty").hidden=!!n; $("b-body").hidden=!n;
   $("bstepn").textContent = n ? " · "+n : "";
-  $("b-clear").hidden = bStep!==1 || !n || sent; $("bclose").hidden = bStep!==1;
-  $("bnext").hidden = bStep===3 || !n; $("bnext").disabled = !bLast;
-  $("bback").hidden = bStep===1 || sent; $("bsend").hidden = bStep!==3;
+  $("b-clear").hidden = bStep!==1 || !n || sent;
+  $("bback").hidden = bStep===1 || sent; $("bsend").hidden = !n;                                             // the primary signs from the list on
   ballotPill();
+  $("bprice").hidden=!n||sent;
   if(!n) return;
   $("b-list").innerHTML=e.map((x,i)=>`<div class="bent${sent?" sent":""}">
       ${x.name?iconBadge("",ICON_TAKE):x.intent==="feature"?iconBadge("feature",ICONS.feature):iconBadge("reg",ICONS.reg)}
@@ -1858,16 +1902,16 @@ function bPaint(){
       <b class="mono">${fmt(x.sats)}<small> sats</small></b>
       ${sent?`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
     </div>`).join("");
-  const tip=bTipSats(), one=ballotFee(1,1,e,tip).fee, sep=e.reduce((a,x)=>a+ballotFee(1,1,[x],0).fee,0)+(tip?ballotFee(1,1,[],tip).fee-ballotFee(1,1,[],0).fee:0);
-  $("b-sats").textContent=fmt(ballotSats(e))+" sats"; $("b-fee").textContent="≈ "+fmt(one)+" sats"; $("b-save").textContent="≈ "+fmt(Math.max(0,sep-one))+" sats";
+  const tip=bTipSats();
+  dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`, bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
   $("b-tipf").hidden=!tipEnabled(); $("b-tip").hidden=!$("b-tipck").checked; $("b-tipusd").textContent=tip?usdOf(tip):"skipped";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";
   $("bpay-text").textContent=bLast?bLast.rawHex:"…"; $("bpay-copy").disabled=!bLast;
   bwt.paint();
-  if(bStep===3){ walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close());   // Connect a wallet / Unlock wallet / Sign & broadcast / Done
-    if($("bsend").textContent==="Sign & broadcast") $("bsend").textContent=`Burn the batch · ${n} burn${n===1?"":"s"}`; }
+  walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close(), !!bLast);   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, from any step
+  if(/^Sign/.test($("bsend").textContent)) $("bsend").onclick=()=>{ if(bStep!==3) bGo(3); bwt.send(); };   // signing shows the Transaction step, where progress and errors show
 }
 PAY.push({paint:bPaint, wallet:bwt});                        // repainted with every wallet change, like the burn dialogs
 bwt.onsent=({txid})=>{                                       // one transaction, N rows: each topic gets its own pending burn (h:null) so the receipt page and the boards find them
@@ -1884,14 +1928,11 @@ $("b-tipck").onchange=()=>{ LS(NETKEY("bv.vote.tip"),$("b-tipck").checked?"1":"0
 $("b-tip").oninput=bSync;
 $("bpay-copy").onclick=()=>{ if(bLast) copyText(bLast.rawHex,$("bpay-copy")); };
 function bGo(n){                                             // show a step; focus its first action
-  bStep=n; for(const k of [1,2,3]) $("bstep-"+k).hidden=n!==k; bPaint(); segThumbs();
+  bStep=n; for(const k of [1,3]) $("bstep-"+k).hidden=n!==k; bPaint(); segThumbs();
   $("ballotdlg").querySelector(".dlg").scrollTop=0;
-  if($("ballotdlg").open) (n===3?$("bsend"):(!$("bnext").hidden&&!$("bnext").disabled?$("bnext"):(n===1?$("bclose"):$("bback")))).focus({preventScroll:true});
+  if($("ballotdlg").open) $("bsend").focus({preventScroll:true});
 }
-$("bnext").onclick=()=>{ if(bLast&&bStep<3) bGo(bStep+1); };
-$("bback").onclick=()=>bGo(Math.max(1,bStep-1));
-document.querySelectorAll("#bsteps [data-bstep]").forEach(b=>b.onclick=()=>{ const n=+b.dataset.bstep; if(n!==bStep&&b.getAttribute("aria-disabled")!=="true") bGo(n); });
-$("ballotdlg").addEventListener("keydown",e=>{ if(e.key==="Enter"&&bStep<3&&e.target.matches("input:not([type=checkbox])")&&!$("bnext").hidden&&!$("bnext").disabled){ e.preventDefault(); $("bnext").click(); } });
+$("bback").onclick=()=>bGo(1);
 function ballotOpen(){ bSent=null; bStep=1; bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
@@ -1902,7 +1943,7 @@ ballotPill();
 //   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done"|"error", source?, count?, page?, lastTx?, height?, requests?}
 //   cancelled()     -> true when the caller moved on: the loader stops and resolves null
 // The result's votes are the whole list with the mempool as the explorer lists it now: pages recount from it, not from the batches.
-tipReady(); priceReady();                                                 // the chain tip and the BTC price, once per page (shared.js)
+tipReady(); priceReady(); feeReady().then(()=>PAY.forEach(p=>p.paint()));   // the chain tip, the BTC price and the fee estimates, once per page (shared.js)
 const ADDRS=new Map();                                                    // topic name -> address, derived once per page
 const topicAddr=async name=>{ if(!ADDRS.has(name)) ADDRS.set(name,(await deriveScope(name)).addr); return ADDRS.get(name); };
 const FRESH_PENDING=10*60000;                                             // a burn signed in this browser stays pending this long, even before the explorer lists it
@@ -1938,17 +1979,35 @@ async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancel
 // dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
 // d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
 let ROOTV=[], DIRP=null, DIRERR=false;
-const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(r=>{
-  ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length;
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(async r=>{ ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length; await regTies(); return dirBuild(); }));
+// a registration or sponsorship signed in this browser: the directory takes it at once, in the mempool (it is on disk too: DB.putPending), until the explorer lists it
+const dirAddPending=vs=>{ ROOTV=[...vs, ...ROOTV.filter(v=>!vs.some(x=>x.txid===v.txid))]; return dirBuild(); };
+function dirBuild(){                                                      // the directory from the root topic's burns, keeping what the pages already counted
   const was=new Map(DIRECTORY.map(d=>[d.name,d])), next=new Map();
   for(const v of ROOTV){ const name=nameOf(v.t); if(!name) continue; const h=v.h??TIP+1;
     const d=next.get(name)||{name, stats:null, active:0, ...(was.get(name)||{}), reg:0, listings:0, first:Infinity, last:0};
     d.reg+=v.sats; d.listings++; d.first=Math.min(d.first,h); d.last=Math.max(d.last,h); next.set(name,d); }
-  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY; }));
-const rootBurns=()=>ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name);   // the sponsorships (a topic's first one registers it), newest first
-// dirTopics({onTopic}) -> Promise: every registered topic through loadVotes, three at a time; its burns land in cache[name], then d.stats and d.active
-async function dirTopics({onTopic=()=>{}}={}){
-  const todo=[...DIRECTORY];
+  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY;
+}
+// a topic's first root burn registers it (reg): the lowest height, then the earliest in that height. The explorer's order says little, so a tie asks once:
+// in a block, each burn's place (/tx/:txid/merkle-proof, pos; kept in this browser); in the mempool, when mempool.space first saw it (else when this browser sent it)
+let POS={}; try{ POS=JSON.parse(localStorage.getItem(NETKEY("bv.pos")))||{}; }catch{}
+const SEENT={};
+const regBefore=(a,b)=>{ const c=(x,y)=>x<y?-1:x>y?1:0, at=v=>v.h===null ? SEENT[v.txid]??(v.at?v.at/1000:Infinity) : POS[v.txid]??Infinity;
+  return c(a.h??Infinity,b.h??Infinity) || c(at(a),at(b)); };
+async function regTies(){
+  const low=new Map(); for(const v of ROOTV){ const n=nameOf(v.t); if(!n) continue; const h=v.h??Infinity, o=low.get(n); if(!o||h<o.h) low.set(n,{h,vs:[v]}); else if(h===o.h) o.vs.push(v); }
+  const tied=[...low.values()].filter(g=>g.vs.length>1).flatMap(g=>g.vs), ask=tied.filter(v=>v.h!==null&&!(v.txid in POS)), seen=tied.filter(v=>v.h===null&&!(v.txid in SEENT));
+  await Promise.all([...ask.map(v=>chainGet(`/tx/${v.txid}/merkle-proof`).then(r=>{ POS[v.txid]=r.pos; }).catch(()=>{})),
+    seen.length && chainGet("/v1/transaction-times?"+seen.map(v=>"txId[]="+v.txid).join("&")).then(ts=>seen.forEach((v,i)=>{ if(ts[i]) SEENT[v.txid]=ts[i]; })).catch(()=>{})]);   // mempool.space only
+  if(ask.length) try{ localStorage.setItem(NETKEY("bv.pos"), JSON.stringify(POS)); }catch{}
+}
+const rootBurns=()=>{ const vs=ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name), first=new Map();   // the sponsorships, newest first
+  for(const v of vs){ const o=first.get(v.name); if(!o || regBefore(v,o)<0) first.set(v.name,v); }   // still tied: the first listed (mempool.space lists a block, and the mempool, oldest first)
+  for(const v of first.values()) v.reg=true; return vs; };
+// dirTopics({onTopic, only}) -> Promise: the registered topics (only(d): a subset) through loadVotes, three at a time; burns land in cache[name], then d.stats and d.active
+async function dirTopics({onTopic=()=>{},only=()=>true}={}){
+  const todo=DIRECTORY.filter(only);
   const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(()=>null), vs=(r&&r.votes)||cache[d.name]||[];
     cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); onTopic(d); } };
   await Promise.all([worker(),worker(),worker()]);
@@ -1962,10 +2021,10 @@ const validAddr=a=>{ try{ return bech32Decode(a).hrp===HRP; }catch{ return false
 const shortAddr=a=>a.slice(0,10)+"…"+a.slice(-6);
 const hv=v=>v.h===null?Number.MAX_SAFE_INTEGER:v.h;         // pending first
 function paintHead(){
-  $("baddr").textContent=ADDR||"…"; $("baddr").title=ADDR;
+  $("baddr").textContent=ADDR ? shortAddr(ADDR) : "…"; $("baddr").title=ADDR;   // condensed; the copy button and the tooltip carry the full address
   $("bmine").hidden=!(WALLET&&WALLET.addr===ADDR);
   $("bwrong").hidden=!ADDR||validAddr(ADDR);
-  $("bmeta").hidden=$("bmine").hidden&&$("bwrong").hidden;          // no badge to show: no empty row under the sync line
+  $("bmeta").hidden=$("bwrong").hidden;                              // no badge to show: no empty row under the sync line
   $("explorerlink").href="https://mempool.space/"+(NET==="mainnet"?"":"signet/")+"address/"+ADDR; $("explorerlink").hidden=!validAddr(ADDR);
   $("bcopy").disabled=!ADDR;
   document.title=(ADDR?shortAddr(ADDR):"Burner")+" · Burning Take";

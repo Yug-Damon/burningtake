@@ -55,7 +55,7 @@ dialog[open] .dlg{box-shadow:0 40px 120px -30px rgba(255,106,26,.35),0 30px 80px
 @media (prefers-reduced-motion:reduce){dialog[open],dialog[open]::backdrop{animation:none}}
 dialog textarea,dialog select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--ink)}
 dialog .dlg>h3{font-size:18px;letter-spacing:-.01em}
-dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;display:inline-grid;place-items:center}
+dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;display:inline-grid;place-items:center;color:var(--ink2)}   /* close: an 18px X */
 /* stepped scope dialog (classes are .stepper/.wstep so they do not collide with #how .steps/.step) */
 .stepper{display:flex;gap:0;list-style:none;margin:14px 0 2px;padding:0;overflow:hidden}
 .stepper li{display:flex;align-items:center;min-width:0}
@@ -86,10 +86,6 @@ dialog h3 .copy{margin-left:auto;min-width:36px;min-height:36px;padding:0;displa
 .field label.ck .mono{margin-left:auto;white-space:nowrap}
 .minline{margin:0;font-size:12px;color:var(--ink3);padding:12px 14px;border:1px dashed var(--line);border-radius:10px;letter-spacing:.04em}
 /* review step: what the user typed, not the wire format */
-.review{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px 12px;margin:16px 0 0;font-size:14px}
-.review dt{color:var(--ink3);font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding-top:3px}
-.review dd{margin:0;overflow-wrap:anywhere}
-.review dd.q{font-family:var(--font-d);font-weight:600;font-size:16px;letter-spacing:-.01em;line-height:1.3}
 .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 details.tech{flex:0 1 auto;min-width:0}
@@ -103,9 +99,8 @@ details.tech .out{margin-top:6px}
 #sqadv{margin-top:14px}
 /* transaction panel (one per dialog): the wallet block on top, "Advanced · do it yourself" folds the outputs + raw hex under it */
 .pay{margin-top:16px;display:grid;gap:8px}
-.pay .wtab{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px}
-.pay details.tech{justify-self:start}
-.pay details.tech[open]{justify-self:stretch}
+.pay .wtab{min-width:0}   /* the metric tiles stand on their own, no card around them */
+.pay .adv{display:grid;gap:2px}.pay .adv>.divider{margin:10px 0 0}   /* the raw outputs and transaction, always shown */
 .pay .tabbox{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px;margin-top:4px;display:grid;gap:12px}
 .pay .outs{display:grid;gap:10px}
 .pay .body{position:relative;border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:6px}
@@ -135,9 +130,6 @@ details.tech .out{margin-top:6px}
   #sqstep-4>p.note:first-of-type,#tipdlg .dlg>p.note{display:none}
   .dlgfoot>span{display:none}
   .dlgfoot .btn{justify-content:center;min-height:44px}
-  .review{grid-template-columns:1fr;gap:2px 0}
-  .review dt{padding-top:12px}
-  .review dt:first-of-type{padding-top:0}
   .seg.amtseg{display:grid;grid-template-columns:repeat(3,1fr);border-radius:14px;width:100%}
   .seg.amtseg button{text-align:center;padding:9px 4px;min-height:40px;font-size:12px}
   #tipseg{grid-template-columns:1fr 1fr}
@@ -265,7 +257,7 @@ section{padding-block:64px}
 .divider{display:flex;align-items:center;gap:12px;margin:14px 0 4px;font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 .divider::after{content:"";flex:1;height:1px;background:var(--line)}
 .st.other{opacity:.7}.st.other .txt{font-weight:400}
-.st{display:grid;grid-template-columns:36px minmax(0,1fr) 120px 52px 80px 110px;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:.15s;position:relative;overflow:hidden}
+.st{display:grid;grid-template-columns:36px minmax(0,1fr) 140px 80px 110px;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:.15s;position:relative;overflow:hidden}
 .st:hover{border-color:rgba(255,181,71,.35);background:rgba(255,255,255,.05)}
 .st .rank{font-family:var(--font-d);font-weight:600;color:var(--ink3);font-size:14px}
 .st:nth-child(1) .rank{color:var(--ember2)}
@@ -273,9 +265,9 @@ section{padding-block:64px}
 .st .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--ember2),var(--ember));opacity:.8;transition:width .4s ease}
 @media (prefers-reduced-motion:reduce){.st .bar{transition:none}}
 .st .sats{font-family:var(--font-d);font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
-.st .sats small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3)}
+.st .sats small{display:inline;margin-left:4px;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3)}
 .st .votes{font-family:var(--font-m);font-size:13px;color:var(--ink2);text-align:right}
-.st .act{text-align:right}.st .share{font-family:var(--font-m);font-size:13px;color:var(--ink2);text-align:right;font-variant-numeric:tabular-nums}.st .plus{display:none}
+.st .act{text-align:right}.st .plus{display:none}
 .st.newrow{border-style:dashed}
 .board .showall{display:block;width:100%;padding:10px;border:1px dashed var(--line);border-radius:12px;background:transparent;color:var(--ink2);font:inherit;font-size:13px;cursor:pointer}.board .showall:hover{color:var(--ink);border-color:rgba(255,181,71,.35)}
 .others{border:1px solid var(--line);border-radius:12px;color:var(--ink3)}.others summary{min-height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;cursor:pointer;list-style:none;font-family:var(--font-m);font-size:12px}
@@ -320,8 +312,8 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
   #scopebox{grid-template-columns:1fr!important}
   .two{grid-template-columns:1fr}
   nav .links{display:none}
-  .st{grid-template-columns:28px minmax(0,1fr) auto auto;grid-template-areas:"r t s a" "r v h a"}
-  .st .rank{grid-area:r}.st .txt{grid-area:t}.st .sats{grid-area:s}.st .votes{grid-area:v;text-align:left}.st .share{grid-area:h}.st .act{grid-area:a}.st .plus{grid-area:p}
+  .st{grid-template-columns:28px minmax(0,1fr) auto auto;grid-template-areas:"r t s a" "r v v a"}
+  .st .rank{grid-area:r}.st .txt{grid-area:t}.st .sats{grid-area:s}.st .votes{grid-area:v;text-align:left}.st .act{grid-area:a}.st .plus{grid-area:p}
   .source{grid-template-columns:1fr}.source select,.source input{width:100%;min-width:0}
   footer .footep{width:100%}footer .footep select{flex:1}footer input{width:100%}
   .kv{grid-template-columns:1fr auto}.kv .k{grid-column:1/-1}
@@ -399,7 +391,7 @@ nav .pill,.logo{white-space:nowrap}
 .badge.feat{color:#ffd88a;border-color:rgba(255,216,138,.4);background:linear-gradient(135deg,rgba(255,181,71,.16),rgba(255,106,26,.06))}
 /* top burners under the board */
 .burners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 40px;margin-top:18px;align-items:start}   /* topic page: [biggest burns] | [latest burns, top burners], stacked up to tablet */
-.burners>.col{display:grid;gap:18px;align-content:start;min-width:0}.burners.solo{grid-template-columns:minmax(0,1fr)}
+.burners>.col{display:grid;gap:18px;align-content:start;min-width:0}
 .burners .col>.burnercol>.divider:first-child{margin-top:0}
 .bchip.lb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
 .lb .lbt{font-family:var(--font-b);font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -415,11 +407,6 @@ nav .pill,.logo{white-space:nowrap}
 .bent .stmt{min-width:0;overflow-wrap:anywhere}.bent .stmt i{color:var(--ink3)}
 .bent b{font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap}.bent b small{font-family:var(--font-m);font-weight:400;font-size:10px;color:var(--ink3)}
 .bent.sent{border-style:dashed;opacity:.75}
-.bsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.bsum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.bsum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
-.bsum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
-.bsum div:last-child b{color:var(--ok)}
 #b-outs .kv{grid-template-columns:100px 1fr auto}
 /* toast */
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:40;pointer-events:none;background:var(--bg2);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:9px 16px;font-family:var(--font-m);font-size:12px;color:var(--ink);box-shadow:0 18px 40px -12px rgba(255,106,26,.45),0 10px 30px rgba(0,0,0,.5);transition:transform .25s ease,opacity .25s ease;max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -435,7 +422,7 @@ nav .pill,.logo{white-space:nowrap}
   .more{display:none} .less{display:inline}
   footer a{display:inline-block;padding:8px 0}footer .footlinks b{display:none}   /* the brand is in the nav already */
   .titlerow h2{overflow-wrap:anywhere}
-  .st{padding:12px 14px;gap:4px 10px;grid-template-columns:24px minmax(0,1fr) auto 14px;grid-template-areas:"r t s p" "r v h p";cursor:pointer}.st .act{display:none}.st .plus{display:block;color:var(--ember2);font-weight:600;text-align:right}.st.ghost .plus,.st.other .plus{display:none}.st .sats small{display:inline;margin-left:3px}.st .txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.st .rank{font-size:12px}.st .txt{font-size:15px}.st .sats{font-size:14px}.st .sats small{font-size:12px}
+  .st{padding:12px 14px;gap:4px 10px;grid-template-columns:24px minmax(0,1fr) auto 14px;grid-template-areas:"r t s p" "r v v p";cursor:pointer}.st .act{display:none}.st .plus{display:block;color:var(--ember2);font-weight:600;text-align:right}.st.ghost .plus,.st.other .plus{display:none}.st .sats small{display:inline;margin-left:3px}.st .txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}.st .rank{font-size:12px}.st .txt{font-size:15px}.st .sats{font-size:14px}.st .sats small{font-size:12px}
   .srow{gap:4px 12px;padding:10px 14px}.srow .sats{font-size:13px}
   .card .meta{font-size:12px}.recent .btn:nth-child(n+5){display:none}
   .numstats{gap:6px}.numstats div{padding:8px 10px}.numstats b{font-size:15px}.numstats>div>span{letter-spacing:.04em}
@@ -456,7 +443,6 @@ nav .pill,.logo{white-space:nowrap}
   .thead .titlerow h2{font-size:20px}
   .badge{font-size:12px;padding:5px 10px}
   .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent>span.mono{grid-area:r;justify-self:end}
-  .bsum{grid-template-columns:1fr 1fr}.bsum div:first-child{grid-column:1/-1}.bsum b{font-size:14px}
   #b-outs .kv{grid-template-columns:1fr auto}
   nav .pill.ballot{padding:3px 8px}
 }
@@ -468,7 +454,7 @@ nav .pill,.logo{white-space:nowrap}
 
 /* ===== burner + receipt pages ===== */
 .thead-main.one{grid-template-columns:1fr}
-.thead .titlerow h2.addrtitle{font-family:var(--font-m);font-weight:500;font-size:clamp(14px,2vw,19px);letter-spacing:0;overflow-wrap:anywhere;color:var(--ember2);line-height:1.4}
+.thead .titlerow h2.addrtitle{font-family:var(--font-m);font-weight:500;font-size:clamp(17px,2.4vw,22px);letter-spacing:0;overflow-wrap:anywhere;color:var(--ink);line-height:1.4}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .tiles div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(11,10,14,.5)}
 .tiles b{display:block;font-family:var(--font-d);font-weight:600;font-size:22px;color:var(--ember2);font-variant-numeric:tabular-nums}
@@ -496,7 +482,7 @@ nav .pill,.logo{white-space:nowrap}
 .rpreview img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line)}
 .ralso{font-size:13px;color:var(--ink2);margin:0}.ralso a{color:var(--ember2)}.ralso i{color:var(--ink3)}
 @media (max-width:860px){.rgrid{grid-template-columns:1fr}}
-@media (max-width:480px){.tiles{grid-template-columns:1fr 1fr}.tiles div:first-child{grid-column:1/-1}.tiles b{font-size:18px}.rcard{padding:18px 16px;border-radius:16px;gap:12px}.ractions .btn{flex:1;justify-content:center;min-height:44px}.empty{padding:22px 14px}.thead .titlerow h2.addrtitle{font-size:13px}.rgrid .qrow .copy{min-height:36px}}
+@media (max-width:480px){.tiles{grid-template-columns:1fr 1fr}.tiles div:first-child{grid-column:1/-1}.tiles b{font-size:18px}.rcard{padding:18px 16px;border-radius:16px;gap:12px}.ractions .btn{flex:1;justify-content:center;min-height:44px}.empty{padding:22px 14px}.rgrid .qrow .copy{min-height:36px}}
 
 /* burners on Explore: three short columns */
 .burnercols{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 40px;margin-top:14px}
@@ -535,14 +521,14 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   .tactions{justify-content:flex-start}.tactions .btn{min-height:44px}
 }
 @media (max-width:480px){ #board{padding-top:14px} .stand-head .seg{width:100%} .stand-head .seg button{flex:1} }
-/* timeline (Explore Recent, topic Latest burns): a vertical timeline. A rail runs through the nodes (the kind icons); each entry reads kind and time first, then what happened */
+/* timeline (Recent, on Explore and the topic page): a vertical timeline. A rail runs through the nodes (the kind icons); each entry reads kind and time first, then what happened */
 .tl{position:relative;display:grid}
 .tl::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--line) 75%,transparent);transform:translateX(-50%)}
 .fr{display:grid;grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i m x" "i a s";gap:2px 12px;align-items:center;padding:8px 0}
 .fi{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-d);font-size:15px;line-height:1;letter-spacing:0;background:color-mix(in srgb,var(--ember) 24%,var(--bg));color:var(--ember2)}   /* the icon badge, always a flat disc: shape = what, tint = which burn */
 .fi.feature,.fr.feature .fi{background:color-mix(in srgb,#ffd88a 20%,var(--bg));color:#ffd88a}
 .fi.burner,.fr.burner .fi{background:color-mix(in srgb,#7a91b0 26%,var(--bg));color:#c3d1e2}
-.fi.reg{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
+.fi.reg,.fr.reg .fi{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
 .fi.top{background:color-mix(in srgb,#ff3b30 24%,var(--bg));color:#ff8f7a}   /* most burned: hotter than a take */
 .fi.sm{width:20px;height:20px;font-size:11px}.fi.sm svg{width:12px;height:12px}
 .fr .fi{grid-area:i;align-self:start;position:relative;z-index:1;box-shadow:0 0 0 4px var(--bg)}
@@ -551,11 +537,26 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .fr .frx{grid-area:x;font-family:var(--font-m);font-size:11.5px;color:var(--ink3);text-align:right;white-space:nowrap}.fr .frx:hover{color:var(--ink)}
 .fr .fa{grid-area:a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-size:15px}.fr a.fa:hover{color:var(--ember2)}
 .fr b{grid-area:s;font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap;text-align:right}
-.fr.burn .ft{color:var(--ember2)}.fr.feature .ft{color:#ffd88a}.fr.burner .ft{color:#b3c3d6}
+.fr.burn .ft{color:var(--ember2)}.fr.feature .ft{color:#ffd88a}.fr.burner .ft{color:#b3c3d6}.fr.reg .ft{color:var(--ink2)}
 .fr .fa.has-rk{display:flex;align-items:center;gap:8px}.fr .fa.has-rk>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rk1{flex:none;font:600 10px/1 var(--font-d);color:var(--ember2);background:var(--ember-dim);border-radius:999px;padding:4px 7px}   /* a burn for the take ranked 01, like the board */
+.rk1{flex:none;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;color:var(--ember2);background:var(--ember-dim)}   /* a burn for the topic's top take: a star, the icon badge language */
 /* list rows lead with their icon badge */
 .bchip.ic{column-gap:12px}.bchip.lb.ic{grid-template-columns:28px minmax(0,1fr) auto}.bchip.lb.ic>.fi{grid-row:span 2}.bchip.lb.ic>.m:nth-child(4):last-child{grid-column:2/-1}   /* no right cell on line 2: the meta takes it */
 .bchip.br.ic{grid-template-columns:28px auto minmax(0,1fr) auto;padding-block:6px}
 .badge>.fi.sm{width:16px;height:16px;margin:-2px 0 -2px -6px}.badge>.fi.sm svg{width:10px;height:10px}
 .rkind{display:flex;align-items:center;gap:10px}
+/* the dialogs' primary action from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch, upward from the footer */
+.signwrap .netmenu{top:auto;bottom:calc(100% + 6px);min-width:100%}
+.signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
+@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
+.wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
+#vpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
+.eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
+#votehead{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* "Burn for “…”": a long take stays on one line */
+.signwrap .btn .caret{margin-left:2px;flex:none}   /* "Validate take ▾": the primary opens a menu */
+.amtcustom{position:relative;display:block}.amtcustom input{width:100%;padding-right:44px}   /* Custom amount: the input in the chips' place */
+.amtx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--ink3);cursor:pointer;font-size:13px}.amtx:hover,.amtx:focus-visible{color:var(--ink);background:rgba(255,255,255,.06)}
+.dlgprice{display:inline-grid;gap:1px;font-family:var(--font-m);font-size:12px;color:var(--ink2)}.dlgprice .w{margin-left:8px}.dlgprice .w .linkbtn{margin-left:6px}.dlgprice small{font-size:11px;color:var(--ink3);white-space:nowrap}.dlgprice b{font-family:var(--font-d);font-weight:600;font-size:15px;color:var(--ink)}   /* what signing costs, at the footer's left: the amount, then one line per extra (tip, mining fees) */
+.rulesline{margin:10px 0 0}.rulesline .linkbtn{font-size:12px}
+@media (max-width:480px){.dlgfoot .dlgprice{display:inline-grid;justify-content:center;text-align:center;padding:4px 0;order:9}}   /* phone: the cost over the stacked buttons */
+.feeseg{margin-top:10px;width:100%}.feeseg button{flex:1;white-space:nowrap}.feeseg button span{color:var(--ink3);font-size:11px}   /* the mining fee speed under the tiles */

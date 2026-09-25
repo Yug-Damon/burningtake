@@ -8,11 +8,10 @@ if(tipEnabled()){
     const sats=tipAmount();
     $("tipdusd").textContent=usdOf(sats);
     $("tipdaddr").textContent=TIP_EFFECTIVE; $("copytipd").dataset.copy=TIP_EFFECTIVE;
-    $("tipdemo").hidden=true;
     tpay.set({burnAddr:TIP_EFFECTIVE, burnSats:sats, statementBytes:null, tipAddr:null, tipSats:0, burnLabel:"tip"});
   };
   const tAmt=amountChips($("tipseg"), $("tipdamt"), tipRender); tAmt.reset(5000);   // presets over #tipdamt, same chips as the burn dialogs
-  tpay.onpaint=()=>walletPrimary($("tsend"), tpay.wallet, ()=>$("tipdlg").close());   // Connect a wallet / Unlock wallet / Sign & broadcast / Done
+  tpay.onpaint=()=>{ walletPrimary($("tsend"), tpay.wallet, ()=>$("tipdlg").close()); dlgPrice($("tprice"), tipAmount(), "tip", tpay.wallet.fee()); $("tprice").hidden=tpay.wallet.status()?.kind==="sent"; };   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, and the cost
   $("tipdamt").oninput=tipRender;
   $("copytipd").onclick=()=>copyText(TIP_EFFECTIVE,$("copytipd"));
   $("tipbtn").onclick=()=>{ tipRender(); $("tipdlg").showModal(); };

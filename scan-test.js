@@ -3,12 +3,12 @@
 "use strict";
 const fs=require("fs"), path=require("path"), assert=require("assert");
 const src=fs.readFileSync(path.join(__dirname,"parts","shared.js"),"utf8");
-const names=["opReturnData","txBurns","nameOf","scanAddress","chainGet","deriveScope","canonical","parseScope"];
+const names=["opReturnData","txBurns","nameOf","scanAddress","chainGet","deriveScope","canonical","parseScope","feeRefresh","feeRates"];
 const doc={querySelectorAll:()=>[], getElementById:()=>null, createElement:()=>({style:{}}), body:{appendChild(){}}, documentElement:{style:{}}, fonts:null};
 let fetchImpl=()=>{ throw new Error("fetch not stubbed"); };
 const lib=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch",src+"\nreturn {"+names.join(",")+"};")(
   doc, {}, {getItem:()=>null, setItem(){}}, ()=>({matches:false}), {}, ()=>{}, (...a)=>fetchImpl(...a));
-const {opReturnData,txBurns,nameOf,scanAddress,chainGet,deriveScope}=lib;
+const {opReturnData,txBurns,nameOf,scanAddress,chainGet,deriveScope,feeRefresh,feeRates}=lib;
 
 // ---------- independent helpers: an OP_RETURN script, Esplora-shaped outputs and transactions ----------
 const hex=s=>Buffer.from(s,"utf8").toString("hex");
@@ -72,6 +72,11 @@ let n=0, failed=0; const ok=async(name,fn)=>{ n++; try{ await fn(); console.log(
     assert.strictEqual(nameOf("Paris Cars?Yes|No"),null,"uppercase and whitespace");
     assert.strictEqual(nameOf("ID:00\nInsta:Unknown\nLinkedin:Unknown"),null,"seen on mainnet at the root address");
     assert.strictEqual(nameOf(""),null);
+    assert.strictEqual(nameOf("\ufffd41#\ufffd\u0013"),null,"binary payload seen on signet");
+    assert.strictEqual(nameOf("admin\u202egnp.exe"),null,"bidi override");
+    assert.strictEqual(nameOf("zero\u200bwidth"),null,"zero-width space");
+    assert.strictEqual(nameOf("caf\u00e9-talk"),"caf\u00e9-talk");
+    assert.strictEqual(nameOf("\u{1F468}\u200d\u{1F469}\u200d\u{1F467}"),"\u{1F468}\u200d\u{1F469}\u200d\u{1F467}","an emoji joined with ZWJ");
   });
   await ok("scanAddress: the mempool from the first page, 25 confirmed per page, until a short page", async()=>{
     const conf=Array.from({length:60},(_,i)=>tx(100+i,[burn(A,330)],900100-i)), mem=[tx(99,[burn(A,330)])];
@@ -98,6 +103,14 @@ let n=0, failed=0; const ok=async(name,fn)=>{ n++; try{ await fn(); console.log(
     assert.strictEqual(await chainGet("/blocks/tip/height",{text:true}),"968433");
     assert.deepStrictEqual(hosts,["mempool.space","blockstream.info"]);
     hosts.length=0; await chainGet("/blocks/tip/height",{text:true}); assert.deepStrictEqual(hosts,["blockstream.info"],"the one that answered goes first");
+  });
+  await ok("fees: live estimates rounded up, a floor, never faster for less, a missing target takes the next one", async()=>{
+    const est=j=>{ fetchImpl=async()=>({ok:true,json:async()=>j}); return feeRefresh(); };
+    assert.deepStrictEqual(await est({"1":12.34,"2":10,"6":3.01,"144":0.5,"504":0.2}),{fast:12.4,normal:3.1,eco:1});
+    assert.deepStrictEqual(await est({"1":2,"6":5,"144":9}),{fast:2,normal:2,eco:2},"inverted estimates: the slower speeds are capped");
+    assert.deepStrictEqual(await est({"2":4,"25":1.5}),{fast:4,normal:1.5,eco:1.5});
+    fetchImpl=async()=>{ throw new TypeError("offline"); }; await feeRefresh();
+    assert.deepStrictEqual(feeRates(),{fast:4,normal:1.5,eco:1.5},"no answer: the last estimates stay");
   });
   console.log(`\n${n-failed}/${n} passed${failed?`, ${failed} FAILED`:""}`); process.exitCode=failed?1:0;
 })();

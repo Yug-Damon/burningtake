@@ -32,7 +32,6 @@ const rowHtml=(s,i,cls="")=>{ const sh=shareOf(s); return `
       <span class="rank">${typeof i==="number"?String(i+1).padStart(2,"0"):i}</span>
       <span class="txt">${esc(s.disp??s.t)}</span>
       <span class="sats">${fmt(s.sats)}<small> sats</small></span>
-      <span class="share">${sh.toFixed(0)}%</span>
       <span class="votes">${s.votes} burn${s.votes===1?"":"s"}</span>
       <span class="act">${isClosed()?"":`<button class="btn sm" data-vote="${esc(s.t)}">Burn for it</button>`}</span>
       <span class="plus" aria-hidden="true">${isClosed()?"":"+"}</span>
@@ -57,7 +56,6 @@ function rowEl(s,i,cls){                                // s carries total (for 
   r.className="st "+cls; r.querySelector(".rank").textContent= typeof i==="number"?String(i+1).padStart(2,"0"):i;
   if(r._t!==s.t){ r._t=s.t; r.querySelector(".txt").textContent=s.disp??s.t; r.dataset.voteRow=s.t; const b=r.querySelector("[data-vote]"); if(b) b.dataset.vote=s.t; }
   r.querySelector(".votes").textContent=`${s.votes} burn${s.votes===1?"":"s"}`;
-  r.querySelector(".share").textContent=sh.toFixed(0)+"%";
   const sats=r.querySelector(".sats");
   tween(r,"_sats",s.sats,v=>{ sats.firstChild.nodeValue=fmt(Math.round(v)); });
   r._barW=sh.toFixed(1)+"%";                           // applied in commit(), after the DOM move, so the width transition runs
@@ -166,7 +164,6 @@ function renderList(){
       <span class="rank">new</span>
       <span class="txt">${esc(raw)}</span>
       <span class="sats">0<small> sats</small></span>
-      <span class="share"></span>
       <span class="votes">nobody yet</span>
       <span class="act"><button class="btn sm primary" data-vote="${esc(raw)}" data-new>Burn for it</button></span>
       <span class="plus" aria-hidden="true">+</span>
@@ -185,7 +182,7 @@ const ghostFor = k => k==="duel"                               // loading: the f
   ? `<div class="duel ghost"><div class="duel-head"><span class="sk" style="width:70px;height:16px"></span><span class="sk" style="width:70px;height:16px"></span></div><div class="duel-bar"></div><div class="duel-foot"><span class="sk" style="width:120px"></span><span class="sk" style="width:120px"></span></div></div>`
   : Array.from({length:4},()=>`
     <div class="st ghost"><span class="rank"></span><span class="txt"><span class="sk" style="width:${40+Math.random()*40}%"></span></span>
-    <span class="sats"><span class="sk" style="width:80px"></span></span><span class="share"></span><span class="votes"><span class="sk" style="width:50px"></span></span><span class="act"></span></div>`).join("");
+    <span class="sats"><span class="sk" style="width:80px"></span></span><span class="votes"><span class="sk" style="width:50px"></span></span><span class="act"></span></div>`).join("");
 const numGhost = () => `<div class="numstats">${'<div><b><span class="sk" style="width:90px;height:18px"></span></b><span class="sk" style="width:60px;height:9px"></span></div>'.repeat(3)}</div><div class="numview"><div class="hist">${'<div></div>'.repeat(10)}</div><div class="hist-axis"><span>&nbsp;</span></div></div>`;
 
 async function loadScope(name){
@@ -211,7 +208,7 @@ async function loadScope(name){
   watchMarkSeen(name,r.votes.length,TIP);                   // a watched topic: what this browser has now seen, so the watchlist can say "N new burns"
 }
 // a burn signed in this browser (single or ballot) lands on the board at once as pending; the explorer takes over on the next scan
-globalThis.addPending=(name,votes)=>{ if(name!==scope.name) return; (cache[name]||(cache[name]=[])).unshift(...votes); votes.forEach(addVote); S=Object.values(agg); render(); };
+globalThis.addPending=(name,votes)=>{ if(name===""){ dirAddPending(votes.map(cleanVote).filter(Boolean)); headMeta(); return; } if(name!==scope.name) return; (cache[name]||(cache[name]=[])).unshift(...votes); votes.forEach(addVote); S=Object.values(agg); render(); };
 list.addEventListener("toggle",e=>{ if(e.target.matches("details.others")) othersOpen=e.target.open; },true);   // the off-list line stays as the reader left it
 PHONE.addEventListener("change",()=>render());                                // 10 rows on desktop, 5 on phone
 document.querySelectorAll("#tseg [data-win]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.win===win)); b.onclick=()=>{
@@ -230,20 +227,25 @@ list.addEventListener("click",e=>{
   vOther=false; stmt.value=b.dataset.vote;
   if(scope.spec?.range && Number.isFinite(+b.dataset.vote)) $("num").value=b.dataset.vote;   // keep the number input in step with the row clicked
   update();
-  openVote(!b.hasAttribute("data-new"));                // an existing statement/option/number opens locked; the synthetic "new" row does not
+  openVote(!b.hasAttribute("data-new"), false, 2);                  // Burn for it: the take is chosen, straight to the amount                // an existing statement/option/number opens locked; the synthetic "new" row does not
 });
 
 let scope={name:"general",addr:"…",poll:null};
 
-const vpay=payPanel("vpay"); PAY.push(vpay);
+const vpay=payPanel("vpay",{speed:false}); PAY.push(vpay);   // the fee speed sits in the amount view (Advanced), not in the transaction
+$("vfeehost").innerHTML=feeSegHtml("vfeeseg"); feeSegWire($("vfeeseg"));
 const nfm=x=>Math.abs(+x)>=10000?fmt(+x):String(x);
 $("tipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copytip").dataset.copy=TIP_EFFECTIVE||""; $("copytip").disabled=!TIP_EFFECTIVE;
 
 // ---------- vote builder: real OP_RETURN script hex ----------
 const stmt=document.getElementById("stmt"), amt=document.getElementById("amt"),
       bytesEl=document.getElementById("bytes"), hexEl=document.getElementById("hex"), usd=document.getElementById("usd");
-const vAmt=amountChips($("vamtseg"), amt, ()=>update());   // presets over #amt; reset per topic in openScope (10,000 or the topic minimum)
+const vAmt=amountChips($("vamtseg"), amt, ()=>update());   // presets over #amt; reset per topic in openScope (330 or the topic minimum)
+const burnTitle=()=>{ const t=stmt.value.trim(), topic="#"+scope.q+(scope.spec&&(scope.spec.opts||scope.spec.range)?"?":"");   // a new take: the topic it burns for; an existing one (Burn for it): that take
+  return vLocked&&t ? `Burn for “${kind(scope.spec||{})==="number"&&Number.isFinite(+t)?nfmt(t):t}”` : `Burn for ${topic}`; };
+const amtLabelText=()=>featureMode ? "Amount to burn to sponsor" : `Amount to burn for this ${kind(scope.spec||{})==="open"?"take":"answer"}${scope.spec&&scope.spec.min?` · min ${fmt(scope.spec.min)}`:""}`;
 function update(){
+  if(!featureMode&&typeof scope!=="undefined"&&scope.spec) $("votehead").textContent=burnTitle();
   const payload=stmt.value.trim();
   const data=enc.encode(payload);
   const n=data.length;
@@ -256,7 +258,7 @@ function update(){
   $("tipusd").textContent=t?usdOf(t):"skipped";
   $("tiprow").hidden=!t; amt.setAttribute("aria-invalid",String(!vValid2()));
   vpay.set({burnAddr:featureMode&&ROOT?ROOT.addr:scope.addr, burnSats:b, statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});
-  syncPollUI(); vReview(); vPaint();
+  syncPollUI(); vPaint();
 }
 // effective amounts: the burn is the vote (never optional); tip only when ticked
 const burnSats=()=>regMode ? REG_SATS : Number(amt.value||0);   // registering burns the fixed amount; the amount chips stay as they were for the next burn
@@ -267,7 +269,7 @@ $("opts").onclick=e=>{const b=e.target.closest("[data-opt]"); if(!b||b.getAttrib
 $("num").oninput=()=>{ stmt.value=$("num").value; update(); };
 $("numrange").oninput=()=>{ $("num").value=$("numrange").value; stmt.value=$("num").value; update(); };
 $("otherans").onclick=()=>{ vOther=true; stmt.value=""; update(); stmt.focus(); };   // off-list answer for a duel/poll: reveal the text field
-let vStep=1, vOther=false, vLocked=false, featureMode=false, regMode=false, ROOT=null;   // regMode: featureMode on a topic nobody registered yet (fixed REG_SATS, no amount step)   // featureMode: burn to the root topic with this topic's name (= registering, = sponsoring)
+let vStep=1, vOther=false, vLocked=false, featureMode=false, regMode=false, vEdit=false, ROOT=null;   // vEdit: the amount view stands in for the take (the price's edit)   // regMode: featureMode on a topic nobody registered yet (fixed REG_SATS, no amount step)   // featureMode: burn to the root topic with this topic's name (= registering, = sponsoring)
 deriveScope("").then(r=>{ ROOT=r; });              // vLocked: opened from a row, the answer control is read-only until "change"; vote dialog step (1 Your vote, 2 Transaction); "other answer…" clicked: the text field stays visible even while it matches an option
 const nfmt=x=>Number.isFinite(+x)&&String(x).trim()!==""?(+x).toLocaleString("en-US",{maximumFractionDigits:2}):"—";
 function syncPollUI(){
@@ -289,7 +291,7 @@ function syncPollUI(){
   document.querySelectorAll("#opts [data-opt]").forEach(b=>{ const sel=b.dataset.opt===norm(stmt.value); b.classList.toggle("primary",sel); b.setAttribute("aria-pressed",String(sel)); });
 }
 $("vtipck").checked=!!TIP_EFFECTIVE&&LS(NETKEY("bv.vote.tip"))==="1";   // default: tip off
-if(!tipEnabled()){ $("vtipck").disabled=true; $("tipoff").textContent="no tip address yet on "+NET; $("vtipf").hidden=true; $("vtipnote").hidden=true; $("tiprow").hidden=true; }   // no tip address on this network: every tip control disappears (tipSats() is 0)
+if(!tipEnabled()){ $("vtipck").disabled=true; $("tipoff").textContent="no tip address yet on "+NET; $("vtipf").hidden=true; $("tiprow").hidden=true; }   // no tip address on this network: every tip control disappears (tipSats() is 0)
 vpay.onpaint=vPaint;                                    // the wallet block repaints (wallet created, unlocked, balance in) → the footer primary follows
 stmt.oninput=update; amt.oninput=update; update();
 
@@ -306,7 +308,7 @@ async function openScope(n){
   $("q").value=""; q="";                                    // a new scope starts with an empty search (the page re-renders in place on hashchange)
   loadScope(scope.name); if($("votedlg").open) $("votedlg").close();
   $("addr").textContent=scope.addr;
-  $("votehead").textContent="Burn in #"+scope.q;
+  $("votehead").textContent=burnTitle();
   const k=kind(scope.spec); vOther=false;
   $("optfield").hidden=!scope.poll;
   $("opts").className="choice "+(k==="duel"?"pair":k);
@@ -314,62 +316,49 @@ async function openScope(n){
   $("opthint").textContent= k==="duel" ? "pick a side" : "pick one";
   const sp=scope.spec;
   const dl=sp.deadline?(sp.deadline>TIP?`closes ≈ ${new Date(Date.now()+(sp.deadline-TIP)*600000).toLocaleDateString()}`:"closed"):null;
-  $("votesub").textContent=[k==="open"?"free text, 80 bytes max":k==="number"?`a number, ${nfm(sp.range[0])} – ${nfm(sp.range[1])}`:k==="duel"?"pick a side":`pick one of ${scope.poll.length}`, sp.min?`min ${fmt(sp.min)} sats`:null, dl].filter(Boolean).join(" · ");
+  scope.rules=[sp.min?`min ${fmt(sp.min)} sats`:null, dl].filter(Boolean);   // what still matters when the take is given
+  $("votesub").textContent=scope.sub=[k==="open"?"free text, 80 bytes max":k==="number"?`a number, ${nfm(sp.range[0])} – ${nfm(sp.range[1])}`:k==="duel"?"pick a side":`pick one of ${scope.poll.length}`, sp.min?`min ${fmt(sp.min)} sats`:null, dl].filter(Boolean).join(" · ");
   $("numfield").hidden=!sp.range;
   if (sp.range){
     const [lo,hi]=sp.range, r=$("numrange"), both=Number.isInteger(lo)&&Number.isInteger(hi);
     let step=Math.pow(10,Math.floor(Math.log10(Math.max((hi-lo)/100,1e-9)))); if(both) step=Math.max(1,step);   // a round step: 50000..500000 → 1000, 0..100 → 1
     r.min=lo; r.max=hi; r.step=step; $("num").min=lo; $("num").max=hi; $("num").value=lo; stmt.value=String(lo);
   } else stmt.value="";
-  amt.min=sp.min||330; vAmt.reset(10000);
-  $("amtlabel").textContent= sp.min ? `Burn · min ${fmt(sp.min)}` : "Burn";
+  amt.min=sp.min||330; vAmt.reset(330);
+  $("amtlabel").textContent=amtLabelText();
   $("closednote").hidden=!(sp.deadline && sp.deadline<=TIP);
   update();
   $("boardtitle").textContent= kind(scope.spec)==="open" ? `Hottest takes on #${scope.q}` : `${scope.q}?`;
   document.title=scope.q+" · Burning Take";
-  headMeta(); Promise.all([tipReady(),dirLoad()]).then(()=>{ if(scope.addr===addrNow) headMeta(); });   // the sponsor score and the countdown need the directory and the tip
+  headMeta(); Promise.all([tipReady(),dirLoad()]).then(()=>{ if(scope.addr===addrNow){ headMeta(); renderBurners(); } });   // the sponsor score and the countdown need the directory and the tip
   if(hashText()!==n) history.replaceState(null,"","#"+n);
 }
 $("copyaddr").onclick=()=>copyText($("addr").textContent,$("copyaddr"));
 
-// ---------- vote dialog: 4 steps, Your statement → Amount → Review → Transaction (sponsoring skips the first) ----------
+// ---------- vote dialog: view 2 is the take (or the amount in its place: the price's edit; sponsoring: the amount), view 4 the transaction ----------
 function numInRange(){ const r=scope.spec?.range; if(!r) return true; const v=+stmt.value.trim(); return Number.isFinite(v) && v>=r[0] && v<=r[1]; }   // hoisted like vValid: a number scope only takes numbers inside its range
 function vValid1(){ if(featureMode) return true; const raw=stmt.value.trim(); if(!raw) return false; if(!scope.spec?.range) return true; return Number.isFinite(+raw) ? numInRange() : vLocked; }   // a number topic takes in-range numbers, or an existing off-list row opened from the board
 function vValid2(){ return burnSats()>=+(amt.min||330); }
 function vValid(n=vStep){ return n<=1 ? vValid1() : vValid1()&&vValid2(); }   // step n reachable when everything before it holds   // hoisted: update() runs at load, before this section
-function vReview(){                                     // step 3, in words: what the transaction burns, where, and whether it counts. Text only (textContent)
-  const k=kind(scope.spec||{}), b=burnSats(), t=tipSats(), fs=featureScore(scope.name), usd=v=>usdOf(v)?" · "+usdOf(v):"";
-  $("vrtopic").textContent="#"+scope.q;
-  $("vrstmtk").textContent= regMode ? "Name" : featureMode ? "Sponsored" : k==="open" ? "Take" : "Answer";
-  const said=stmt.value.trim();
-  $("vrstmt").textContent= regMode ? scope.name : featureMode ? `${fmt(fs)} → ${fmt(fs+b)} sats` : k==="number"&&said!==""&&Number.isFinite(+said) ? nfmt(said) : said;
-  $("vrburn").textContent=fmt(b)+" sats"+usd(b);
-  $("vrtipk").hidden=$("vrtip").hidden=!tipEnabled(); $("vrtip").textContent= t ? fmt(t)+" sats"+usd(t) : "none";
-  const late=!featureMode && !!(scope.spec?.deadline && scope.spec.deadline<=TIP);
-  $("vrnote").hidden=!late && !featureMode;
-  $("vrnote").textContent= regMode ? "Registering lists this topic in Explore. The burn goes to the root topic, with this topic's name in the OP_RETURN." : featureMode ? "The burn goes to the root topic, with this topic's name in the OP_RETURN." : "This topic is closed: the burn lands in the late bucket and does not count.";
-}
 function vPaint(){
-  document.querySelectorAll("#vsteps li").forEach((li,i)=>{ const k=i+1, b=li.firstElementChild;
-    const skip=regMode?2:featureMode?1:0; li.hidden = k<=skip; li.querySelector("i").textContent = String(k-skip);   // sponsoring: Amount, Review, Transaction. Registering: Review, Transaction
-    li.dataset.state = k===vStep?"current" : k<vStep?"done":"todo";
-    if(k===vStep) b.setAttribute("aria-current","step"); else b.removeAttribute("aria-current");
-    const off= k!==vStep && ((k===2 && !vValid1()) || (k>=3 && !(vValid1()&&vValid2()))); b.setAttribute("aria-disabled",String(off)); b.tabIndex=off?-1:0;
-  });
-  $("vback").hidden=vStep<=(regMode?3:featureMode?2:1); $("vnext").hidden=vStep===4; $("vnext").disabled=!vValid(vStep);
-  $("vsend").hidden=vStep!==4; if(vStep===4) walletPrimary($("vsend"), vpay.wallet, ()=>$("votedlg").close());   // Connect a wallet / Unlock wallet / Sign & broadcast / Done
-  const st=vpay.wallet.status(); $("vballot").hidden=vStep!==4 || !vValid(4) || !!(st&&st.kind!=="err") || scope.addr.length<20;   // the secondary way out of the Transaction step: keep the burn aside, cast several at once
+  const first=2, sign=vStep>=first, s=vpay.wallet.status(), amtView=vStep===2&&(featureMode&&!regMode||vEdit);   // the first view: the take, or the amount in its place; the primary signs
+  const sent=!!(s&&s.kind==="sent"); $("vback").hidden=sent||vLocked||featureMode||!(vStep>first || vStep===2&&vEdit); $("vprice").hidden=sent;   // Back: New take only, from the amount or the transaction   // sent: Done alone. Review is the one secondary; the transaction sits in the primary's menu
+  $("vsendwrap").hidden=!sign; const t=tipSats();
+  const edit=!regMode&&!amtView&&!(s&&(s.kind==="sent"||s.kind==="busy"));   // edit: the amount and the fee speed, in place of the view
+  dlgPrice($("vprice"), burnSats(), (regMode?"registration fee":featureMode?"sponsorship":"burn")+(edit?` <button type="button" class="linkbtn" data-editamt>edit</button>`:""), vpay.wallet.fee(), t?[`+${fmt(t)} sats tip`]:[]);
+  const r=feeRates(), sp=feeSpeed(); feeSegPaint($("vfeeseg"), !!(s&&s.kind!=="err")); $("vfeesum").textContent=`Advanced · mining fee · ${FEE_SPEEDS.find(x=>x[0]===sp)[1]} · ${r[sp]} sat/vB`;
+  if(sign) signMenu($("vsend"), $("vsendmenu"), vpay.wallet, {label: regMode?"Validate topic":featureMode?"Validate sponsorship":kind(scope.spec||{})==="open"?"Validate take":"Validate answer",
+    ok:vValid(4)&&scope.addr.length>=20, show:()=>{ if(vStep!==4) vGo(4); }, batch:vBatch, tx: vStep!==4 ? ()=>vGo(4) : null, done:()=>$("votedlg").close()});
 }
 function vGo(n){
-  vStep=n; for(const k of [1,2,3,4]) $("vstep-"+k).hidden=n!==k; vPaint(); segThumbs();   // the amount chips live in step 2: place their thumb once visible
+  n=Math.max(n,2); vStep=n; const amtView=featureMode&&!regMode||vEdit;   // view 2: the take (none when Burn for it), or the amount in its place (edit; sponsoring asks nothing else; registering, a fixed 330: nothing)
+  $("vstep-4").hidden=n!==4; $("vstep-2").hidden=n!==2||!amtView; $("vstep-1").hidden=n!==2||amtView||vLocked; vPaint(); segThumbs();
   $("votedlg").querySelector(".dlg").scrollTop=0;
-  const first=[...$("vstep-"+n).querySelectorAll("input:not([type=hidden]):not([type=checkbox]):not(:disabled):not([readonly]),button.primary")].find(el=>!el.closest("[hidden]"));
-  (first||(n===4?$("vsend"):$("vnext"))).focus({preventScroll:true});
+  const first=[...document.querySelectorAll(`#vstep-1 :is(input,button.primary),#vstep-${n} :is(input,button.primary)`)].find(el=>!el.closest("[hidden]")&&!el.disabled&&!el.readOnly&&el.type!=="hidden"&&el.type!=="checkbox");
+  (n===2&&amtView ? ($("vamtseg").hidden?amt:$("vamtseg").querySelector('[aria-pressed="true"]'))||amt : first||$("vsend")).focus({preventScroll:true});
 }
-$("vnext").onclick=()=>{ if(vValid(vStep)) vGo(vStep+1); };
-$("vback").onclick=()=>vGo(Math.max(1,vStep-1));
-document.querySelectorAll("#vsteps [data-vstep]").forEach(b=>b.onclick=()=>{ const n=+b.dataset.vstep; if(n!==vStep&&(n===1||vValid(n-1))) vGo(n); });
-$("votedlg").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches("input:not([type=checkbox])")&&!$("vnext").hidden&&!$("vnext").disabled){ e.preventDefault(); $("vnext").click(); } });
+$("vback").onclick=()=>{ if(vStep===2) vEdit=false; vGo(2); };   // from the amount: back to the take; from the transaction: back to the first view
+$("vprice").onclick=e=>{ if(e.target.closest("[data-editamt]")){ vEdit=true; vGo(2); } };
 function vLock(){                                      // per-row Burn +: the chosen answer is fixed until "change" is clicked; never blocks Next
   const k=kind(scope.spec||{}), v=norm(stmt.value), raw=stmt.value.trim();
   const onList = k==="number" ? raw!==""&&Number.isFinite(+raw) : !!scope.poll && scope.poll.includes(v);
@@ -388,17 +377,18 @@ $("unlock").onclick=()=>{
   (!stmt.readOnly&&!$("stmtfield").hidden ? stmt : k==="number" ? $("num") : $("opts").querySelector("[data-opt]")||stmt).focus({preventScroll:true});
 };
 let vOpener=null; $("votedlg").addEventListener("close",()=>{ vOpener?.focus?.({preventScroll:true}); vOpener=null; });
-function openVote(locked=false, feature=false){
+function openVote(locked=false, feature=false, start=1){   // start 2: the take is known (Burn for it), straight to the amount
   featureMode=!!feature; regMode=featureMode && !featureScore(scope.name);
-  $("vstep1").textContent = featureMode ? "Sponsor" : kind(scope.spec||{})==="open" ? "Your take" : "Your answer";
-  $("votehead").textContent = regMode ? "Register #"+scope.q : featureMode ? "Sponsor #"+scope.q : "Burn in #"+scope.q;
+  $("votehead").textContent = regMode ? "Register #"+scope.q : featureMode ? "Sponsor #"+scope.q : burnTitle();
   if(regMode){ $("votesub").textContent=`Nobody has registered this topic yet. Registering burns ${fmt(REG_SATS)} sats so it appears in Explore. Sponsoring it later ranks it higher.`; amt.min=330; }
-  else if(featureMode){ $("votesub").textContent=`Sponsoring lifts this topic onto the home page and into Explore's Spotlight. The more sats burned to sponsor it, the higher it ranks: ${fmt(featureScore(scope.name))} sats so far.`; amt.min=330; }
-  else { amt.min=(scope.spec&&scope.spec.min)||330; }
+  else if(featureMode){ $("votesub").textContent=`Ranks it on Home and in Explore · ${fmt(featureScore(scope.name))} sats so far.`; amt.min=330; }
+  else { amt.min=(scope.spec&&scope.spec.min)||330; $("votesub").textContent=scope.sub||""; }   // a plain burn: the topic's own line, not the one a sponsoring left
   update();                                                  // the payload follows the mode at once (root address and minimum when sponsoring)
   $("addr").textContent = featureMode&&ROOT ? ROOT.addr : scope.addr;
   vOpener=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:$("burnbtn");
-  vLocked=!!locked; vLock(); $("votedlg").showModal(); vGo(regMode?3:featureMode?2:1); }   // sponsoring: the statement is the topic name, nothing to ask, straight to the amount
+  vLocked=!!locked; vLock(); if(!featureMode){ $("votehead").textContent=burnTitle(); $("votesub").textContent= vLocked ? ["in #"+scope.q+(scope.spec&&(scope.spec.opts||scope.spec.range)?"?":""), ...(scope.rules||[])].join(" · ") : scope.sub||""; }   // a given take: the topic it goes to, not the typing hint
+  $("amtlabel").textContent=amtLabelText();
+  vEdit=false; $("vfeeadv").open=false; $("votedlg").showModal(); vGo(2); }   // sponsoring: the statement is the topic name, nothing to ask, straight to the amount
 $("copylink").onclick=()=>copyText(location.href,$("copylink"));
 $("featurebtn").onclick=()=>{                          // register / sponsor = burn to the root topic with this topic's name, locked
   vOther=false; stmt.value=scope.name; openVote(true,true);
@@ -465,34 +455,30 @@ $("embedbtn").onclick=morePick(()=>{ $("em-code").textContent=embedSnippet(); $(
 $("em-copy").onclick=()=>copyText($("em-code").textContent,$("em-copy"));
 $("em-copy2").onclick=()=>copyText($("em-code").textContent,$("em-copy2"));
 // ---- ballot: keep this burn aside (shared.js ballotAdd), cast several in one transaction from the nav pill ----
-$("vballot").onclick=()=>{ const n=ballotAdd(featureMode&&ROOT ? {name:"", addr:ROOT.addr, statement:scope.name, sats:burnSats(), intent:regMode?"register":"feature"} : {name:scope.name, addr:scope.addr, statement:stmt.value.trim(), sats:burnSats()}); $("votedlg").close(); ballotPill(); toast(`Added to your batch · ${n} burn${n===1?"":"s"}`); };
+function vBatch(){ const n=ballotAdd(featureMode&&ROOT ? {name:"", addr:ROOT.addr, statement:scope.name, sats:burnSats(), intent:regMode?"register":"feature"} : {name:scope.name, addr:scope.addr, statement:stmt.value.trim(), sats:burnSats()}); $("votedlg").close(); ballotPill(); toast(`Added to your batch · ${n} burn${n===1?"":"s"}`); }
 // ---- receipts: a burn signed here is on disk at once as pending (h:null, from = this wallet), so receipt.html#<txid> can show it before the explorer does ----
-vpay.wallet.onsent=({txid})=>{ const v={txid, t:stmt.value.trim(), sats:burnSats(), h:null, from:WALLET?WALLET.addr:"", tx:txid.slice(0,6)+"…"+txid.slice(-4), vout:0}; if(featureMode){ DB.putPending("",[v]); return; } DB.putPending(scope.name,[v]); addPending(scope.name,[v]); };
-// ---- top burners: the five addresses that put the most counted sats in this topic ----
-function renderBurners(){                                    // under the board, inside the time window: [biggest burns] | [latest burns, top burners]
-  const host=$("burners"), short=a=>a.slice(0,6)+"…"+a.slice(-4), H=v=>v.h===null?1e12:v.h, tag={late:" · late",dust:" · below min"}, when=h=>h===null?"in the mempool":"block "+fmt(h), W=WINLABEL[win];
+// a burn sent from here: pending on disk and on the board at once; registered or sponsored, the header follows at once too
+vpay.wallet.onsent=({txid})=>{ const v={txid, t:stmt.value.trim(), sats:burnSats(), h:null, from:WALLET?WALLET.addr:"", tx:txid.slice(0,6)+"…"+txid.slice(-4), vout:0}; if(featureMode){ DB.putPending("",[v]); dirAddPending([cleanVote({...v, at:Date.now()})]); headMeta(); renderBurners(); return; } DB.putPending(scope.name,[v]); addPending(scope.name,[v]); };
+const STAR='<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';   // the top take of the topic, in Recent
+// ---- under the board: [biggest burns (window)] | [recent (this topic's timeline, whatever the window), top burners (window)] ----
+function renderBurners(){
+  const host=$("burners"), short=a=>a.slice(0,6)+"…"+a.slice(-4), tag={late:" · late",dust:" · below min"}, when=h=>h===null?"in the mempool":"block "+fmt(h), W=WINLABEL[win];
   const seen=SEEN.filter(v=>BUCKET.get(v.txid)!=="window");
-  host.hidden=!synced || !seen.length || !!q; if(host.hidden) return;   // after the first sync, and not during a search
+  host.hidden=!synced || !SEEN.length || !!q; if(host.hidden) return;   // after the first sync, and not during a search
   const top=Object.entries(BURN).sort((a,b)=>b[1].sats-a[1].sats).slice(0,5);   // counted sats only
   const burnRow=v=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<span class="lbt">${v.t?esc(v.t):"<i>no take</i>"}</span><b>${fmt(v.sats)} sats</b>
       <span class="m">${v.from?`<a href="burner.html#${esc(v.from)}" title="${esc(v.from)}">${esc(short(v.from))}</a>`:"unknown burner"} · ${when(v.h)}${tag[BUCKET.get(v.txid)]||""}</span><a class="m" href="receipt.html#${esc(v.txid)}">receipt →</a></div>`;
   const burnerRow=(addr,sats,meta)=>`<a class="bchip br ic" href="burner.html#${esc(addr)}" title="${esc(addr)}">${iconBadge("burner",ICONS.burner)}<span class="ad">${esc(short(addr))}</span><span class="m">${meta}</span><b>${fmt(sats)} sats</b></a>`;
-  const col=(head,rows,empty="none yet")=>`<div class="burnercol"><div class="divider">${head}</div>${rows.join("")||`<span class="note">${empty}</span>`}</div>`;
-  const few=seen.length<=5;                                  // the two burn lists would repeat each other: no Biggest burns, the right column alone
+  const col=(head,rows,empty)=>`<div class="burnercol"><div class="divider">${head}</div>${rows.join("")||`<span class="note">${empty}</span>`}</div>`;
   const p=scope.spec||{}, word=kind(p)==="open"?"take":"answer";   // the board's 01: counted like countVote, off-list answers never rank
   const keyOf=v=>{ if(!p.range) return norm(v.t); const x=numOf(v.t); return Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1] ? "n:"+x : null; };
   const lead=Object.entries(agg).filter(([k])=>p.range?k.startsWith("n:"):p.opts?p.opts.includes(k):true).sort((a,b)=>b[1].sats-a[1].sats)[0], leadKey=lead&&lead[1].sats>0?lead[0]:null;
-  const takeHtml=v=>!v.t ? "<i>no take</i>" : leadKey!==null&&keyOf(v)===leadKey ? `<span>${esc(v.t)}</span><span class="rk1" title="The ${word} ranked 01 in this topic · ${W}">01</span>` : esc(v.t);
-  const tlRow=v=>`<div class="fr burn"><span class="fi">${ICON_TAKE}</span>
-      <span class="fm">${v.from?`<a href="burner.html#${esc(v.from)}" title="${esc(v.from)}">${esc(short(v.from))}</a>`:"unknown burner"} · ${when(v.h)}${tag[BUCKET.get(v.txid)]||""}</span><a class="frx" href="receipt.html#${esc(v.txid)}">receipt →</a>
-      <span class="fa${v.t&&leadKey!==null&&keyOf(v)===leadKey?" has-rk":""}">${takeHtml(v)}</span><b>${fmt(v.sats)} sats</b></div>`;   // the same timeline entry as Explore's Recent
-  const latest=[...seen].sort((a,b)=>H(b)-H(a)).slice(0,5);
-  const right = `<div class="burnercol"><div class="divider"><span class="hot" title="Live: each new block adds its burns here">Latest burns · ${W}</span></div><div class="tl">${latest.map(tlRow).join("")}</div></div>`
-    + col(`<span title="by first-input address">Top burners · ${W}</span>`, top.map(([a,b])=>burnerRow(a,b.sats,`${b.votes} burn${b.votes===1?"":"s"}`)), "none counted yet");
-  host.classList.toggle("solo",few);
-  host.innerHTML = (few ? "" : `<div class="col cl">${col(`Biggest burns · ${W}`, [...seen].sort((a,b)=>b.sats-a.sats).slice(0,ONE_COL.matches?5:20).map(burnRow))}</div>`)
-    + `<div class="col cr">${right}</div>`;
-  if(!few && !ONE_COL.matches){ const L=host.querySelector(".cl"), R=host.querySelector(".cr"), rows=[...L.querySelectorAll(".bchip")];   // Biggest burns grows to the right column's height, never below 5
+  const take=(v,link)=>{ const rk=!!v.t&&leadKey!==null&&keyOf(v)===leadKey; return link(!v.t?"<i>no take</i>":rk?`<span>${esc(v.t)}</span><span class="rk1" role="img" aria-label="Top ${word}" title="The top ${word} in this topic · ${W}">${STAR}</span>`:esc(v.t), rk?" has-rk":""); };   // link: recentRow's, to the topic page
+  const items=recentDigest(SEEN.map(v=>({v, name:scope.name})), rootBurns().filter(v=>v.name===scope.name));   // shared.js, Explore's Recent for this topic alone
+  const right = `<div class="burnercol"><div class="divider"><span class="hot" title="Live: each new block adds its burns here">Recent</span></div><div class="tl">${items.map(x=>recentRow(x,{here:true, take, tag:v=>tag[BUCKET.get(v.txid)]||""})).join("")}</div></div>`
+    + col(`<span title="by first-input address">Top burners · ${W}</span>`, top.map(([a,b])=>burnerRow(a,b.sats,`${b.votes} burn${b.votes===1?"":"s"}`)), "none counted "+W);
+  host.innerHTML = `<div class="col cl">${col(`Biggest burns · ${W}`, [...seen].sort((a,b)=>b.sats-a.sats).slice(0,ONE_COL.matches?5:20).map(burnRow), "none "+W)}</div><div class="col cr">${right}</div>`;
+  if(!ONE_COL.matches){ const L=host.querySelector(".cl"), R=host.querySelector(".cr"), rows=[...L.querySelectorAll(".bchip")];   // Biggest burns grows to the right column's height, never below 5
     for(let n=rows.length; n>5 && L.offsetHeight>R.offsetHeight+6; ) rows[--n].remove(); }
 }
 const ONE_COL=matchMedia("(max-width:860px)"); ONE_COL.addEventListener("change",()=>renderBurners());
@@ -502,5 +488,6 @@ setInterval(async()=>{
   const my=seq; await tipRefresh();
   const r=await loadVotes(scope.name,{addr:scope.addr, cancelled:()=>my!==seq}); if(!r||r.error||my!==seq) return;
   SEEN=r.votes.slice(); recount(); headTick();
+  dirLoad(true).then(()=>{ if(my===seq){ headMeta(); renderBurners(); } });   // the root topic too: sponsorships land in the header and in Recent
   const n=r.votes.length; status.innerHTML=`<span class="dot"></span> synced · block ${fmt(TIP)} · ${n?`${n} burn${n===1?"":"s"}`:"no burns yet"}`;
 },60000);

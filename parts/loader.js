@@ -4,7 +4,7 @@
 //   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done"|"error", source?, count?, page?, lastTx?, height?, requests?}
 //   cancelled()     -> true when the caller moved on: the loader stops and resolves null
 // The result's votes are the whole list with the mempool as the explorer lists it now: pages recount from it, not from the batches.
-tipReady(); priceReady();                                                 // the chain tip and the BTC price, once per page (shared.js)
+tipReady(); priceReady(); feeReady().then(()=>PAY.forEach(p=>p.paint()));   // the chain tip, the BTC price and the fee estimates, once per page (shared.js)
 const ADDRS=new Map();                                                    // topic name -> address, derived once per page
 const topicAddr=async name=>{ if(!ADDRS.has(name)) ADDRS.set(name,(await deriveScope(name)).addr); return ADDRS.get(name); };
 const FRESH_PENDING=10*60000;                                             // a burn signed in this browser stays pending this long, even before the explorer lists it
@@ -40,17 +40,35 @@ async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancel
 // dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
 // d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
 let ROOTV=[], DIRP=null, DIRERR=false;
-const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(r=>{
-  ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length;
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(async r=>{ ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length; await regTies(); return dirBuild(); }));
+// a registration or sponsorship signed in this browser: the directory takes it at once, in the mempool (it is on disk too: DB.putPending), until the explorer lists it
+const dirAddPending=vs=>{ ROOTV=[...vs, ...ROOTV.filter(v=>!vs.some(x=>x.txid===v.txid))]; return dirBuild(); };
+function dirBuild(){                                                      // the directory from the root topic's burns, keeping what the pages already counted
   const was=new Map(DIRECTORY.map(d=>[d.name,d])), next=new Map();
   for(const v of ROOTV){ const name=nameOf(v.t); if(!name) continue; const h=v.h??TIP+1;
     const d=next.get(name)||{name, stats:null, active:0, ...(was.get(name)||{}), reg:0, listings:0, first:Infinity, last:0};
     d.reg+=v.sats; d.listings++; d.first=Math.min(d.first,h); d.last=Math.max(d.last,h); next.set(name,d); }
-  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY; }));
-const rootBurns=()=>ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name);   // the sponsorships (a topic's first one registers it), newest first
-// dirTopics({onTopic}) -> Promise: every registered topic through loadVotes, three at a time; its burns land in cache[name], then d.stats and d.active
-async function dirTopics({onTopic=()=>{}}={}){
-  const todo=[...DIRECTORY];
+  DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY;
+}
+// a topic's first root burn registers it (reg): the lowest height, then the earliest in that height. The explorer's order says little, so a tie asks once:
+// in a block, each burn's place (/tx/:txid/merkle-proof, pos; kept in this browser); in the mempool, when mempool.space first saw it (else when this browser sent it)
+let POS={}; try{ POS=JSON.parse(localStorage.getItem(NETKEY("bv.pos")))||{}; }catch{}
+const SEENT={};
+const regBefore=(a,b)=>{ const c=(x,y)=>x<y?-1:x>y?1:0, at=v=>v.h===null ? SEENT[v.txid]??(v.at?v.at/1000:Infinity) : POS[v.txid]??Infinity;
+  return c(a.h??Infinity,b.h??Infinity) || c(at(a),at(b)); };
+async function regTies(){
+  const low=new Map(); for(const v of ROOTV){ const n=nameOf(v.t); if(!n) continue; const h=v.h??Infinity, o=low.get(n); if(!o||h<o.h) low.set(n,{h,vs:[v]}); else if(h===o.h) o.vs.push(v); }
+  const tied=[...low.values()].filter(g=>g.vs.length>1).flatMap(g=>g.vs), ask=tied.filter(v=>v.h!==null&&!(v.txid in POS)), seen=tied.filter(v=>v.h===null&&!(v.txid in SEENT));
+  await Promise.all([...ask.map(v=>chainGet(`/tx/${v.txid}/merkle-proof`).then(r=>{ POS[v.txid]=r.pos; }).catch(()=>{})),
+    seen.length && chainGet("/v1/transaction-times?"+seen.map(v=>"txId[]="+v.txid).join("&")).then(ts=>seen.forEach((v,i)=>{ if(ts[i]) SEENT[v.txid]=ts[i]; })).catch(()=>{})]);   // mempool.space only
+  if(ask.length) try{ localStorage.setItem(NETKEY("bv.pos"), JSON.stringify(POS)); }catch{}
+}
+const rootBurns=()=>{ const vs=ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name), first=new Map();   // the sponsorships, newest first
+  for(const v of vs){ const o=first.get(v.name); if(!o || regBefore(v,o)<0) first.set(v.name,v); }   // still tied: the first listed (mempool.space lists a block, and the mempool, oldest first)
+  for(const v of first.values()) v.reg=true; return vs; };
+// dirTopics({onTopic, only}) -> Promise: the registered topics (only(d): a subset) through loadVotes, three at a time; burns land in cache[name], then d.stats and d.active
+async function dirTopics({onTopic=()=>{},only=()=>true}={}){
+  const todo=DIRECTORY.filter(only);
   const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(()=>null), vs=(r&&r.votes)||cache[d.name]||[];
     cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); onTopic(d); } };
   await Promise.all([worker(),worker(),worker()]);

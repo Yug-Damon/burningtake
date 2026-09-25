@@ -35,7 +35,7 @@
 /* activity comes after a clear break */
 @media (max-width:860px){
   .fcard{align-items:center;padding:14px 16px;gap:6px 12px}
-  .fcard .big{font-size:16px}.fcard .big small{display:inline;margin:0 0 0 5px;font-size:11px}
+  .fcard .big{font-size:16px}.fcard .big small{font-size:11px}
   .fcard .lead .row3~.row3,.fcard .nt{display:none}
 }
 /* two independent columns under the spotlight: left = hottest takes, most burned; right = biggest features, recent, top burners.
@@ -60,4 +60,5 @@
 .viz.num i{position:absolute;top:50%;width:9px;height:9px;min-width:0;border-radius:50%;transform:translate(-50%,-50%);background:var(--ember2);box-shadow:0 0 6px var(--ember)}
 @media (max-width:480px){.viz{width:64px}}
 .burnercol>.striphead{margin-bottom:4px;flex-wrap:wrap;row-gap:0}.burnercol>.striphead .divider{white-space:nowrap}@media (min-width:481px){.burnercol>.striphead .hint{padding:0}}   /* a list heading with its link, as tall as a plain heading; the link drops under it when the line is too short */
-@media (min-width:861px) and (max-width:1100px){.fcard{padding:14px}.fcard .name{font-size:15px}.fcard .big{font-size:18px}.fcard .big .more{display:none}.fcard .big .less{display:inline}}   /* three narrow cards: a smaller number, just "sats" under it */
+@media (min-width:861px) and (max-width:1100px){.fcard{padding:14px}.fcard .name{font-size:15px}.fcard .big{font-size:18px}}   /* three narrow cards: a smaller number, just "sats" under it */
+.fcard .big small{display:inline;margin:0 0 0 5px}.fcard .big .per{display:block;margin-top:4px;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase}   /* the amount and its unit on one line, the window under them */
