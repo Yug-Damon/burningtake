@@ -2182,7 +2182,7 @@ async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancel
 // dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
 // d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
 let ROOTV=[], DIRP=null, DIRERR=false;
-const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(async r=>{ ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length; await regTies(); return dirBuild(); }));
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(async r=>{ ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length; await Promise.race([regTies(), sleep(1500)]); return dirBuild(); }));   // the ties never hold the directory long: a late answer shows at the next paint
 // a registration or sponsorship signed in this browser: the directory takes it at once, in the mempool (it is on disk too: DB.putPending), until the explorer lists it
 const dirAddPending=vs=>{ ROOTV=[...vs, ...ROOTV.filter(v=>!vs.some(x=>x.txid===v.txid))]; return dirBuild(); };
 function dirBuild(){                                                      // the directory from the root topic's burns, keeping what the pages already counted
