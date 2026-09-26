@@ -76,4 +76,4 @@
 #sqnumf .seg{flex-wrap:wrap}
 .twinnote{color:var(--ember2)}.twinnote .linkbtn{font-size:12px}
 .sqdone{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}.sqdone p{margin:0;font-size:13px;color:var(--ink2)}.sqdone .acts{display:flex;gap:8px;flex-wrap:wrap}
-.tipx{margin-left:4px;padding:0 4px;font-size:11px}
+#squnitc{display:block;margin-top:8px;width:180px;max-width:100%}   /* the Custom unit: one word, written into the name */

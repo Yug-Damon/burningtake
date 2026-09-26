@@ -78,7 +78,7 @@ function renderFeatured(){
     if(k==="number"){ const m=weightedMedian(T.answers); return `<span class="row3 num"><b>≈ ${numU(m,p)} estimate</b><span class="m">${T.answers.reduce((a,r)=>a+r.burns,0)} answers</span></span>`; }
     if(k==="duel"||k==="yes-no"){ const [A,B]=sides(p,T), L=s=>k==="yes-no"?s.key.toUpperCase():esc(s.t);
       return `<span class="row3 duo"><b class="a">${L(A)} ${k==="yes-no"?pc(A):fmt(A.sats)}</b>${splitBar(A,B)}<b class="b">${k==="yes-no"?pc(B):fmt(B.sats)} ${L(B)}</b></span>${p.deadline&&k==="yes-no"?`<span class="nt">${esc(closeState(p).short)}</span>`:""}`; }
-    const rk=j=>{ const f=T.answers.findIndex(r=>r.sats===T.answers[j].sats), tie=T.answers.filter(r=>r.sats===T.answers[j].sats).length>1; return (tie?"=":"")+String(f+1).padStart(2,"0"); };   // equal sats share a rank, like the board
+    const rk=j=>String(T.answers.findIndex(r=>r.sats===T.answers[j].sats)+1).padStart(2,"0");   // equal sats share a rank, like the board
     const rows=T.answers.slice(0,3).map((t,j)=>`<span class="row3"><i class="rk">${rk(j)}</i><b>${takeTxt(d.name,t.t)}</b><span class="m">${k==="poll"?pc(t):fmt(t.sats)}</span></span>`).join("");
     const zero=k==="poll"?p.opts.filter(o=>!T.answers.some(r=>r.key===o)):[];
     return (k==="poll"?`<span class="viz race">${T.answers.map((r,i)=>`<i class="s${Math.min(i,3)}" style="flex:${r.sats}"></i>`).join("")}</span>`:"")+rows+(zero.length?`<span class="nt">+ ${esc(zero.join(", "))}</span>`:""); };
@@ -251,7 +251,7 @@ async function dirTick(){ if(document.hidden||BUSY) return; BUSY=true; let again
 setInterval(dirTick,60000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&Date.now()-LASTTICK>60000) dirTick(); });
 const spay=payPanel("spay",{speed:false}); PAY.push(spay);   // the fee speed sits in the fee view (Advanced)
-$("sqfeehost").innerHTML=feeSegHtml("sqfeeseg"); feeSegWire($("sqfeeseg"));
+$("sqfeehost").innerHTML=feeSegHtml("sqfeeseg",true); feeSegWire($("sqfeeseg"));
 $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copylisttip").dataset.copy=TIP_EFFECTIVE||""; $("copylisttip").disabled=!TIP_EFFECTIVE;
 // effective registration amounts: burn checkbox off = no registration output, tip checkbox off = no tip output
 const regSats=()=>Math.max(REG_SATS, Math.round(+$("sqamt").value||REG_SATS));   // 330 registers; more is an initial sponsorship (the footer's Sponsor)
@@ -269,7 +269,7 @@ function updateList(){
   if(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits()) spay.set({entries:[{name:"", addr:$("rootaddr").textContent, statement:n, sats:regSats(), intent:"register"}, {name:n, addr:SQADDR.addr, statement:SQFIRST, sats:REG_SATS}], tipAddr:TIP_EFFECTIVE, tipSats:t});
   else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});   // "…" until the root address is derived
 }
-const sqTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.scope.tipsats"),$("listtip").value); }, sqTipDefault=()=>{ const v=LS(NETKEY("bv.scope.tipsats")); return v==null||v===""?1000:+v; };   // registering: 1,000 unless another tip was chosen here
+const sqTipSave=()=>tipPrefSave($("listtip").value), sqTipDefault=tipPref;   // the tip every amount dialog shares: 1,000 until another is chosen
 const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }); sqTip.reset(sqTipDefault());
 if(!tipEnabled()){ $("listtipf").hidden=true; $("listtiprow").hidden=true; }   // no tip address on this network: every tip control disappears (regTipSats() is 0)
 deriveScope("").then(r=>{ $("rootaddr").textContent=r.addr; updateList(); });
@@ -279,7 +279,7 @@ updateList();
 $("copylisthex").onclick=()=>copyText($("listhex").textContent,$("copylisthex"));
 
 // ---------- new scope dialog: the question, its kind (five chips, the guess preselected), the kind's own fields; deadline and minimum in their own view ----------
-let sqk="open", sqStep=1, sqUnit="", sqAuto=false, sqStem=null, sqTouched=false, sqDLTouched=false;   // sqk: the kind chip; sqUnit: a number's unit token; sqAuto: the kind was read from the question, untouched; sqStem: the question without the list its options came from
+let sqk="open", sqStep=1, sqUnit="", sqUnitCustom=false, sqAuto=false, sqStem=null, sqTouched=false, sqDLTouched=false;   // sqk: the kind chip; sqUnit: a number's unit token; sqAuto: the kind was read from the question, untouched; sqStem: the question without the list its options came from
 // the deadline picked: a preset or a guessed span (blocks from the tip), a date, or a searched name's block. Its block is fixed the first time a tip
 // read on this visit is known, so the name never drifts while the dialog is open and a copied transaction matches the one broadcast later
 let sqDL={kind:null};                                            // {kind:null} | {kind:"rel", blocks, abs} | {kind:"date", at (ms, 00:00 UTC), abs} | {kind:"abs", abs}
@@ -334,11 +334,11 @@ function sqRegLine(){
 function sqPaint(){                              // the footer, idempotent, called by sqRender and sqGo
   const s=spay.wallet.status(), editing=sqStep===2||sqStep===3, sent=!!(s&&s.kind==="sent");   // the rules and the fee views: Cancel or Apply, back to the topic
   $("sqback").hidden=sqStep!==4||sent;                           // the transaction only
-  const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible and removable
+  const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible; it changes in the edit view only (no ✕: removing it takes a step)
   $("sqprice").hidden=sqStep!==1&&sqStep!==3; dlgPrice($("sqprice"), REG_SATS, "registration"+(sqStep===1?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee(),
-    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip${sqStep===1&&!sent?` <button type="button" class="linkbtn tipx" data-notip aria-label="Remove the tip">✕</button>`:""}`:null].filter(Boolean));   // walletui.js; edit opens the fee view
+    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
   $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
-  feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"));
+  feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"), tipEnabled()?regTipSats():null);
   sqRegLine();
   $("sqdone").hidden=!sent; if(sent) paintDone();
   $("sqsendwrap").hidden=editing;
@@ -357,7 +357,7 @@ function sqBatch(){                                                 // registeri
 function sqRender(){
   const p=sqSpec(), name=canonical(p), nb=enc.encode(name).length;
   document.querySelectorAll("#sqkinds [data-k]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===sqk)));
-  document.querySelectorAll("#squnit [data-u]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.u===sqUnit)));
+  document.querySelectorAll("#squnit [data-u]").forEach(b=>b.setAttribute("aria-pressed",String(sqUnitCustom?b.dataset.u==="custom":b.dataset.u===sqUnit))); $("squnitc").hidden=!sqUnitCustom;
   $("sqblurb").textContent=KINDS[sqk].blurb; $("sqq").placeholder=PLACE[sqk];
   $("sqduelf").hidden=sqk!=="duel"; $("sqpollf").hidden=sqk!=="poll"; $("sqnumf").hidden=sqk!=="number";
   $("sqdetect").innerHTML= sqAuto&&$("sqq").value.trim() ? `Detected from your question · <button type="button" class="linkbtn" data-kchange>change</button>` : "";
@@ -379,8 +379,8 @@ function sqRender(){
 }
 let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; });
 function openScopeDialog(prefill, reg=false, kindHint=null){     // kindHint: a kind to start from (Home's "Start one →")
-  const p=parseScope((prefill||"").toLowerCase()), um=p.q.match(/-(in-usd|in-eur|in-sats|percent)$/);
-  sqUnit=um?"-"+um[1]:""; $("sqq").value=um?p.q.slice(0,-um[0].length):p.q||"";
+  const p=parseScope((prefill||"").toLowerCase()), um=p.q.match(/-(in-usd|in-eur|in-sats|percent)$/)||(p.range?p.q.match(/-(in-\p{L}[\p{L}\p{N}]*)$/u):null);   // a custom unit only on a number: "best-pizza-in-rome" keeps its words
+  sqUnit=um?"-"+um[1]:""; sqUnitCustom=!!um&&!/^(in-usd|in-eur|in-sats|percent)$/.test(um[1]); $("squnitc").value=sqUnitCustom?um[1].slice(3):""; $("sqq").value=um?p.q.slice(0,-um[0].length):p.q||"";
   sqk=kindHint||(p.range?"number":p.opts?(isYesNo(p)?"yes-no":p.opts.length===2?"duel":"poll"):"open");
   $("sqa").value=p.opts&&p.opts.length===2&&!isYesNo(p)?p.opts[0]:""; $("sqb").value=p.opts&&p.opts.length===2&&!isYesNo(p)?p.opts[1]:"";
   pollFields(p.opts&&p.opts.length>2?p.opts:[]); $("sqlo").value=p.range?p.range[0]:""; $("sqhi").value=p.range?p.range[1]:"";
@@ -450,7 +450,9 @@ $("sqdetect").onclick=e=>{ if(e.target.closest("[data-kchange]")){ sqTouch(); sq
 ["sqa","sqb","sqlo","sqhi"].forEach(id=>$(id).addEventListener("input",()=>{ sqTouch(); sqRender(); }));
 $("sqpollopts").addEventListener("input",()=>{ sqTouch(); sqRender(); });
 $("sqaddopt").onclick=()=>{ const n=pollInputs().length; $("sqpollopts").insertAdjacentHTML("beforeend",`<input class="mono" placeholder="Option ${n+1}" autocomplete="off" spellcheck="false" aria-label="Option ${n+1}">`); pollInputs()[n].focus(); };
-document.querySelectorAll("#squnit [data-u]").forEach(b=>b.onclick=()=>{ sqUnit=b.dataset.u; sqRender(); });
+const sqUnitIn=()=>{ const w=$("squnitc").value.toLowerCase().replace(/[^\p{L}\p{N}]/gu,"").replace(/^\p{N}+/u,""); return w?"-in-"+w:""; };   // Custom: one word, a letter first ("km/h" → "-in-kmh")
+document.querySelectorAll("#squnit [data-u]").forEach(b=>b.onclick=()=>{ sqUnitCustom=b.dataset.u==="custom"; sqUnit=sqUnitCustom?sqUnitIn():b.dataset.u; sqRender(); if(sqUnitCustom) $("squnitc").focus(); });
+$("squnitc").oninput=()=>{ sqUnit=sqUnitIn(); sqRender(); };
 const sqDateAt=()=>{ const v=$("sqdate").value; return v ? Date.parse(v+"T00:00:00Z")||0 : 0; };
 $("sqdl").onchange=()=>{ const v=$("sqdl").value, o=$("sqdl").selectedOptions[0];
   sqDL= v==="date" ? {kind:"date", at:sqDateAt(), abs:null} : v==="abs" ? {kind:"abs", abs:+o.dataset.abs} : +v ? {kind:"rel", blocks:+v, abs:null} : {kind:null}; sqDLTouched=true;
@@ -470,7 +472,7 @@ const sqMin=amountChips($("sqminseg"), $("sqmin"), ()=>sqRender());   // None, 1
 $("sqmin").addEventListener("input",()=>sqRender());
 const sqAmt=amountChips($("sqamtseg"), $("sqamt"), ()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });   // the initial sponsorship: 330 registers, more ranks it at once
 $("sqamt").addEventListener("input",()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });
-$("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } if(e.target.closest("[data-notip]")){ sqTip.reset(0); sqTipSave(); updateList(); sqPaint(); } };
+$("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } };
 $("sqback").onclick=()=>sqGo(1);
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later

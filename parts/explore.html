@@ -75,7 +75,8 @@
         <div class="field"><label for="sqhi"><span>Highest</span></label><input id="sqhi" class="mono" type="number" step="any" placeholder="e.g. 500000"></div>
       </div>
       <div class="field"><label><span>Unit</span><span class="mono">in the name, so everyone reads the same number</span></label>
-        <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button></div></div>
+        <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button><button type="button" data-u="custom" aria-pressed="false">Custom</button></div>
+        <input id="squnitc" class="mono" placeholder="e.g. km" aria-label="Custom unit, one word" maxlength="16" autocomplete="off" spellcheck="false" hidden></div>
       <p class="note">Answers outside the range are shown but not in the result: leave room.</p>
     </div>
     <div class="note rulesline regline" id="sqrulesline" aria-live="polite"></div>
@@ -119,12 +120,13 @@
       </div>
       <input id="sqamt" class="mono" type="number" min="330" step="1" value="330" aria-label="Registration in sats" hidden>
     </div>
+    <details class="tech" id="sqfeeadv"><summary id="sqfeesum">Advanced · mining fee</summary>
     <div class="field" id="listtipf">
       <label for="listtip"><span>Tip the project</span><span class="mono" id="listtipusd"></span></label>
       <div class="seg amtseg" role="group" aria-label="Tip presets" id="listtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
       <input id="listtip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
     </div>
-    <details class="tech" id="sqfeeadv"><summary id="sqfeesum">Advanced · mining fee</summary><div id="sqfeehost"></div></details>
+    <div id="sqfeehost"></div></details>
   </section>
 
   <!-- 4 · Transaction: the registration burn, a fixed 330 sats (the amount is chosen when sponsoring) -->

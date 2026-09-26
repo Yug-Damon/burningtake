@@ -3,7 +3,7 @@
 if(tipEnabled()){
   $("tipcard").hidden=false; $("tipdlg").hidden=false;
   const tpay=payPanel("tpay",{speed:false}); PAY.push(tpay);
-  $("tfeehost").innerHTML=feeSegHtml("tfeeseg"); feeSegWire($("tfeeseg"));
+  $("tfeehost").innerHTML=feeSegHtml("tfeeseg",true); feeSegWire($("tfeeseg"));
   let tStep=2, tEdit=false, tSnap=null;                     // 2: the note (the amount when editing), 4: the transaction; tSnap: what the amount view started from
   const tipAmount=()=>Number($("tipdamt").value||0);
   const tipRender=()=>{

@@ -11,7 +11,7 @@ for page in ["index","explore","topic"]+[p for p in ["burner","receipt","embed"]
     if dupf: print(f"{page}: DUPLICATE top-level functions {dupf}"); bad+=1
     markup=re.sub(r"<script>.*?</script>","",html,flags=re.S)
     ids=collections.Counter(re.findall(r'\sid="([^"]+)"', markup))
-    ids.update(re.findall(r'feeSegHtml\("([^"]+)"\)', js))   # the fee speed seg is written by script into its host
+    ids.update(re.findall(r'feeSegHtml\("([^"]+)"[,)]', js))   # the fee speed seg is written by script into its host
     dup=[k for k,v in ids.items() if v>1]
     if dup: print(f"{page}: DUPLICATE ids {dup}"); bad+=1
     used=set(re.findall(r'(?<![$\w])\$\("([^"]+)"\)', js))   # not $$("k"): walletTab's per-panel prefixed ids|set(re.findall(r'getElementById\("([^"]+)"\)', js))

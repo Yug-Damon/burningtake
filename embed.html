@@ -121,7 +121,7 @@ const nfc = x => { const a=Math.abs(+x); if(a<1e4) return String(x); const [d,s]
   return Math.abs(v-Math.round(v))<1e-9 ? Math.round(v)/10+s : fmt(+x); };                                                    // 12345 stays 12,345, years stay bare
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const $ = id => document.getElementById(id);
-const LS=(k,v)=>{ try{ return v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v); }catch{ return null; } };   // always through NETKEY(): bv.vote.tip / bv.scope.tip / bv.summary / bv.wallet
+const LS=(k,v)=>{ try{ return v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v); }catch{ return null; } };   // always through NETKEY(): bv.vote.tipsats (every dialog's tip) / bv.summary / bv.wallet
 const rhex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b=>b.toString(16).padStart(2,"0")).join("");
 const norm = t => t.trim().toLowerCase().replace(/\s+/g," ").replace(/[.!?]+$/,"");
 
@@ -339,8 +339,8 @@ const topicName = (name,hash=true) => { const p=parseScope(name); return (hash?"
 const numFmt = (x,range) => { if(x===null||x===undefined||!Number.isFinite(+x)) return "—"; const [lo,hi]=range||[0,Math.abs(+x)], ints=Number.isInteger(lo)&&Number.isInteger(hi);
   return (+x).toLocaleString("en-US",{useGrouping:Math.max(Math.abs(lo),Math.abs(hi))>=1e4, maximumFractionDigits:ints?0:2}); };
 // a number topic's unit, when its name ends with one (the New topic dialog appends it): "$150,000", "€150,000", "150,000 sats", "42%"
-const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-usd|in-eur|in-sats|percent)$/); return m?m[1]:null; };
-const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="in-sats" ? s+" sats" : s+"%"; };
+const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-\p{L}[\p{L}\p{N}]*|percent)$/u); return m?m[1]:null; };   // numbers only (numU): -in-usd, -in-eur, -in-sats, -percent, or a custom -in-<word>
+const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="percent" ? s+"%" : s+" "+u.slice(3); };   // "42 km", "5,000 sats"
 // a statement as the pages show it (escape it before HTML): a number topic's answer formatted like its board, the words as written otherwise
 const shownT = (p,t) => { if(p&&p.range){ const x=numOf(t); if(Number.isFinite(x)) return numU(x,p); } return String(t??""); };
 const numOf = t => { const m=norm(String(t)).match(/^(-?\d+(?:\.\d+)?)([km])?$/); return m ? +m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1) : NaN; };   // spec §5: "150k" = 150000
@@ -475,6 +475,8 @@ const BECH32M=0x2bc830a3;
 const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
+const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network)
+const tipPrefSave = v => { if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),String(v)); };
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
 function bech32Decode(addr){                                     // -> {hrp, version, program}; v0 = bech32, v1+ = bech32m (BIP-173 / BIP-350)
   if(typeof addr!=="string") throw new Error("not a string");
@@ -704,7 +706,10 @@ function netSwitch(to){
 // ---------- a small menu under a button (aria-expanded + hidden): closes on outside click and Escape. -> close() ----------
 function dropMenu(btn,menu){
   const close=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false"); };
-  btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
+  const place=()=>{ const w=btn.closest("dialog .signwrap"); if(!w) return; const r=w.getBoundingClientRect(), phone=matchMedia("(max-width:480px)").matches;   // a dialog footer's menu: fixed to the screen, so a short dialog's scroll box cannot clip it
+    Object.assign(menu.style,{position:"fixed",top:"auto",bottom:innerHeight-r.top+6+"px",right:innerWidth-r.right+"px",left:phone?r.left+"px":"auto",minWidth:r.width+"px"}); };
+  btn.closest("dialog")?.querySelector(".dlg")?.addEventListener("scroll",()=>{ if(!menu.hidden) close(); },{passive:true});   // fixed: it would stay put while the dialog scrolls
+  btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; if(open) place(); menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); btn.focus(); } });
   menu.addEventListener("keydown",e=>{                                     // arrow keys walk the items, like a native menu

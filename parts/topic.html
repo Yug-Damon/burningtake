@@ -97,7 +97,7 @@
       </div>
       <p class="note" id="othernote" hidden></p>
       </section>
-      <div class="veffect" id="veffect" aria-live="polite"></div>
+      <div class="veffect" id="veffect"></div><p class="vh" id="veffectsay" aria-live="polite"></p>
       <label class="check" id="vregf" hidden><input type="checkbox" id="vreg"> <span>Also register it so it shows in Explore · +330 sats, same transaction</span></label>
       <p class="note" id="vregnote" hidden>This take and the topic's name don't fit one 80-byte OP_RETURN together: register it separately.</p>
 
@@ -115,13 +115,14 @@
           <input id="amt" class="mono" type="number" min="330" step="1" value="330" aria-label="Burn amount in sats" hidden>
           <p class="note" id="leadnote" hidden></p>
         </div>
+        <p class="note" id="minnote" hidden></p>
+        <details class="tech" id="vfeeadv"><summary id="vfeesum">Advanced · mining fee</summary>
         <div class="field" id="vtipf">
           <label for="tip"><span>Tip the project</span><span class="mono" id="tipusd"></span></label>
           <div class="seg amtseg" role="group" aria-label="Tip presets" id="vtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
           <input id="tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
         </div>
-        <p class="note" id="minnote" hidden></p>
-        <details class="tech" id="vfeeadv"><summary id="vfeesum">Advanced · mining fee</summary><div id="vfeehost"></div></details>
+        <div id="vfeehost"></div></details>
       </section>
 
       <!-- 4 · Transaction -->

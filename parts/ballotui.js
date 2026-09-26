@@ -12,7 +12,7 @@ function download(name,text,type){                        // a file from text; a
 // ---------- batch: several burns kept aside (shared.js ballotGet/ballotAdd…), cast as ONE transaction from buildBallotPayload ----------
 // The nav pill (#ballotbtn) counts the entries; the dialog lists them, compares one fee with N, and signs through the same wallet block as a single burn.
 const bwt=walletTab("bpay",$("bpay-wallet"),{speed:false});   // the fee speed sits in the fees view (the price's edit)
-$("bfeehost").innerHTML=feeSegHtml("bfeeseg"); feeSegWire($("bfeeseg"));
+$("bfeehost").innerHTML=feeSegHtml("bfeeseg",true); feeSegWire($("bfeeseg"));
 let bLast=null, bSent=null, bStep=1, bSnap=null;            // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
 const bTipSats=()=>tipEnabled() ? Math.max(0,Math.round(Number($("b-tip").value||0))) : 0;   // "No tip" is 0
 function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
@@ -43,7 +43,7 @@ function bPaint(){
     </div>`).join("");
   const tip=bTipSats();
   dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+(!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:""), bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
-  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"));
+  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"), tipEnabled()?bTipSats():null);
   $("b-tipf").hidden=!tipEnabled(); $("b-tipusd").textContent=tip?usdOf(tip):"";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
@@ -82,8 +82,8 @@ bwt.onsent=({txid})=>{                                       // one transaction,
 $("b-list").onclick=e=>{ const b=e.target.closest("[data-brm]"); if(!b) return; const n=ballotRemove(+b.dataset.brm); bSync(); toast(n?`Removed · ${n} left`:"Batch is empty"); };
 $("b-clear").onclick=()=>{ ballotClear(); bSync(); toast("Batch cleared"); };
 $("b-tipf").hidden=!tipEnabled();                            // no tip address on this network: the ballot's tip line is never shown
-const bTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),$("b-tip").value); };   // shared with the burn dialogs
-const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(+LS(NETKEY("bv.vote.tipsats"))||0);
+const bTipSave=()=>tipPrefSave($("b-tip").value);   // shared with every amount dialog (tipPref)
+const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(tipPref());
 $("b-tip").oninput=()=>{ bTipSave(); bSync(); };
 $("bpay-copy").onclick=()=>{ if(bLast) copyText(bLast.rawHex,$("bpay-copy")); };
 function bGo(n){                                             // show a step; focus its first action
@@ -95,7 +95,7 @@ $("bback").onclick=()=>bGo(1);
 $("bprice").onclick=e=>{ if(!e.target.closest("[data-editfee]")) return; bSnap={tip:$("b-tip").value, fee:feeSpeed()}; bGo(2); };
 $("bapply").onclick=()=>{ bSnap=null; bGo(1); };
 $("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ bTip.reset(s.tip); bTipSave(); LS(NETKEY("bv.fee"),s.fee); } bSync(); PAY.forEach(p=>p.paint()); bGo(1); };
-function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bSync(); $("ballotdlg").showModal(); bGo(1); }
+function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bTip.reset(tipPref()); bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
 ballotPill();

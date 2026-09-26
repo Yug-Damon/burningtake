@@ -106,7 +106,7 @@ details.tech{flex:0 1 auto;min-width:0}
 details.tech[open]{flex-basis:100%}
 .wstep>.field+details.tech{display:block;margin-top:10px}   /* an Advanced after a field: the fields' own rhythm (16px, the summary pads the rest) */
 details.tech summary{cursor:pointer;list-style:none;display:inline-flex;align-items:flex-start;gap:6px;font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:8px 2px;line-height:1.4;border-radius:6px}
-details.tech summary::-webkit-details-marker{display:none}
+details.tech summary::-webkit-details-marker{display:none}details.tech summary{text-wrap:balance}   /* a long Advanced label breaks evenly, never one word alone */
 details.tech summary::before{content:"▸";font-size:10px;flex:none;margin-top:2px;transition:.15s}
 details.tech[open] summary::before{transform:rotate(90deg)}
 details.tech summary:hover{color:var(--ink)}
@@ -155,6 +155,7 @@ details.tech .out{margin-top:6px}
   .wpay .qrow>.note{flex-basis:100%;margin-top:2px}
   .wledger>.btn{flex:1 1 100%;justify-content:center;min-height:44px}.wledger>.note{flex-basis:100%;margin-top:2px}
   dialog .copy{min-height:40px;padding:0 12px} dialog h3 .copy{min-width:40px;min-height:40px} #walletdlg .seg button{min-height:40px} dialog .btn.sm{min-height:40px}
+  dialog .ef{padding:12px}dialog .efgo{min-height:40px}.efnotes span>.linkbtn:first-child{margin-left:-6px}.ef .efgo,.efnotes .linkbtn,#leadnote button{scroll-margin-bottom:200px}   /* phone: the linkbtn's 6px touch padding would push a note's first link off the icon column; a focused action scrolls clear of the sticky footer */
 }
 @media (prefers-reduced-motion:reduce){.wstep{animation:none}}
 
@@ -230,16 +231,20 @@ section{padding-block:64px}
 .duel{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:14px}
 .duel-head{display:flex;justify-content:space-between;font-family:var(--font-d);font-weight:600;font-size:18px}
 .duel-head .a,.duel-head .b{color:var(--ink)}.duel-head .side{font-family:var(--font-m);font-size:12px;font-weight:500;color:var(--ink2);margin:0 8px}
-.dbtn{background:transparent}.dbtn.da{border-color:rgba(255,154,82,.55)}.dbtn.db{border-color:color-mix(in srgb,var(--side-b2) 60%,transparent)}
-.duel.empty .duel-bar div.a,.duel.empty .duel-bar div.b{background:transparent}.duel.ghost .duel-bar{background:rgba(255,255,255,.04)}
+.dbtn{min-width:0;min-height:44px;justify-content:center;text-align:center;line-height:1.25;overflow-wrap:anywhere}   /* a duel's two burns: equal halves, each in its side's tint */
+.dbtn.da{color:var(--ember2);background:var(--ember-dim);border-color:rgba(255,181,71,.35)}.dbtn.da:hover{border-color:var(--ember2)}
+.dbtn.db{color:var(--side-b2);background:color-mix(in srgb,var(--side-b) 16%,transparent);border-color:color-mix(in srgb,var(--side-b2) 35%,transparent)}.dbtn.db:hover{border-color:var(--side-b2)}
+.duel.blank{border-style:dashed}.duel.blank .duel-bar div.a,.duel.blank .duel-bar div.b,.duel.unknown .duel-bar div.a,.duel.unknown .duel-bar div.b{background:transparent}.duel.ghost .duel-bar{background:rgba(255,255,255,.04)}   /* blank: nothing burned yet (not .empty: the pages' generic empty box centred the card and collapsed its bar) */
 .duel-bar{position:relative;display:flex;height:44px;border-radius:12px;overflow:hidden;background:var(--bg)}
 .duel-bar div.a{background:linear-gradient(90deg,var(--ember),var(--ember2));transition:width .4s}   /* div only: the .pct labels share the a/b class */
 .duel-bar div.b{background:linear-gradient(90deg,var(--side-b2),var(--side-b));transition:width .4s}
 @media (prefers-reduced-motion:reduce){.duel-bar div.a,.duel-bar div.b{transition:none}.pend i{animation:none}}   /* the duel's bars and the pending pulse hold still too */
 .duel-bar .pct{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--font-d);font-weight:800;font-size:16px}
 .duel-bar .pct.a{left:14px;color:#1a0900}.duel-bar .pct.b{right:14px;color:#fff}
-.duel-foot{display:flex;justify-content:space-between;gap:16px;font-size:13px;color:var(--ink2);line-height:2}
-.duel-foot b{font-family:var(--font-d);font-size:15px;color:var(--ink)}
+.duel-sides{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:-6px}   /* each side's figures under its end of the bar */
+.dside{margin:0;display:grid;justify-items:start;align-content:start;font:12px/1.5 var(--font-m);color:var(--ink2)}.dside.b{justify-items:end;text-align:right}
+.dsum{max-width:100%}.dsum b{font:600 16px/1.25 var(--font-d);color:var(--ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.dside{container-type:inline-size}@container (max-width:220px){.dmeta span{display:block}.dmeta .dsep{display:none}}.dmeta span{white-space:nowrap}.dmeta .dsep{white-space:normal}   /* burns · burners: a real separator, the one place a long pair wraps */
+.duel-acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.duel.ghost .dside{gap:8px;padding-top:2px}.duel.ghost .duel-acts .sk{height:44px;border-radius:999px}
 .numview{padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:6px;margin-bottom:14px}
 .numstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
 .numstats div{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--panel);min-width:0}
@@ -464,7 +469,6 @@ nav .pill,.logo{white-space:nowrap}
   .srow{gap:4px 12px;padding:10px 14px}.srow .sats{font-size:13px}
   .card .meta{font-size:12px}.recent .btn:nth-child(n+5){display:none}
   .numstats{gap:6px}.numstats div{padding:8px 10px}.numstats b{font-size:15px}.numstats>div>span{letter-spacing:.04em}
-  .duel-foot{line-height:1.5;gap:12px}.duel-foot .va,.duel-foot .vb{display:block;font-size:12px;margin:2px 0 8px}.duel-foot br{display:none}
   #tipcard .source>div:last-child{justify-content:stretch}#tipbtn{width:100%;justify-content:center;min-height:48px}
   details.tech summary{max-width:100%}
   .wbal b{font-size:20px}.wbal .mono{font-size:12px}#w-refresh{margin-left:auto}
@@ -608,7 +612,9 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .regline .warn,.regline .warn code{color:var(--ember2)}.regline .bad,.regline .bad code{color:#ff5c5c}
 #sqdatef{margin-top:8px}#sqdatef input{width:100%}#sqdatef .note{margin-top:6px}
 @media (max-width:480px){.dlgfoot .dlgprice{display:inline-grid;justify-content:center;text-align:center;padding:4px 0;order:9}}   /* phone: the cost over the stacked buttons */
-.feeseg{margin-top:10px;width:100%}.feeseg button{flex:1;white-space:nowrap}.feeseg button span{color:var(--ink3);font-size:11px}   /* the mining fee speed under the tiles */
+.feeseg{margin-top:10px;width:100%}.feeseg button{flex:1;white-space:nowrap}.feeseg button span{color:var(--ink3);font-size:11px}.feeseg button span::before{content:" · "}.feef .feeseg{margin-top:0}   /* the mining fee speed: "Normal · 2 sat/vB" */
+@media (max-width:480px){.feeseg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.2;padding:5px 6px}.feeseg button span::before{content:none}}   /* phones: the rate under its speed, so three fit */
+.feenote{margin:8px 0 0}   /* where the fee goes, under the speeds of an Advanced · mining fee view */
 .batchnote{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,181,71,.35);border-radius:12px;background:var(--ember-dim);color:var(--ink2);display:grid;gap:10px}.batchnote p{margin:0}.batchnote .acts{display:flex;gap:8px;flex-wrap:wrap}   /* the batch already holds this topic: replace or add, never lose a burn */
 .btag{display:block;margin-top:2px;font-family:var(--font-m);font-size:11px;color:#ff8c5c}   /* a batch row that would not count as written */
 
@@ -624,7 +630,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .racebar b{font:600 12px var(--font-d);color:#dfe6f0;overflow:hidden;text-overflow:ellipsis}.racebar .s0 b{color:#1a0900}
 .racebar .s0{background:linear-gradient(90deg,var(--ember),var(--ember2))}.racebar .s1{background:#3b4a60}.racebar .s2{background:#334055}.racebar .s3{background:#2b3545}
 .racebar.ghost{background:rgba(255,255,255,.04)}
-.rmom,.duel-x{margin:0;font-family:var(--font-m);font-size:11.5px;color:var(--ink3)}.duel-x{display:grid;gap:2px}.duel-x:empty{display:none}
+.rmom,.duel-x{margin:0;font-family:var(--font-m);font-size:11.5px;color:var(--ink3)}.duel-x{display:grid;gap:2px}.duel-x:empty,.duel-verdict:empty{display:none}
 .esttop{display:flex;align-items:end;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
 .esthero{display:grid;gap:2px}.esthero .lbl,.eststats span{font-family:var(--font-m);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
 .esthero b{font:600 30px/1.1 var(--font-d);color:var(--ember2);font-variant-numeric:tabular-nums}.esthero .sub{font-size:12px;color:var(--ink3)}
@@ -645,8 +651,8 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .duel-head .a{color:var(--ember2)}.duel-head .b{color:var(--side-b2)}   /* each side in its color */
 .duel-head{gap:12px;align-items:flex-start}.duel-head>span{min-width:0;overflow-wrap:anywhere}
 .vs{font-style:normal;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:.12em;color:var(--ink3);align-self:center}
-.dhint{display:block;margin-top:6px;font-family:var(--font-m);font-size:11.5px;color:var(--ember2)}.dhint:empty{display:none}
-.duel.empty .duel-bar{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px),var(--bg)}
+.dhint{margin-top:2px;padding-inline:0;text-align:inherit;font-family:var(--font-m);font-size:11.5px;text-wrap:balance}.dhint:empty{display:none}.dhint.wait{visibility:hidden}.dhb{color:var(--side-b2)}   /* the trailing side (duel or yes-no): the amount that would lead, a link (.linkbtn) that burns it; two even lines on a narrow phone */
+.duel.blank .duel-bar{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px),var(--bg)}
 .duel-bar .nocall{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-m);font-size:12px;color:var(--ink3)}
 .tg{display:inline-block;margin-left:8px;padding:0 6px;border-radius:4px;font:500 10.5px/1.6 var(--font-m);color:var(--ink3);background:rgba(255,255,255,.06);vertical-align:2px;white-space:nowrap}
 .tg.pend{color:var(--ember2);background:var(--ember-dim)}.tg.warn{color:#ff8c5c;background:rgba(255,92,92,.12)}.tg.up{color:var(--ok)}
@@ -661,7 +667,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .st.compact{padding:8px 14px;min-height:44px}.st.compact .txt{font-size:14px}
 @media (max-width:480px){
   .racebar{height:30px}.esthero b{font-size:24px}.hist{height:72px}
-  .duel{padding:16px}.duel-foot{display:grid;grid-template-columns:1fr 1fr}.duel-foot .dbtn{width:100%;justify-content:center;min-height:44px;margin-top:6px}
+  .duel{padding:16px}.duel-acts{display:none}.dmeta span{display:block}.dmeta .dsep{display:none}.dhint{margin-top:-4px;font-size:11px}.duel.ghost .dside{padding-bottom:18px}   /* the sticky bar (#mbar) holds both burns; burns and burners on their own lines, no separator */
   .duel-head:has(.vs){display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.duel-head:has(.vs) .b{text-align:right}
 }
 /* ===== the burn dialog: the take as it is typed, what the burn changes, the answers with where they stand ===== */
@@ -669,8 +675,55 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .field textarea.locked{border-style:dashed;color:var(--ink2);caret-color:transparent;cursor:default}
 .meter{display:block;height:3px;margin-top:6px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--ember2);transition:width .15s}.meter.over i{background:#ff5c5c}
 #byteshint.over{color:#ff5c5c}
-.veffect{margin-top:14px;display:grid;gap:6px}.veffect[hidden]{display:none}
-.effect{margin:0;font-family:var(--font-m);font-size:12.5px;color:var(--ink2);line-height:1.5}.effect.warn{color:#ff8c5c}.effect.cost{color:var(--ink3);font-size:11.5px}
+.veffect{margin-top:14px;display:grid;gap:8px}.veffect[hidden]{display:none}
+.ef{display:grid;gap:12px;padding:12px 14px 14px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}   /* what this burn changes: one card, the picture, the outcome and its one action */
+.veffect,.ef{grid-template-columns:minmax(0,1fr)}.efnotes li>span,.efwarn>span{min-width:0;overflow-wrap:anywhere}.efcap p>b{overflow-wrap:anywhere}   /* a long unbroken take or name wraps inside the card, never widens it past the dialog */
+.efeye{margin:0 0 -2px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font:500 10.5px/1.4 var(--font-m);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}   /* With your N sats; as of block N on stale data */
+.efeye .asof{text-transform:none;letter-spacing:.02em;color:var(--ink2)}
+.ef .was,.ef .to{color:var(--ink3);font-weight:400}.efends .a,.efcap .a{color:var(--ember2)}.efends .b,.efcap .b{color:var(--side-b2)}   /* before → after: the before muted; a side in its color, 01 in ember */
+.eflad{display:grid;gap:4px}   /* open and poll: the leader and yours as small board rows, your sats hatched */
+.efrow{display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center}
+.efrow .k{font:600 12.5px var(--font-d);color:var(--ink3);white-space:nowrap}.efrow.r1 .k{color:var(--ember2)}
+.efrow .bx{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px;padding:5px 12px 7px;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden;font-size:14px;color:var(--ink2)}
+.efrow .bx>span{position:relative;min-width:0;text-shadow:0 0 3px var(--bg),0 0 6px var(--bg)}
+.efrow .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;unicode-bidi:isolate}.efrow .n.hid{font-style:italic;color:var(--ink3)}
+.efrow .s{flex:none;font:500 12.5px var(--font-m);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink3)}.efrow .s b{font-weight:600;color:var(--ink2)}@media (max-width:400px){.efrow .was{display:none}}   /* phones: your row keeps its name; the hatch shows what you add */
+.efrow.me .bx{color:var(--ink);border-color:rgba(255,181,71,.3)}.efrow.me .n{font-weight:600}.efrow.me .s b{color:var(--ink)}
+.efrow i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,106,26,.14),rgba(255,181,71,.08));box-shadow:inset 0 -2px 0 rgba(255,106,26,.8)}
+.ef-poll .efrow:not(.r1) i:not(.add){background:rgba(122,145,176,.14)}   /* a poll: the leader in ember, the others slate, as on the board */
+.efrow i.add{background:repeating-linear-gradient(-45deg,rgba(255,181,71,.32) 0 2px,transparent 2px 6px);box-shadow:inset 0 -2px 0 var(--ember2)}
+.efends{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font:600 13px/1.2 var(--font-d)}   /* duel and yes-no: the names at the split's ends, the 50% mark over and under it */
+.efends span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.efbar{position:relative}.efbar .mini{height:12px;border-radius:6px}
+.efbar::before,.efbar::after{content:"";position:absolute;left:50%;width:1px;height:4px;background:var(--ink3)}.efbar::before{top:-6px}.efbar::after{bottom:-6px}
+.efaxis{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}   /* a number: its range, the middle half, the estimate before (ring) and after (dot), yours marked */
+.efaxis .end{font:500 11px var(--font-m);font-variant-numeric:tabular-nums;color:var(--ink3);white-space:nowrap}
+.efaxis .trk{position:relative;height:58px}
+.efaxis .ln{position:absolute;left:0;right:0;top:28px;height:2px;border-radius:1px;background:rgba(255,255,255,.16)}
+.efaxis .ln::before,.efaxis .ln::after{content:"";position:absolute;top:-4px;width:1px;height:10px;background:rgba(255,255,255,.28)}.efaxis .ln::before{left:0}.efaxis .ln::after{right:0}
+.efaxis .q{position:absolute;top:25px;height:8px;padding:0 4px;box-sizing:content-box;transform:translateX(-4px);border-radius:4px;background:rgba(255,181,71,.22)}
+.efaxis .mv{position:absolute;top:28px;height:2px;background:var(--ember2);opacity:.7}
+.efaxis .m0,.efaxis .m1{position:absolute;top:29px;width:12px;height:12px;border-radius:50%;transform:translate(-50%,-50%)}
+.efaxis .m0{border:2px solid var(--ink3);background:var(--bg)}
+.efaxis .m1{background:var(--ember2);box-shadow:0 0 0 3px var(--bg),0 0 10px rgba(255,106,26,.6)}
+.efaxis .you{position:absolute;top:14px;height:15px;width:2px;border-radius:1px;background:var(--ink);transform:translateX(-50%)}
+.efaxis .lt,.efaxis .lb{position:absolute;white-space:nowrap;font:500 11px/1 var(--font-m)}
+.efaxis .lt{top:0;color:var(--ink)}.efaxis .lb{bottom:0;color:var(--ember2)}
+.efcap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}   /* the outcome in words, one fact under it; the action at its right, under it on a phone */
+.efcap p{margin:0;min-width:0;display:grid;gap:2px}
+.efcap p>b{font:600 15px/1.3 var(--font-d);letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums}
+.efcap p>span{font-size:13px;line-height:1.4;color:var(--ink2);text-wrap:pretty}
+.efgo{display:inline-flex;align-items:center;min-height:36px;padding:6px 15px;border:1px solid rgba(255,154,82,.55);border-radius:18px;background:transparent;color:var(--ember2);font:600 13px var(--font-b);font-variant-numeric:tabular-nums;text-align:left;cursor:pointer;transition:.15s}   /* the one action, an outlined pill in its side's color; a wrapped second part loses its "·" (clipped by the span's overflow) */
+.efgo>span{display:flex;flex-wrap:wrap;column-gap:14px;overflow:hidden}.efgo b,.efgo i{white-space:nowrap}.efgo b{font-weight:600}
+.efgo i{position:relative;font-style:normal;font-weight:400;color:var(--ink2)}.efgo i::before{content:"·";position:absolute;right:calc(100% + 5px)}
+.efgo:hover{border-color:var(--ember2);color:var(--ink)}.efgo.b{border-color:color-mix(in srgb,var(--side-b2) 60%,transparent);color:var(--side-b2)}.efgo.b:hover{border-color:var(--side-b2);color:var(--ink)}
+.efok{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--font-b);color:var(--ok);white-space:nowrap}.efok svg{width:15px;height:15px}   /* this amount already does it */
+.efnotes{margin:0;padding:0 2px;list-style:none;display:grid;gap:5px}   /* the notes: small, quiet, one icon each */
+.efnotes li{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.45;color:var(--ink3)}
+.efnotes li>svg{flex:none;width:13px;height:13px;margin-top:2px}.efnotes .linkbtn{font-size:12.5px}.efnotes .cost{font-family:var(--font-m);font-size:11.5px}
+.efwarn{margin:0;display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid rgba(255,140,92,.32);border-radius:12px;background:rgba(255,140,92,.07);font-size:13px;line-height:1.45;color:#ff8c5c}   /* late, off the list, under the minimum: said as a callout */
+.efwarn svg{flex:none;width:15px;height:15px;margin-top:2px}
+#leadnote{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}#leadnote[hidden]{display:none}   /* the amount view: the card's action under the chips */
 .mini{position:relative;display:flex;height:16px;border-radius:5px;overflow:hidden;background:linear-gradient(90deg,var(--side-b2),var(--side-b))}.mini i.a{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2))}.mini i.b{flex:1}
 .mini .proj{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
 .choice .btn small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);margin-top:2px}.choice .btn{flex-direction:column;gap:0}
@@ -708,7 +761,9 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 @media (max-width:480px){
   .mbar:not([hidden]){display:flex;position:fixed;left:0;right:0;bottom:0;z-index:6;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(11,10,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
   .mbar .btn{flex:1;justify-content:center;min-height:44px}.mbar .btn.sideb{background:linear-gradient(135deg,var(--side-b2),var(--side-b));color:#fff;border:0}
-  #board:has(.mbar:not([hidden])){padding-bottom:84px}html:has(dialog[open]) .mbar{display:none!important}
+  .mbar .btn{min-width:0}.mbar .btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* one row: a long side name ellipsizes */
+  body:has(.mbar:not([hidden])){padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}   /* the reserve under the footer, so the bar never covers its last row */
+  html:has(dialog[open]) .mbar{display:none!important}
   .hactions #featurebtn{min-height:40px}
 }
 #vregf,#sqfirstf .check{margin-top:12px;font-size:13px;color:var(--ink2)}#sqfirstopts{margin-top:10px}
@@ -791,7 +846,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 #sqnumf .seg{flex-wrap:wrap}
 .twinnote{color:var(--ember2)}.twinnote .linkbtn{font-size:12px}
 .sqdone{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}.sqdone p{margin:0;font-size:13px;color:var(--ink2)}.sqdone .acts{display:flex;gap:8px;flex-wrap:wrap}
-.tipx{margin-left:4px;padding:0 4px;font-size:11px}
+#squnitc{display:block;margin-top:8px;width:180px;max-width:100%}   /* the Custom unit: one word, written into the name */
 </style>
 
 <nav><div class="wrap">
@@ -871,7 +926,8 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
         <div class="field"><label for="sqhi"><span>Highest</span></label><input id="sqhi" class="mono" type="number" step="any" placeholder="e.g. 500000"></div>
       </div>
       <div class="field"><label><span>Unit</span><span class="mono">in the name, so everyone reads the same number</span></label>
-        <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button></div></div>
+        <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button><button type="button" data-u="custom" aria-pressed="false">Custom</button></div>
+        <input id="squnitc" class="mono" placeholder="e.g. km" aria-label="Custom unit, one word" maxlength="16" autocomplete="off" spellcheck="false" hidden></div>
       <p class="note">Answers outside the range are shown but not in the result: leave room.</p>
     </div>
     <div class="note rulesline regline" id="sqrulesline" aria-live="polite"></div>
@@ -915,12 +971,13 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
       </div>
       <input id="sqamt" class="mono" type="number" min="330" step="1" value="330" aria-label="Registration in sats" hidden>
     </div>
+    <details class="tech" id="sqfeeadv"><summary id="sqfeesum">Advanced · mining fee</summary>
     <div class="field" id="listtipf">
       <label for="listtip"><span>Tip the project</span><span class="mono" id="listtipusd"></span></label>
       <div class="seg amtseg" role="group" aria-label="Tip presets" id="listtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
       <input id="listtip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
     </div>
-    <details class="tech" id="sqfeeadv"><summary id="sqfeesum">Advanced · mining fee</summary><div id="sqfeehost"></div></details>
+    <div id="sqfeehost"></div></details>
   </section>
 
   <!-- 4 · Transaction: the registration burn, a fixed 330 sats (the amount is chosen when sponsoring) -->
@@ -1079,12 +1136,13 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
   <!-- 2 · Fees: the mining fee speed and the tip (the price's edit), Apply or Cancel -->
   <section class="wstep" id="bstep-2" hidden>
+    <details class="tech" id="bfeeadv" open><summary id="bfeesum">Advanced · mining fee</summary>
     <div class="field" id="b-tipf">
       <label for="b-tip"><span>Tip the project</span><span class="mono" id="b-tipusd"></span></label>
       <div class="seg amtseg" role="group" aria-label="Tip presets" id="b-tipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
       <input id="b-tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
     </div>
-    <details class="tech" id="bfeeadv" open><summary id="bfeesum">Advanced · mining fee</summary><div id="bfeehost"></div></details>
+    <div id="bfeehost"></div></details>
   </section>
 
   <!-- 3 · Transaction: one transaction for the whole batch -->
@@ -1145,7 +1203,7 @@ const nfc = x => { const a=Math.abs(+x); if(a<1e4) return String(x); const [d,s]
   return Math.abs(v-Math.round(v))<1e-9 ? Math.round(v)/10+s : fmt(+x); };                                                    // 12345 stays 12,345, years stay bare
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const $ = id => document.getElementById(id);
-const LS=(k,v)=>{ try{ return v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v); }catch{ return null; } };   // always through NETKEY(): bv.vote.tip / bv.scope.tip / bv.summary / bv.wallet
+const LS=(k,v)=>{ try{ return v===undefined ? localStorage.getItem(k) : localStorage.setItem(k,v); }catch{ return null; } };   // always through NETKEY(): bv.vote.tipsats (every dialog's tip) / bv.summary / bv.wallet
 const rhex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b=>b.toString(16).padStart(2,"0")).join("");
 const norm = t => t.trim().toLowerCase().replace(/\s+/g," ").replace(/[.!?]+$/,"");
 
@@ -1363,8 +1421,8 @@ const topicName = (name,hash=true) => { const p=parseScope(name); return (hash?"
 const numFmt = (x,range) => { if(x===null||x===undefined||!Number.isFinite(+x)) return "—"; const [lo,hi]=range||[0,Math.abs(+x)], ints=Number.isInteger(lo)&&Number.isInteger(hi);
   return (+x).toLocaleString("en-US",{useGrouping:Math.max(Math.abs(lo),Math.abs(hi))>=1e4, maximumFractionDigits:ints?0:2}); };
 // a number topic's unit, when its name ends with one (the New topic dialog appends it): "$150,000", "€150,000", "150,000 sats", "42%"
-const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-usd|in-eur|in-sats|percent)$/); return m?m[1]:null; };
-const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="in-sats" ? s+" sats" : s+"%"; };
+const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-\p{L}[\p{L}\p{N}]*|percent)$/u); return m?m[1]:null; };   // numbers only (numU): -in-usd, -in-eur, -in-sats, -percent, or a custom -in-<word>
+const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="percent" ? s+"%" : s+" "+u.slice(3); };   // "42 km", "5,000 sats"
 // a statement as the pages show it (escape it before HTML): a number topic's answer formatted like its board, the words as written otherwise
 const shownT = (p,t) => { if(p&&p.range){ const x=numOf(t); if(Number.isFinite(x)) return numU(x,p); } return String(t??""); };
 const numOf = t => { const m=norm(String(t)).match(/^(-?\d+(?:\.\d+)?)([km])?$/); return m ? +m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1) : NaN; };   // spec §5: "150k" = 150000
@@ -1499,6 +1557,8 @@ const BECH32M=0x2bc830a3;
 const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
+const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network)
+const tipPrefSave = v => { if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),String(v)); };
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
 function bech32Decode(addr){                                     // -> {hrp, version, program}; v0 = bech32, v1+ = bech32m (BIP-173 / BIP-350)
   if(typeof addr!=="string") throw new Error("not a string");
@@ -1728,7 +1788,10 @@ function netSwitch(to){
 // ---------- a small menu under a button (aria-expanded + hidden): closes on outside click and Escape. -> close() ----------
 function dropMenu(btn,menu){
   const close=()=>{ menu.hidden=true; btn.setAttribute("aria-expanded","false"); };
-  btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
+  const place=()=>{ const w=btn.closest("dialog .signwrap"); if(!w) return; const r=w.getBoundingClientRect(), phone=matchMedia("(max-width:480px)").matches;   // a dialog footer's menu: fixed to the screen, so a short dialog's scroll box cannot clip it
+    Object.assign(menu.style,{position:"fixed",top:"auto",bottom:innerHeight-r.top+6+"px",right:innerWidth-r.right+"px",left:phone?r.left+"px":"auto",minWidth:r.width+"px"}); };
+  btn.closest("dialog")?.querySelector(".dlg")?.addEventListener("scroll",()=>{ if(!menu.hidden) close(); },{passive:true});   // fixed: it would stay put while the dialog scrolls
+  btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; if(open) place(); menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); btn.focus(); } });
   menu.addEventListener("keydown",e=>{                                     // arrow keys walk the items, like a native menu
@@ -2327,9 +2390,9 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-fund]"); 
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-wretry]")) return; chainReset(); const p=walletBalance(true); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) $("w-balhint").textContent="checking…";   // the wallet's balance: another try, when the reader asks
   p.then(()=>{ walletPill(); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) walletPaint(); }); });
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
-const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
-function feeSegPaint(seg, off=false, sum=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; });
-  if(sum) sum.textContent=`Advanced · mining fee · ${FEE_SPEEDS.find(x=>x[0]===sp)[1]} · ${r[sp]} sat/vB`; }   // sum: the <summary> of an edit view's Advanced
+const feeSegHtml=(id,note=false)=>`${note?`<div class="field feef"><label><span>Mining fee</span></label>`:""}<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>${note?`</div><p class="note feenote">Mining fees go to Bitcoin miners, not to Burning Take.</p>`:""}`;   // note: an Advanced view's field, labeled like the tip's, then where the fee goes
+function feeSegPaint(seg, off=false, sum=null, tip=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=`${r[b.dataset.fee]} sat/vB`; b.disabled=off; });
+  const S=FEE_SPEEDS.find(x=>x[0]===sp)[1]; if(sum) sum.textContent= (tip==null ? `Advanced · mining fee · ${S} · ${r[sp]} sat/vB` : `Advanced · ${tip?`tip ${fmt(tip)}`:"no tip"} · ${S} mining fee`).replace(/ ·/g,"\u00a0·"); }   // sum: the <summary> of an edit view's Advanced; tip: the tip it also holds (null: none there); a wrap never starts a line with a "·"
 const feeSegWire=seg=>{ seg.onclick=e=>{ const b=e.target.closest("[data-fee]"); if(!b||b.disabled) return; LS(NETKEY("bv.fee"),b.dataset.fee); PAY.forEach(p=>p.paint()); }; };
 // ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary). speed:false when the dialog sets the fee elsewhere ----------
 function walletTab(prefix, root, {speed=true}={}){
@@ -2474,7 +2537,7 @@ function download(name,text,type){                        // a file from text; a
 // ---------- batch: several burns kept aside (shared.js ballotGet/ballotAdd…), cast as ONE transaction from buildBallotPayload ----------
 // The nav pill (#ballotbtn) counts the entries; the dialog lists them, compares one fee with N, and signs through the same wallet block as a single burn.
 const bwt=walletTab("bpay",$("bpay-wallet"),{speed:false});   // the fee speed sits in the fees view (the price's edit)
-$("bfeehost").innerHTML=feeSegHtml("bfeeseg"); feeSegWire($("bfeeseg"));
+$("bfeehost").innerHTML=feeSegHtml("bfeeseg",true); feeSegWire($("bfeeseg"));
 let bLast=null, bSent=null, bStep=1, bSnap=null;            // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
 const bTipSats=()=>tipEnabled() ? Math.max(0,Math.round(Number($("b-tip").value||0))) : 0;   // "No tip" is 0
 function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
@@ -2505,7 +2568,7 @@ function bPaint(){
     </div>`).join("");
   const tip=bTipSats();
   dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+(!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:""), bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
-  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"));
+  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"), tipEnabled()?bTipSats():null);
   $("b-tipf").hidden=!tipEnabled(); $("b-tipusd").textContent=tip?usdOf(tip):"";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
@@ -2544,8 +2607,8 @@ bwt.onsent=({txid})=>{                                       // one transaction,
 $("b-list").onclick=e=>{ const b=e.target.closest("[data-brm]"); if(!b) return; const n=ballotRemove(+b.dataset.brm); bSync(); toast(n?`Removed · ${n} left`:"Batch is empty"); };
 $("b-clear").onclick=()=>{ ballotClear(); bSync(); toast("Batch cleared"); };
 $("b-tipf").hidden=!tipEnabled();                            // no tip address on this network: the ballot's tip line is never shown
-const bTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),$("b-tip").value); };   // shared with the burn dialogs
-const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(+LS(NETKEY("bv.vote.tipsats"))||0);
+const bTipSave=()=>tipPrefSave($("b-tip").value);   // shared with every amount dialog (tipPref)
+const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(tipPref());
 $("b-tip").oninput=()=>{ bTipSave(); bSync(); };
 $("bpay-copy").onclick=()=>{ if(bLast) copyText(bLast.rawHex,$("bpay-copy")); };
 function bGo(n){                                             // show a step; focus its first action
@@ -2557,7 +2620,7 @@ $("bback").onclick=()=>bGo(1);
 $("bprice").onclick=e=>{ if(!e.target.closest("[data-editfee]")) return; bSnap={tip:$("b-tip").value, fee:feeSpeed()}; bGo(2); };
 $("bapply").onclick=()=>{ bSnap=null; bGo(1); };
 $("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ bTip.reset(s.tip); bTipSave(); LS(NETKEY("bv.fee"),s.fee); } bSync(); PAY.forEach(p=>p.paint()); bGo(1); };
-function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bSync(); $("ballotdlg").showModal(); bGo(1); }
+function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bTip.reset(tipPref()); bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
 ballotPill();
@@ -2740,7 +2803,7 @@ function renderFeatured(){
     if(k==="number"){ const m=weightedMedian(T.answers); return `<span class="row3 num"><b>≈ ${numU(m,p)} estimate</b><span class="m">${T.answers.reduce((a,r)=>a+r.burns,0)} answers</span></span>`; }
     if(k==="duel"||k==="yes-no"){ const [A,B]=sides(p,T), L=s=>k==="yes-no"?s.key.toUpperCase():esc(s.t);
       return `<span class="row3 duo"><b class="a">${L(A)} ${k==="yes-no"?pc(A):fmt(A.sats)}</b>${splitBar(A,B)}<b class="b">${k==="yes-no"?pc(B):fmt(B.sats)} ${L(B)}</b></span>${p.deadline&&k==="yes-no"?`<span class="nt">${esc(closeState(p).short)}</span>`:""}`; }
-    const rk=j=>{ const f=T.answers.findIndex(r=>r.sats===T.answers[j].sats), tie=T.answers.filter(r=>r.sats===T.answers[j].sats).length>1; return (tie?"=":"")+String(f+1).padStart(2,"0"); };   // equal sats share a rank, like the board
+    const rk=j=>String(T.answers.findIndex(r=>r.sats===T.answers[j].sats)+1).padStart(2,"0");   // equal sats share a rank, like the board
     const rows=T.answers.slice(0,3).map((t,j)=>`<span class="row3"><i class="rk">${rk(j)}</i><b>${takeTxt(d.name,t.t)}</b><span class="m">${k==="poll"?pc(t):fmt(t.sats)}</span></span>`).join("");
     const zero=k==="poll"?p.opts.filter(o=>!T.answers.some(r=>r.key===o)):[];
     return (k==="poll"?`<span class="viz race">${T.answers.map((r,i)=>`<i class="s${Math.min(i,3)}" style="flex:${r.sats}"></i>`).join("")}</span>`:"")+rows+(zero.length?`<span class="nt">+ ${esc(zero.join(", "))}</span>`:""); };
@@ -2913,7 +2976,7 @@ async function dirTick(){ if(document.hidden||BUSY) return; BUSY=true; let again
 setInterval(dirTick,60000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&Date.now()-LASTTICK>60000) dirTick(); });
 const spay=payPanel("spay",{speed:false}); PAY.push(spay);   // the fee speed sits in the fee view (Advanced)
-$("sqfeehost").innerHTML=feeSegHtml("sqfeeseg"); feeSegWire($("sqfeeseg"));
+$("sqfeehost").innerHTML=feeSegHtml("sqfeeseg",true); feeSegWire($("sqfeeseg"));
 $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copylisttip").dataset.copy=TIP_EFFECTIVE||""; $("copylisttip").disabled=!TIP_EFFECTIVE;
 // effective registration amounts: burn checkbox off = no registration output, tip checkbox off = no tip output
 const regSats=()=>Math.max(REG_SATS, Math.round(+$("sqamt").value||REG_SATS));   // 330 registers; more is an initial sponsorship (the footer's Sponsor)
@@ -2931,7 +2994,7 @@ function updateList(){
   if(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits()) spay.set({entries:[{name:"", addr:$("rootaddr").textContent, statement:n, sats:regSats(), intent:"register"}, {name:n, addr:SQADDR.addr, statement:SQFIRST, sats:REG_SATS}], tipAddr:TIP_EFFECTIVE, tipSats:t});
   else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});   // "…" until the root address is derived
 }
-const sqTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.scope.tipsats"),$("listtip").value); }, sqTipDefault=()=>{ const v=LS(NETKEY("bv.scope.tipsats")); return v==null||v===""?1000:+v; };   // registering: 1,000 unless another tip was chosen here
+const sqTipSave=()=>tipPrefSave($("listtip").value), sqTipDefault=tipPref;   // the tip every amount dialog shares: 1,000 until another is chosen
 const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }); sqTip.reset(sqTipDefault());
 if(!tipEnabled()){ $("listtipf").hidden=true; $("listtiprow").hidden=true; }   // no tip address on this network: every tip control disappears (regTipSats() is 0)
 deriveScope("").then(r=>{ $("rootaddr").textContent=r.addr; updateList(); });
@@ -2941,7 +3004,7 @@ updateList();
 $("copylisthex").onclick=()=>copyText($("listhex").textContent,$("copylisthex"));
 
 // ---------- new scope dialog: the question, its kind (five chips, the guess preselected), the kind's own fields; deadline and minimum in their own view ----------
-let sqk="open", sqStep=1, sqUnit="", sqAuto=false, sqStem=null, sqTouched=false, sqDLTouched=false;   // sqk: the kind chip; sqUnit: a number's unit token; sqAuto: the kind was read from the question, untouched; sqStem: the question without the list its options came from
+let sqk="open", sqStep=1, sqUnit="", sqUnitCustom=false, sqAuto=false, sqStem=null, sqTouched=false, sqDLTouched=false;   // sqk: the kind chip; sqUnit: a number's unit token; sqAuto: the kind was read from the question, untouched; sqStem: the question without the list its options came from
 // the deadline picked: a preset or a guessed span (blocks from the tip), a date, or a searched name's block. Its block is fixed the first time a tip
 // read on this visit is known, so the name never drifts while the dialog is open and a copied transaction matches the one broadcast later
 let sqDL={kind:null};                                            // {kind:null} | {kind:"rel", blocks, abs} | {kind:"date", at (ms, 00:00 UTC), abs} | {kind:"abs", abs}
@@ -2996,11 +3059,11 @@ function sqRegLine(){
 function sqPaint(){                              // the footer, idempotent, called by sqRender and sqGo
   const s=spay.wallet.status(), editing=sqStep===2||sqStep===3, sent=!!(s&&s.kind==="sent");   // the rules and the fee views: Cancel or Apply, back to the topic
   $("sqback").hidden=sqStep!==4||sent;                           // the transaction only
-  const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible and removable
+  const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible; it changes in the edit view only (no ✕: removing it takes a step)
   $("sqprice").hidden=sqStep!==1&&sqStep!==3; dlgPrice($("sqprice"), REG_SATS, "registration"+(sqStep===1?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee(),
-    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip${sqStep===1&&!sent?` <button type="button" class="linkbtn tipx" data-notip aria-label="Remove the tip">✕</button>`:""}`:null].filter(Boolean));   // walletui.js; edit opens the fee view
+    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
   $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
-  feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"));
+  feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"), tipEnabled()?regTipSats():null);
   sqRegLine();
   $("sqdone").hidden=!sent; if(sent) paintDone();
   $("sqsendwrap").hidden=editing;
@@ -3019,7 +3082,7 @@ function sqBatch(){                                                 // registeri
 function sqRender(){
   const p=sqSpec(), name=canonical(p), nb=enc.encode(name).length;
   document.querySelectorAll("#sqkinds [data-k]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===sqk)));
-  document.querySelectorAll("#squnit [data-u]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.u===sqUnit)));
+  document.querySelectorAll("#squnit [data-u]").forEach(b=>b.setAttribute("aria-pressed",String(sqUnitCustom?b.dataset.u==="custom":b.dataset.u===sqUnit))); $("squnitc").hidden=!sqUnitCustom;
   $("sqblurb").textContent=KINDS[sqk].blurb; $("sqq").placeholder=PLACE[sqk];
   $("sqduelf").hidden=sqk!=="duel"; $("sqpollf").hidden=sqk!=="poll"; $("sqnumf").hidden=sqk!=="number";
   $("sqdetect").innerHTML= sqAuto&&$("sqq").value.trim() ? `Detected from your question · <button type="button" class="linkbtn" data-kchange>change</button>` : "";
@@ -3041,8 +3104,8 @@ function sqRender(){
 }
 let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; });
 function openScopeDialog(prefill, reg=false, kindHint=null){     // kindHint: a kind to start from (Home's "Start one →")
-  const p=parseScope((prefill||"").toLowerCase()), um=p.q.match(/-(in-usd|in-eur|in-sats|percent)$/);
-  sqUnit=um?"-"+um[1]:""; $("sqq").value=um?p.q.slice(0,-um[0].length):p.q||"";
+  const p=parseScope((prefill||"").toLowerCase()), um=p.q.match(/-(in-usd|in-eur|in-sats|percent)$/)||(p.range?p.q.match(/-(in-\p{L}[\p{L}\p{N}]*)$/u):null);   // a custom unit only on a number: "best-pizza-in-rome" keeps its words
+  sqUnit=um?"-"+um[1]:""; sqUnitCustom=!!um&&!/^(in-usd|in-eur|in-sats|percent)$/.test(um[1]); $("squnitc").value=sqUnitCustom?um[1].slice(3):""; $("sqq").value=um?p.q.slice(0,-um[0].length):p.q||"";
   sqk=kindHint||(p.range?"number":p.opts?(isYesNo(p)?"yes-no":p.opts.length===2?"duel":"poll"):"open");
   $("sqa").value=p.opts&&p.opts.length===2&&!isYesNo(p)?p.opts[0]:""; $("sqb").value=p.opts&&p.opts.length===2&&!isYesNo(p)?p.opts[1]:"";
   pollFields(p.opts&&p.opts.length>2?p.opts:[]); $("sqlo").value=p.range?p.range[0]:""; $("sqhi").value=p.range?p.range[1]:"";
@@ -3112,7 +3175,9 @@ $("sqdetect").onclick=e=>{ if(e.target.closest("[data-kchange]")){ sqTouch(); sq
 ["sqa","sqb","sqlo","sqhi"].forEach(id=>$(id).addEventListener("input",()=>{ sqTouch(); sqRender(); }));
 $("sqpollopts").addEventListener("input",()=>{ sqTouch(); sqRender(); });
 $("sqaddopt").onclick=()=>{ const n=pollInputs().length; $("sqpollopts").insertAdjacentHTML("beforeend",`<input class="mono" placeholder="Option ${n+1}" autocomplete="off" spellcheck="false" aria-label="Option ${n+1}">`); pollInputs()[n].focus(); };
-document.querySelectorAll("#squnit [data-u]").forEach(b=>b.onclick=()=>{ sqUnit=b.dataset.u; sqRender(); });
+const sqUnitIn=()=>{ const w=$("squnitc").value.toLowerCase().replace(/[^\p{L}\p{N}]/gu,"").replace(/^\p{N}+/u,""); return w?"-in-"+w:""; };   // Custom: one word, a letter first ("km/h" → "-in-kmh")
+document.querySelectorAll("#squnit [data-u]").forEach(b=>b.onclick=()=>{ sqUnitCustom=b.dataset.u==="custom"; sqUnit=sqUnitCustom?sqUnitIn():b.dataset.u; sqRender(); if(sqUnitCustom) $("squnitc").focus(); });
+$("squnitc").oninput=()=>{ sqUnit=sqUnitIn(); sqRender(); };
 const sqDateAt=()=>{ const v=$("sqdate").value; return v ? Date.parse(v+"T00:00:00Z")||0 : 0; };
 $("sqdl").onchange=()=>{ const v=$("sqdl").value, o=$("sqdl").selectedOptions[0];
   sqDL= v==="date" ? {kind:"date", at:sqDateAt(), abs:null} : v==="abs" ? {kind:"abs", abs:+o.dataset.abs} : +v ? {kind:"rel", blocks:+v, abs:null} : {kind:null}; sqDLTouched=true;
@@ -3132,7 +3197,7 @@ const sqMin=amountChips($("sqminseg"), $("sqmin"), ()=>sqRender());   // None, 1
 $("sqmin").addEventListener("input",()=>sqRender());
 const sqAmt=amountChips($("sqamtseg"), $("sqamt"), ()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });   // the initial sponsorship: 330 registers, more ranks it at once
 $("sqamt").addEventListener("input",()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });
-$("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } if(e.target.closest("[data-notip]")){ sqTip.reset(0); sqTipSave(); updateList(); sqPaint(); } };
+$("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } };
 $("sqback").onclick=()=>sqGo(1);
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later
@@ -3153,7 +3218,7 @@ segThumbs();
 if(tipEnabled()){
   $("tipcard").hidden=false; $("tipdlg").hidden=false;
   const tpay=payPanel("tpay",{speed:false}); PAY.push(tpay);
-  $("tfeehost").innerHTML=feeSegHtml("tfeeseg"); feeSegWire($("tfeeseg"));
+  $("tfeehost").innerHTML=feeSegHtml("tfeeseg",true); feeSegWire($("tfeeseg"));
   let tStep=2, tEdit=false, tSnap=null;                     // 2: the note (the amount when editing), 4: the transaction; tSnap: what the amount view started from
   const tipAmount=()=>Number($("tipdamt").value||0);
   const tipRender=()=>{

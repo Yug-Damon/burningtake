@@ -46,8 +46,8 @@ const pct=v=>Math.round(v)+"%";
 const wouldLead=gap=>Math.max(gap+1, 330, (scope.spec||{}).min||0);   // the exact amount that would lead: shown only from fresh data, never past a 100,000-sat gap
 const leadOk=gap=>synced&&!isClosed()&&gap>=0&&gap<100000;
 const asOf=()=>synced||!SHOWN_H?"":`as of block ${fmt(SHOWN_H)} · `;
-// ranks: equal sats share a rank ("=02"); a row nobody burned for is "·"
-const rankLabels=rows=>{ const m=new Map(); rows.forEach(s=>{ const j=rows.findIndex(x=>x.sats===s.sats), n=rows.filter(x=>x.sats===s.sats).length; m.set(s, !s.sats?"·":(n>1?"=":"")+String(j+1).padStart(2,"0")); }); return m; };
+// ranks: equal sats share a rank (both read "02", no mark); a row nobody burned for is "·"
+const rankLabels=rows=>{ const m=new Map(); rows.forEach(s=>{ const j=rows.findIndex(x=>x.sats===s.sats); m.set(s, !s.sats?"·":String(j+1).padStart(2,"0")); }); return m; };
 const tag=(t,cls="")=>`<span class="tg${cls?" "+cls:""}">${t}</span>`;
 let REVEALED=new Set();                                     // hidden takes the reader chose to see on this page
 const rowHtml=(s,rank,cls="")=>{ const sh=shareOf(s), over=enc.encode(s.t).length>80, p=scope.spec||{}, by=hiddenBy(scope.name,s.t), fold=by&&!REVEALED.has(norm(s.t)), disp=fold?`${hiddenTxt(by)} · show`:s.disp??s.t, off=isClosed()||over||fold, unk=s.unknown;   // unknown: nothing saved and not read yet: "—", never 0; fold: a hidden take keeps its row and sats, its text one tap away
@@ -117,40 +117,44 @@ const concLine=rows=>{ const tot=rows.reduce((a,s)=>a+s.sats,0); if(!tot) return
 // ---- a duel, or a yes-no (a forecast headline over it, yes always on the left): two named sides, one bar, the gap in sats ----
 function duelEl(A,B,yn){
   const tot=A.sats+B.sats, pa=tot?A.sats/tot*100:50, closed=isClosed(), nA=!!tot&&pa<12, nB=!!tot&&100-pa<12, vs=!yn&&!/-vs-/.test(scope.q);
-  const L=s=>yn?s.key.toUpperCase():s.t, lead=A.sats>=B.sats?A:B, trail=lead===A?B:A, gap=lead.sats-trail.sats, tie=!!tot&&gap===0, unk=!synced&&!tot;
-  const key=[!!tot,nA,nB,closed,yn,vs].join();
-  const side=(s,cls)=>`<div${cls==="b"?' style="text-align:right"':""}><b class="n${cls}">${unk?"—":fmt(s.sats)}</b> <span class="v${cls}" title="Burners are counted by first-input address; one person can use several.">${unk?"":sideMeta(s)}</span>${closed?"":`<br><button class="btn sm dbtn d${cls}" data-vote="${esc(s.key)}">Burn for ${esc(L(s))}</button>`}<span class="dhint dh${cls}"></span></div>`;
-  if(!DUEL||DUEL._key!==key){                             // the layout changes (empty, a narrow side, closed): build it again; otherwise patch and tween
+  const L=s=>yn?s.key.toUpperCase():s.t, lead=A.sats>=B.sats?A:B, trail=lead===A?B:A, gap=lead.sats-trail.sats, tie=!!tot&&gap===0, unk=!synced&&!tot, figs=tot||unk;   // figs: no row of zeros before the first burn, "—" while unknown
+  const key=[!!tot,nA,nB,closed,yn,vs,unk].join();
+  const fig=(s,c)=>`<p class="dside ${c}"><span class="vh">${esc(L(s))}: </span><span class="dsum"><b class="n${c}">${unk?"—":fmt(s.sats)}</b>${unk?"":" sats"}</span><span class="dmeta v${c}" title="Burners are counted by first-input address; one person can use several.">${unk?"":sideMeta(s)}</span>${closed?"":`<button type="button" class="linkbtn dhint dh${c}" data-vote="${esc(s.key)}"></button>`}</p>`;
+  if(!DUEL||DUEL._key!==key){                             // the layout changes (empty, a narrow side, closed, known): build it again; otherwise patch and tween
+    if(DUEL) ["_pa","_a","_b"].forEach(k=>cancelAnimationFrame(DUEL[k+"_raf"]));   // the old card's tweens stop: they would paint their old targets into the new one
     DUEL=htmlEl(`
-    <div class="duel${tot?"":" empty"}${yn?" yesno":""}">
+    <div class="duel${tot?"":unk?" unknown":" blank"}${yn?" yesno":""}">
       ${yn?`<div class="fc"><b class="fcbig"></b><span class="fcmeta"></span></div>`:""}
       <div class="duel-head"><span class="a">${esc(L(A))}<b class="side pa">${nA?pct(pa):""}</b></span>${vs?`<i class="vs" aria-hidden="true">VS</i>`:""}<span class="b"><b class="side pb">${nB?pct(100-pa):""}</b>${esc(L(B))}</span></div>
-      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"></div><div class="b" style="width:${(100-pa).toFixed(1)}%"></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot?"":`<span class="nocall">${yn?"No call yet":"No side yet"}</span>`}</div>
+      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"></div><div class="b" style="width:${(100-pa).toFixed(1)}%"></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot||unk?"":`<span class="nocall">${yn?"No call yet":"No side yet"}</span>`}</div>
+      ${figs?`<div class="duel-sides">${fig(A,"a")}${fig(B,"b")}</div>`:""}
       <p class="duel-verdict"></p>
-      <div class="duel-foot">${side(A,"a")}${side(B,"b")}</div>
+      ${closed?"":`<div class="duel-acts">${[A,B].map((s,i)=>`<button type="button" class="btn dbtn d${"ab"[i]}" data-vote="${esc(s.key)}">Burn for ${esc(L(s))}</button>`).join("")}</div>`}
       <p class="duel-x"></p>
     </div>`);
     DUEL._key=key; DUEL._pa=pa; DUEL._a=A.sats; DUEL._b=B.sats;
   } else {
     const qs=sel=>DUEL.querySelector(sel);
     if(tot) tween(DUEL,"_pa",pa,v=>{ qs(nA?".side.pa":".pct.a").textContent=pct(v); qs(nB?".side.pb":".pct.b").textContent=pct(100-v); });
-    tween(DUEL,"_a",A.sats,v=>qs(".na").textContent=unk?"—":fmt(Math.round(v)));
-    tween(DUEL,"_b",B.sats,v=>qs(".nb").textContent=unk?"—":fmt(Math.round(v)));
-    qs(".va").textContent=unk?"":sideMeta(A); qs(".vb").textContent=unk?"":sideMeta(B);
+    if(figs){ tween(DUEL,"_a",A.sats,v=>qs(".na").textContent=unk?"—":fmt(Math.round(v)));
+      tween(DUEL,"_b",B.sats,v=>qs(".nb").textContent=unk?"—":fmt(Math.round(v)));
+      qs(".va").innerHTML=unk?"":sideMeta(A); qs(".vb").innerHTML=unk?"":sideMeta(B); }
     DUEL._w=[pa,100-pa];                                  // applied in commit(), after the DOM move
   }
   const qs=sel=>DUEL.querySelector(sel), p=scope.spec||{};
-  qs(".duel-bar").setAttribute("aria-label", tot ? `${L(A)} ${pct(pa)}, ${L(B)} ${pct(100-pa)}` : yn?"No call yet":"No side yet");
-  if(yn){ qs(".fcbig").className="fcbig "+(tot?(lead===A?"a":"b"):"");
+  qs(".duel-bar").setAttribute("aria-label", tot ? `${L(A)} ${pct(pa)}, ${L(B)} ${pct(100-pa)}` : unk ? "—" : yn?"No call yet":"No side yet");
+  if(yn){ qs(".fcbig").className="fcbig "+(tot&&!tie?(lead===A?"a":"b"):"");   // the leader's color; "Dead even" in neutral ink, never side A's
     qs(".fcbig").textContent= !tot ? (unk?"—":"No call yet") : tie ? "Dead even" : `${L(lead)} ${pct(lead.sats/tot*100)}`;
     const nb=new Set([...A.from,...B.from]).size; qs(".fcmeta").textContent= tot ? `${tie?"50% / 50% · ":""}of ${fmt(tot)} sats burned · ${burnsTxt(A.votes+B.votes)} · ${nb} burner${nb===1?"":"s"}` : ""; }
   const dl=p.deadline&&!closed&&TIP ? ` Closes ≈ ${new Date(Date.now()+blocksTo(p.deadline)*600000).toLocaleDateString(undefined,{dateStyle:"medium"})}.` : "";
   qs(".duel-verdict").innerHTML= !tot ? (unk ? "" : SEEN.length ? "No counted burns yet. The lines below list the ones that don't count." : yn ? `The first burn sets the forecast.${dl}` : "Nobody has picked a side yet. The first burn sets the bar.")
-    : tie ? (yn?"Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.":`${asOf()}Tied at ${fmt(lead.sats)} sats each`)
-    : yn ? `${asOf()}${esc(L(trail))} is ${fmt(gap)} sats behind${leadOk(gap)?` · ${fmt(wouldLead(gap))} would lead`:""}<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`
-    : `${asOf()}${esc(L(lead))} leads by ${fmt(gap)} sats`;
-  qs(".dha").textContent= !yn&&tot&&!tie&&trail===A&&leadOk(gap) ? `${fmt(wouldLead(gap))} sats would lead` : "";
-  qs(".dhb").textContent= !yn&&tot&&!tie&&trail===B&&leadOk(gap) ? `${fmt(wouldLead(gap))} sats would lead` : "";
+    : tie ? `${asOf()}Tied at ${fmt(lead.sats)} sats each${yn?`<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`:""}`
+    : yn ? `${asOf()}${esc(L(trail))} is ${efSats(gap)} behind<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`
+    : `${asOf()}${esc(L(lead))} leads by ${efSats(gap)}`;
+  for(const [s,c] of [[A,"a"],[B,"b"]]){ const h=qs(".dh"+c); if(!h) continue;   // no figures or closed: no hint
+    const behind=tot&&!tie&&trail===s, amt=behind&&leadOk(gap)?wouldLead(gap):0, wait=behind&&!amt&&!synced&&gap<100000;   // the trailing side, duel or yes-no; wait: saved data before the sync keeps the row (hidden), so the amount's arrival moves nothing
+    h.textContent=amt?`${fmt(amt)} sats would lead`:wait?"would lead":""; h.dataset.amt=amt||""; h.classList.toggle("wait",wait);   // a tap burns that amount (boardClick: data-amt)
+    if(amt) h.setAttribute("aria-label",`Burn ${fmt(amt)} sats for ${L(s)}: would lead`); else h.removeAttribute("aria-label"); }
   qs(".duel-x").innerHTML=[yn?forecastLine():"", concLine([A,B]), momentum([A,B],yn)].filter(Boolean).map(x=>`<span>${x}</span>`).join("");
   return DUEL;
 }
@@ -159,7 +163,7 @@ function forecastLine(){ const vs=SEEN.filter(v=>!BUCKET.has(v.txid)&&onKey(keyO
   const pts=[]; let y=0, t=0; for(const v of vs){ t+=v.sats; if(norm(v.t)==="yes") y+=v.sats; const h=v.h??Infinity, s=y/t*100; if(pts.length&&pts[pts.length-1].h===h) pts[pts.length-1].s=s; else pts.push({h,s}); }
   const W=160, H=28, X=i=>(i/(pts.length-1)*W).toFixed(1), Y=v=>(H-2-v/100*(H-4)).toFixed(1), d=`M0 ${Y(pts[0].s)}`+pts.slice(1).map((p,i)=>` H${X(i+1)} V${Y(p.s)}`).join("");
   return `<span class="spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>Yes: ${pct(pts[0].s)} after the first burn, ${pct(pts[pts.length-1].s)} now</span>`; }
-const sideMeta=s=>`sats · ${burnsTxt(s.votes)}${s.from.size?` · ${s.from.size} burner${s.from.size===1?"":"s"}`:""}`;
+const sideMeta=s=>s.votes?`<span>${burnsTxt(s.votes)}</span>${s.from.size?`<span class="dsep"> · </span><span>${fmt(s.from.size)} burner${s.from.size===1?"":"s"}</span>`:""}`:"<span>no burns yet</span>";   // a side's counts under its sats: numbers and fixed words only, no esc(); a real " · " between them (copy-paste reads it), hidden on phones where they stack
 // ---- a take's details: who burned it first and when, how many burns and burners, the other spellings, its burns with receipts, a link to it ----
 let OPEN_TAKE=null;                                          // the take whose details are open (its norm)
 function withDetail(row,s){ if(norm(s.t)!==OPEN_TAKE) return [row]; const p=scope.spec||{}, key=keyOfRow(s), vs=SEEN.filter(v=>keyOfRow(v)===key).sort((a,b)=>(a.h??Infinity)-(b.h??Infinity)||String(a.txid).localeCompare(b.txid));
@@ -311,7 +315,7 @@ function renderStand(){
   $("standsum").textContent=[fin, fixed?null:`${fmt(S.length)} take${S.length===1?"":"s"}`, `${fmt(sats)} sats`, fixed?burnsTxt(burns):null, closed?`every burn before block ${fmt(p.deadline)}`:fixed?"all time":WINLABEL[win], pend?`includes ${fmt(pend)} pending sats, counted only if they confirm before block ${fmt(p.deadline)}`:null].filter(Boolean).join(" · ");
 }
 const ghostFor = (k,p) => k==="duel"||k==="yes-no"             // loading: the final shape of each kind, unranked, at its final height
-  ? `<div class="duel ghost"><div class="duel-head"><span class="sk" style="width:70px;height:16px"></span><span class="sk" style="width:70px;height:16px"></span></div><div class="duel-bar"></div><div class="duel-foot"><span class="sk" style="width:120px"></span><span class="sk" style="width:120px"></span></div></div>`
+  ? `<div class="duel ghost">${k==="yes-no"?`<div class="fc"><span class="sk" style="width:180px;height:40px"></span></div>`:""}<div class="duel-head"><span class="sk" style="width:70px;height:16px"></span><span class="sk" style="width:70px;height:16px"></span></div><div class="duel-bar"></div><div class="duel-sides">${["a","b"].map(c=>`<p class="dside ${c}"><span class="sk" style="width:88px;height:16px"></span><span class="sk" style="width:128px"></span></p>`).join("")}</div><p class="duel-verdict"><span class="sk" style="width:220px"></span></p>${isClosed()?"":`<div class="duel-acts"><span class="sk"></span><span class="sk"></span></div>`}</div>`
   : (k==="poll"?p.opts:Array.from({length:4},()=>"")).map(o=>`
     <div class="st ghost"><span class="rank"></span><span class="txt">${o?esc(o):`<span class="sk" style="width:${40+Math.random()*40}%"></span>`}</span>
     <span class="sats"><span class="sk" style="width:80px"></span></span><span class="votes"><span class="sk" style="width:50px"></span></span><span class="act"></span></div>`).join("");
@@ -401,7 +405,8 @@ function boardClick(e){
   if(scope.spec?.range && Number.isFinite(+b.dataset.vote)) $("num").value=b.dataset.vote;   // keep the number input in step with the row clicked
   update();
   openVote(!b.hasAttribute("data-new"), false, 2);                  // Burn for it: the take is chosen, straight to the amount                // an existing statement/option/number opens locked; the synthetic "new" row does not
-  if(b.dataset&&b.dataset.amt){ vAmt.reset(+b.dataset.amt); update(); }   // "831 would lead": the amount comes with it
+  if(b.dataset&&b.dataset.amt){ vAmt.reset(+b.dataset.amt); AMTFOR=norm(stmt.value); update(); }   // "831 would lead": the amount comes with it, for this answer
+  else if(AMTFOR!==null&&AMTFOR!==norm(stmt.value)){ vAmt.reset(amt.min); AMTFOR=null; update(); }   // another answer: back to the topic's minimum
 }
 list.addEventListener("click",boardClick); hero.addEventListener("click",boardClick);
 hero.addEventListener("focusin",e=>{ const bin=e.target.closest("[data-bin]"); if(bin&&+bin.dataset.bin!==binAt){ binAt=+bin.dataset.bin; hero.querySelectorAll("[data-bin]").forEach(x=>x.classList.toggle("on",x===bin)); const c=hero.querySelector(".hcap"); if(c) c.textContent=bin.getAttribute("aria-label"); } });   // a bin under the finger or the keyboard says its range
@@ -409,14 +414,15 @@ hero.addEventListener("focusin",e=>{ const bin=e.target.closest("[data-bin]"); i
 let scope={name:"general",addr:"…",poll:null};
 
 const vpay=payPanel("vpay",{speed:false}); PAY.push(vpay);   // the fee speed sits in the amount view (Advanced), not in the transaction
-$("vfeehost").innerHTML=feeSegHtml("vfeeseg"); feeSegWire($("vfeeseg"));
+$("vfeehost").innerHTML=feeSegHtml("vfeeseg",true); feeSegWire($("vfeeseg"));
 const nfm=x=>Math.abs(+x)>=10000?fmt(+x):String(x);
 $("tipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copytip").dataset.copy=TIP_EFFECTIVE||""; $("copytip").disabled=!TIP_EFFECTIVE;
 
 // ---------- vote builder: real OP_RETURN script hex ----------
 const stmt=document.getElementById("stmt"), amt=document.getElementById("amt"),
       hexEl=document.getElementById("hex"), usd=document.getElementById("usd");
-const vAmt=amountChips($("vamtseg"), amt, ()=>update());   // presets over #amt; reset per topic in openScope (330 or the topic minimum)
+let AMTFOR=null;                                             // the answer a suggested amount (would lead, Make it) was set for; a preset picked by hand clears it
+const vAmt=amountChips($("vamtseg"), amt, ()=>{ AMTFOR=null; update(); });   // presets over #amt; reset per topic in openScope (330 or the topic minimum)
 const burnTitle=()=>{ const t=stmt.value.trim(), p=scope.spec||{};   // a new take: the question it answers; an existing one (Burn for it): that take, a yes-no's side in capitals
   return vLocked&&t ? (kindKey(p)==="yes-no"&&p.opts.includes(norm(t)) ? `Burn for ${norm(t).toUpperCase()}` : `Burn for “${shownT(p,t)}”`) : niceQ(scope.name); };
 const amtLabelText=()=>featureMode ? "Amount to burn to sponsor" : `Amount to burn for this ${kind(scope.spec||{})==="open"?"take":"answer"}${scope.spec&&scope.spec.min?` · min ${fmt(scope.spec.min)}`:""}`;
@@ -445,7 +451,7 @@ function update(){
 // effective amounts: the burn is the vote (never optional); tip only when ticked
 const burnSats=()=>regMode ? REG_SATS : Number(amt.value||0);   // registering burns the fixed amount; the amount chips stay as they were for the next burn
 const tipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("tip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
-const vTipSave=()=>{ if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),$("tip").value); };   // the tip chosen here is the next burn's (the batch shares it)
+const vTipSave=()=>tipPrefSave($("tip").value);   // the tip chosen here is every amount dialog's next one (tipPref)
 const vTip=amountChips($("vtipseg"), $("tip"), ()=>{ vTipSave(); update(); });
 $("tip").oninput=()=>{ vTipSave(); update(); };
 $("opts").onclick=e=>{const b=e.target.closest("[data-opt]"); if(!b||b.getAttribute("aria-disabled")==="true") return; vOther=false; stmt.value=b.dataset.opt; update();};
@@ -477,7 +483,7 @@ function syncPollUI(){
   $("otherans").textContent= k==="poll" ? "None of these? Burn another answer" : "Neither? Burn another answer";
   document.querySelectorAll("#opts [data-opt]").forEach(b=>{ const sel=b.dataset.opt===norm(stmt.value); b.classList.toggle("primary",sel); b.setAttribute("aria-pressed",String(sel)); });
 }
-vTip.reset(+LS(NETKEY("bv.vote.tipsats"))||0);   // default: no tip
+vTip.reset(tipPref());   // 1,000 until another tip is chosen
 if(!tipEnabled()){ $("vtipf").hidden=true; $("tiprow").hidden=true; }   // no tip address on this network: every tip control disappears (tipSats() is 0)
 vpay.onpaint=vPaint;                                    // the wallet block repaints (wallet created, unlocked, balance in) → the footer primary follows
 stmt.oninput=()=>{ if(/\n/.test(stmt.value)) stmt.value=stmt.value.replace(/\s*\n+\s*/g," "); update(); };   // one line of text: a pasted line break becomes a space
@@ -520,7 +526,7 @@ async function openScope(n){
   const want="#"+n.replace(/[%?|@!]/g,encodeURIComponent); if(location.hash!==want) history.replaceState(null,"",location.pathname+location.search+want);   // "|", "@" and "!" survive chat apps percent-encoded; "/" stays readable
   const burn=new URLSearchParams(location.search).get("burn");   // an embed's side button: this side's dialog, opened here; nothing is sent until the visitor validates
   if(burn!==null){ const u=new URL(location.href); u.searchParams.delete("burn"); history.replaceState(null,"",u.pathname+u.search+u.hash);
-    const b=norm(burn), sp=scope.spec, ok=b&&!isClosed()&&(sp.opts?sp.opts.includes(b):sp.range?Number.isFinite(numOf(b)):true);   // a side, an option, a number, a take
+    const b=norm(burn), sp=scope.spec, ok=b&&!isClosed()&&(sp.opts?sp.opts.includes(b):sp.range?(x=>Number.isFinite(x)&&x>=sp.range[0]&&x<=sp.range[1])(numOf(b)):true);   // a side, an option, a number, a take
     if(ok){ vOther=false; stmt.value=sp.opts?b:burn.trim(); if(sp.range) $("num").value=String(numOf(b)); update(); openVote(true,false,2); } }
 }
 $("copyaddr").onclick=()=>copyText($("addr").textContent,$("copyaddr"));
@@ -538,10 +544,12 @@ function vPaint(){
   const edit=!regMode&&!amtView&&!(s&&(s.kind==="sent"||s.kind==="busy"));   // edit: the amount and the fee speed, in place of the view
   const reg=vRegOK()&&$("vreg").checked&&vRegFits();
   dlgPrice($("vprice"), burnSats(), (regMode?"registration":featureMode?"sponsorship":"burn")+(edit?` <button type="button" class="linkbtn" data-editamt>edit</button>`:""), vpay.wallet.fee(), [reg?`+${fmt(REG_SATS)} sats registration`:null, t?`+${fmt(t)} sats tip`:null].filter(Boolean));
-  feeSegPaint($("vfeeseg"), !!(s&&s.kind!=="err"), $("vfeesum"));
+  feeSegPaint($("vfeeseg"), !!(s&&s.kind!=="err"), $("vfeesum"), tipEnabled()?tipSats():null);
   const late=lateRisk(); if(late) $("vfeeseg").querySelector('[data-fee="fast"] span').textContent+=" · recommended";   // near a deadline: the speed that still counts, said, not forced
   const eff=vStep===2&&!vEdit&&!sent ? effectHtml() : ""; if($("veffect")._h!==eff){ $("veffect")._h=eff; $("veffect").innerHTML=eff; } $("veffect").hidden=!eff;
-  $("leadnote").hidden=!(amtView&&leadAmt()); if(!$("leadnote").hidden) $("leadnote").innerHTML=`<button type="button" class="linkbtn" data-make="${leadAmt()}">${fmt(leadAmt())} · would lead</button>`;
+  const ln=amtView?leadNoteHtml():""; $("leadnote").hidden=!ln; if($("leadnote")._h!==ln){ $("leadnote")._h=ln; $("leadnote").innerHTML=ln; }   // the amount view: the card's action, or 'would lead' once the amount does
+  const sh=!$("veffect").hidden?$("veffect"):!$("leadnote").hidden?$("leadnote"):null, say=sh?efSay(sh).replace(/\s+/g," ").trim():"";
+  if($("veffectsay").textContent!==say) $("veffectsay").textContent=say;   // the dialog's live region: words only, and only when they change (not on every key of a take)
   $("minnote").hidden=!(amtView&&!featureMode&&scope.spec&&scope.spec.min); if(!$("minnote").hidden) $("minnote").textContent=`Burns under ${fmt(scope.spec.min)} sats are listed but never counted, even when they add up.`;
   if(sign) signMenu($("vsend"), $("vsendmenu"), vpay.wallet, {label: regMode?"Validate topic":featureMode?"Validate sponsorship":kind(scope.spec||{})==="open"?"Validate take":"Validate answer",
     ok:vValid(4)&&scope.addr.length>=20, show:()=>{ if(vStep!==4) vGo(4); }, batch:vBatch, tx: vStep!==4 ? ()=>vGo(4) : null, done:()=>$("votedlg").close()});
@@ -556,45 +564,91 @@ function leadAmt(){                                           // the exact amoun
   const p=scope.spec||{}, t=stmt.value.trim(); if(featureMode||!t||!synced||isClosed()) return null; const key=keyOfRow({t}); if(!onKey(key)) return null;
   const T=tallyOf(scope.name, effectBase()), r=T.answers.find(x=>x.key===key), lead=T.answers.find(x=>x.key!==key); if(!lead) return null;
   const gap=lead.sats-(r?r.sats:0); return gap>=0&&gap<100000 ? wouldLead(gap) : null; }
+function efIcon(k){ return svgIcon({swap:'<path d="M4 8h15l-4-4M20 16H5l4 4"/>', wallet:'<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>',   // the notes' small icons (a take: ICON_TAKE, late: ICONS.latest); a function: hoisted like the rest
+  cost:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>', warn:'<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/>'}[k]); }
+function efGo(n,what,b){ return `<button type="button" class="efgo${b?" b":""}" data-make="${n}"><span><b>Make it ${fmt(n)} sats</b><i>${what}</i></span></button>`; }   // the one action: the exact amount, in its side's color
+function efOk(what){ return `<span class="efok">${ICON_OK}${what}</span>`; }                                                                          // this amount already does it
+function efWarn(h,icon=efIcon("warn")){ return `<p class="efwarn">${icon}<span>${h}</span></p>`; }
+function efNote(icon,h,cls=""){ return `<li${cls?` class="${cls}"`:""}>${icon}<span>${h}</span></li>`; }
+function efB(p,key){ const k=kindKey(p); return (k==="duel"||k==="yes-no")&&key!==p.opts[k==="yes-no"?p.opts.indexOf("yes"):0]; }   // a duel's second side: blue
+function efRefocus(host){ const a=document.activeElement; if(a&&a!==document.body&&a.isConnected) return;   // the tapped control was rebuilt: focus the ✓ or the next action, never <body>
+  const t=host.querySelector(".efok,[data-make],[data-switch]")||(host===$("leadnote")?$("vapply"):$("vsend")); if(t.classList.contains("efok")) t.tabIndex=-1; t.focus({preventScroll:true}); }
+function efSay(el){ return el.nodeType===3 ? el.textContent : el.nodeType!==1||el.getAttribute("aria-hidden")==="true" ? "" : el.getAttribute("aria-label")||[...el.childNodes].map(efSay).join(" "); }   // what the live region reads: the words, not the pictures (nor the take typed in them)
+function efSats(n){ return `${fmt(n)} sat${n===1?"":"s"}`; }                                                                             // a gap: 1 sat, 2 sats
+function efTo(a,b){ return `<span class="was">${a}</span> <span class="to" aria-hidden="true">→</span><span class="vh"> to </span> ${b}`; }                                                         // before → after, the after one bright
+// the card: the picture, then the outcome (bold) over one fact, and the action; T0/T1 before and after this burn, r0/r1 this answer's row in each
+function efCard(p,k,t,key,sats,T0,T1,r0,r1){
+  const o=T1.answers.find(r=>r.key!==key), up0=!!r0&&(!o||r0.sats>o.sats), up1=!o||r1.sats>o.sats;   // o: the best other answer (this burn does not move it); up: first on its own
+  let viz, head, fact="", act="";
+  if(k==="number"){
+    const v=T=>T.answers.map(r=>({t:r.t,sats:r.sats})), m0=weightedMedian(v(T0)), m1=weightedMedian(v(T1)), x=numOf(t), f=y=>esc(numU(y,p)), [lo,hi]=p.range, q1=weightedQuantile(v(T1),.25), q3=weightedQuantile(v(T1),.75);
+    const X=y=>hi>lo?Math.min(100,Math.max(0,(y-lo)/(hi-lo)*100)):50, P=y=>X(y).toFixed(1)+"%", at=(y,c)=>`<i class="${c}" style="left:${P(y)}"></i>`;
+    const lbl=(y,c,h)=>`<span class="${c}" style="left:${P(y)};transform:translateX(-${P(y)})">${h}</span>`;   // a label slides along its point: never past the axis ends
+    viz=`<div class="efaxis" aria-hidden="true"><span class="end">${f(lo)}</span><div class="trk"><i class="ln"></i><i class="q" style="left:${P(q1)};width:${(X(q3)-X(q1)).toFixed(1)}%"></i>${m0!==null&&m0!==m1?`<i class="mv" style="left:${P(Math.min(m0,m1))};width:${Math.abs(X(m1)-X(m0)).toFixed(1)}%"></i>`+at(m0,"m0"):""}${at(m1,"m1")}${at(x,"you")}${lbl(x,"lt","yours")}${lbl(m1,"lb","estimate")}</div><span class="end">${f(hi)}</span></div>`;
+    const d=Math.abs(x-m1)/Math.abs(m1||1)*100;
+    head= m0===null ? "Sets the first estimate" : f(m0)===f(m1) ? `Estimate stays at ${f(m1)}` : `Estimate ${efTo(f(m0),f(m1))}`;   // compared as shown: a midpoint that rounds the same stays
+    fact= m0===null ? (T0.other.length?"No answers in range yet":"Nobody has answered yet") : x===m1 ? (m0===m1?"Yours is right on it":"Lands on yours") : `Yours is ${m1>0&&lo>=0?(d<.5?"just":pct(d)):f(Math.abs(x-m1))} ${x>m1?"above":"below"} it`;   // a percent only over a positive estimate; around zero, the distance itself
+    const need=estAmt(); act= need&&x!==m1 ? efGo(need,"would be the estimate") : synced&&m0!==null&&m0!==x&&m1===x ? efOk("would be the estimate") : "";   // short of it: the amount; this burn does it: said (fresh data only)
+  }
+  else if(k==="duel"||k==="yes-no"){
+    const yn=k==="yes-no", A=p.opts[yn?p.opts.indexOf("yes"):0], B=p.opts.find(x=>x!==A), nm=x=>esc(yn?x.toUpperCase():x), sh=(T,r)=>T.shareSats&&r?r.sats/T.shareSats*100:0;
+    const a1=sh(T1,T1.answers.find(r=>r.key===A)), a0=T0.shareSats?sh(T0,T0.answers.find(r=>r.key===A)):key===A?0:100;   // nothing burned yet: this whole side is the move
+    viz=`<div aria-hidden="true"><div class="efends"><span class="a">${nm(A)}</span><span class="b">${nm(B)}</span></div><div class="efbar"><div class="mini"><i class="a" style="width:${a1.toFixed(1)}%"></i><i class="b"></i><span class="proj" style="left:${Math.min(a0,a1).toFixed(1)}%;width:${Math.abs(a1-a0).toFixed(1)}%"></span></div></div></div>`;
+    const s0=pct(sh(T0,r0)), s1=pct(sh(T1,r1)), vs=nm(key===A?B:A);
+    head=`<span class="${key===A?"a":"b"}">${nm(key)}</span> ${!T0.shareSats?s1:s0===s1?`stays ${s1}`:efTo(s0,s1)}`;   // a share that rounds the same "stays"
+    fact= !T0.shareSats ? (yn?"The first burn sets the forecast":"The first burn sets the bar") : !o ? `${vs} has no burns yet`
+      : up1 ? `${efSats(r1.sats-o.sats)} ahead of ${vs}` : r1.sats===o.sats ? `Level with ${vs} at ${fmt(r1.sats)} sats each` : `${efSats(o.sats-r1.sats)} short of ${vs}`;
+  }
+  else{
+    const L0=rankLabels(T0.answers), L1=rankLabels(T1.answers), tot=T1.shareSats, n1=L1.get(r1), tied=(T,r)=>T.answers.filter(x=>x.sats===r.sats).length>1, tie=tied(T1,r1), of=k==="poll"?` of ${p.opts.length}`:"";   // ponytail: rankLabels is O(n²), about 50 ms a key at 2,000 takes; rank only r0, r1 and o if boards grow that big
+    const rows=T1.answers[0]===r1?[r1,T1.answers[1]]:[T1.answers[0],r1], vs=r=>k==="poll"&&!(hiddenBy(scope.name,r.t)&&!REVEALED.has(norm(r.t)))?esc(r.t):L1.get(r);   // the leader and yours; yours first: the runner-up under it
+    const row=r=>{ if(!r) return ""; const mine=r===r1, w=(r.sats-(mine?sats:0))/tot*100, l=L1.get(r), by=!mine&&hiddenBy(scope.name,r.t), hid=by&&!REVEALED.has(norm(r.t));   // a hidden take keeps its row and sats, not its words
+      return `<div class="efrow${mine?" me":""}${/^=?01$/.test(l)?" r1":""}"><span class="k">${l}</span><div class="bx"><i style="width:${w.toFixed(1)}%"></i>${mine?`<i class="add" style="left:${w.toFixed(1)}%;width:${(sats/tot*100).toFixed(1)}%"></i>`:""}<span class="n${hid?" hid":""}"${hid?"":` title="${esc(shownT(p,r.t))}"`}>${hid?hiddenTxt(by):esc(shownT(p,r.t))}</span><span class="s">${mine&&r.sats>sats?`<span class="was">${fmt(r.sats-sats)} → </span>`:""}<b>${fmt(r.sats)}</b></span></div></div>`; };
+    viz=`<div class="eflad" aria-hidden="true">${rows.map(row).join("")}</div>`;
+    const rk=n1==="01"?`<span class="a">01</span>`:n1;
+    head=(!r0 ? `Enters ${tie?"tied ":""}at ${rk}` : L0.get(r0)==="01"&&tied(T0,r0)&&!tie ? `Takes ${rk}` : L0.get(r0)===n1 ? `Stays ${rk}` : tie ? `Ties for ${rk}` : `Moves to ${rk}`)+of;   // ranks compared as numbers: breaking away from a tie at 03 still stays 03
+    fact= !o ? (k==="open" ? (r0?"The only take so far":"The first take") : T0.shareSats ? "No other option has burns yet" : "The first burn in this poll")
+      : r1.sats===o.sats ? "" : up1 ? `${efSats(r1.sats-o.sats)} ahead of ${vs(o)}` : `${efSats(o.sats-r1.sats)} short of ${vs(o)}`;
+  }
+  if(k!=="number"){ const need=leadAmt(); act= !synced ? "" : o&&up1&&!up0 ? efOk("would lead") : !up1&&need ? efGo(need,"would lead",efB(p,key)) : ""; }   // the lead flips: said; short of it: the exact amount, one tap
+  const pre=asOf();
+  return `<div class="ef ef-${k}"><p class="efeye"><span>With your ${fmt(sats)} sats${!fixedKind()&&win!=="all"?` · ${WINLABEL[win]}`:""}</span>${pre?`<span class="asof">${pre.replace(/ · $/,"")}</span>`:""}</p>${viz}<div class="efcap"><p><b>${head}</b>${fact?`<span>${fact}</span>`:""}</p>${act}</div></div>`;
+}
+// a number: the exact amount that puts the estimate on this answer (the weighted median lands on x once the sats at x outweigh the gap between below and above), or null; fresh data only, like leadAmt
+function estAmt(){
+  const p=scope.spec||{}, t=stmt.value.trim(); if(!p.range||featureMode||!t||!synced||isClosed()) return null;
+  const key=keyOfRow({t}), x=numOf(t); if(!onKey(key)) return null;
+  const rows=tallyOf(scope.name,effectBase()).answers.map(r=>({t:r.t,sats:r.sats})), m0=weightedMedian(rows); if(m0===null||m0===x) return null;
+  let lo=0, hi=0, at=0; for(const r of rows){ const v=numOf(r.t); if(v<x) lo+=r.sats; else if(v>x) hi+=r.sats; else at+=r.sats; }
+  const g=Math.abs(lo-hi)-at+1, s=Math.max(g, 330, p.min||0);   // g: capped like leadAmt's gap, not the topic minimum
+  return g<=100000&&weightedMedian([...rows,{t:String(x),sats:s}])===x ? s : null; }   // checked on the median itself: never a wrong promise
 function effectHtml(){
   const p=scope.spec||{}, k=kindKey(p), t=stmt.value.trim(), sats=burnSats(); if(featureMode||!t||closedKnown()) return "";
-  const out=[], key=keyOfRow({t}), make=n=>n&&synced?` · <button type="button" class="linkbtn" data-make="${n}">Make it ${fmt(n)}</button>`:"", pre=asOf();
-  if(!onKey(key)){ if(!vOther) out.push(`<p class="effect warn">${esc(offListText())}</p>`); }   // typed as another answer: the note under the field says it
-  else{
-    const base=effectBase(), me={txid:"~", t, sats, h:null, from:WALLET?WALLET.addr:null}, T0=tallyOf(scope.name,base), T1=tallyOf(scope.name,[...base,me]);
-    const pos=(T,x)=>T.answers.findIndex(r=>r.key===x), r0=T0.answers.find(r=>r.key===key), r1=T1.answers.find(r=>r.key===key), sh=(T,r)=>T.shareSats&&r?r.sats/T.shareSats*100:0, L1=rankLabels(T1.answers), rk=()=>L1.get(r1);
-    const lead0=T0.answers.find(r=>r.key!==key), need=leadAmt(), nm=esc(k==="yes-no"?norm(t).toUpperCase():shownT(p,t));
-    let line;
-    if(k==="yes-no"||k==="duel"){ line= k==="yes-no" ? `Your ${fmt(sats)} sats move ${nm} from ${pct(sh(T0,r0))} to ${pct(sh(T1,r1))}` : `${nm} ${pct(sh(T0,r0))} → ${pct(sh(T1,r1))} with your ${fmt(sats)} sats`;
-      if(lead0&&T1.answers[0].key!==key) line+=` · ${nm} is ${fmt(lead0.sats-(r0?r0.sats:0))} sats behind${make(need)} · would lead`;
-      else if(lead0&&T0.answers[0].key!==key) line+=" · would lead"; }
-    else if(k==="number"){ const v=T=>T.answers.map(r=>({t:r.t,sats:r.sats})), m0=weightedMedian(v(T0)), m1=weightedMedian(v(T1)), x=numOf(t), f=y=>numU(y,p);
-      line= m0===null ? "Nobody has answered yet: yours sets the first estimate" : `Your ${fmt(sats)} sats on ${f(x)} ${m0===m1?`leave the estimate at ${f(m0)}`:`move the estimate ${f(m0)} → ${f(m1)}`}`;
-      if(m0!==null) line+= x===m0 ? " · right on the estimate" : ` · ${pct(Math.abs(x-m0)/Math.abs(m0||1)*100)} ${x>m0?"above":"below"} the estimate`; }
-    else{ const i1=pos(T1,key), leader=T1.answers[0], of=k==="poll"?` of ${p.opts.length}`:"";
-      if(!r0&&k==="open") line=`New take · enters at ${rk()}${i1>0&&need?` · ${fmt(need)} sats would put it at 01${make(need)}`:""}`;
-      else if(i1===0) line=`${nm} ${pos(T0,key)===0?"stays":"moves to"} 01${of} with your ${fmt(sats)} sats`;
-      else line=`${nm} ${pos(T0,key)===i1?"stays":"moves to"} ${rk()}${of} · ${fmt(leader.sats-r1.sats)} sats short of ${k==="poll"?esc(leader.t):"01"}${make(need)}${need?" · would lead":""}`; }
-    out.push(`<p class="effect">${pre}${line}</p>`);
-    if((k==="duel"||k==="yes-no")&&r1){ const ia=k==="yes-no"?p.opts.indexOf("yes"):0, A=p.opts[ia], a0=sh(T0,T0.answers.find(r=>r.key===A)), a1=sh(T1,T1.answers.find(r=>r.key===A)), other=p.opts.find(o=>o!==key);   // the side's bar, where it lands after this burn hatched
-      out.unshift(`<div class="mini"><i class="a" style="width:${a1.toFixed(1)}%"></i><i class="b"></i><span class="proj" style="left:${Math.min(a0,a1).toFixed(1)}%;width:${Math.abs(a1-a0).toFixed(1)}%"></span></div>`);
-      out.push(`<p class="effect"><button type="button" class="linkbtn" data-switch="${esc(other)}">switch to ${esc(k==="yes-no"?other.toUpperCase():other)}</button></p>`); }
-  }
-  if(k==="open"&&!vLocked){ const qn=norm(t), all=tallyOf(scope.name,SEEN).answers, sim=qn.length>=3&&!all.some(r=>r.key===qn)&&all.filter(r=>r.key.includes(qn)||qn.includes(r.key)).sort((a,b)=>b.sats-a.sats)[0];   // a take already on the board says it better: one tap to back it instead
-    if(sim) out.push(`<p class="effect">Similar: “${esc(sim.t)}” · ${fmt(sim.sats)} sats · <button type="button" class="linkbtn" data-use="${esc(sim.t)}">Burn for it instead</button></p>`); }
-  if(lateRisk()){ const left=blocksTo(p.deadline), sp=FEE_SPEEDS.find(f=>f[0]===feeSpeed())[1]; out.push(`<p class="effect warn">Closes in ≈ ${untilText(left)} (${Math.max(1,Math.ceil(left))} block${Math.ceil(left)===1?"":"s"}). ${sp==="Fast"?"Even Fast":sp} may confirm too late and not count${sp==="Fast"?"":": use Fast"}.</p>`); }
-  if(walletState()==="none") out.push(`<p class="effect">No wallet in this browser yet · set one up to burn. Your take is kept.</p>`);
-  const fee=vpay.wallet.fee(), all=sats+tipSats()+(fee||0), cost=[BTCUSD?`≈ $${(all/1e8*BTCUSD).toFixed(2)} all in`:null, fee>sats?"Mining fees go to Bitcoin miners, not to Burning Take.":null].filter(Boolean);
-  if(cost.length) out.push(`<p class="effect cost">${cost.join(" · ")}</p>`);
-  return out.join("");
+  const key=keyOfRow({t}), on=onKey(key), notes=[]; let card="", warn="";
+  if(!on){ if(p.range&&Number.isFinite(numOf(t))) card=efWarn(`Pick a number between ${esc(numU(p.range[0],p))} and ${esc(numU(p.range[1],p))}.`); else if(!vOther) card=efWarn(esc(offListText())); }   // typed as another answer: the note under the field says it
+  else if(p.min&&sats<p.min) card=efWarn(`Below this topic's ${fmt(p.min)}-sat minimum: this burn would not count.`);
+  else if(synced||SHOWN_H){ const base=effectBase(), me={txid:"~", t, sats, h:null, from:WALLET?WALLET.addr:null}, T0=tallyOf(scope.name,base), T1=tallyOf(scope.name,[...base,me]), r1=T1.answers.find(r=>r.key===key);
+    if(r1) card=efCard(p,k,t,key,sats,T0,T1,T0.answers.find(r=>r.key===key),r1); }   // nothing read yet: no outcome, never one made of zeros
+  if(on&&(k==="duel"||k==="yes-no")){ const o=p.opts.find(x=>x!==key); notes.push(efNote(efIcon("swap"),`<button type="button" class="linkbtn" data-switch="${esc(o)}">Switch to ${esc(k==="yes-no"?o.toUpperCase():o)}</button>`)); }
+  if(k==="open"&&!vLocked){ const qn=norm(t), all=tallyOf(scope.name,SEEN).answers, ws=s=>s.split(/[^\p{L}\p{N}]+/u).filter(Boolean).join(" "), q=ws(qn), inW=(l,x)=>!!x&&(" "+l+" ").includes(" "+x+" "), sim=qn.length>=3&&!all.some(r=>r.key===qn)&&all.filter(r=>(inW(ws(r.key),q)||inW(q,ws(r.key)))&&!hiddenBy(scope.name,r.t)).sort((a,b)=>b.sats-a.sats)[0];   // a take already on the board says it better: one tap to back it instead
+    if(sim) notes.push(efNote(ICON_TAKE,`Similar take: “<bdi>${esc(sim.t)}</bdi>” · ${fmt(sim.sats)} sats · <button type="button" class="linkbtn" data-use="${esc(sim.t)}">Burn for it instead</button>`)); }
+  if(lateRisk()){ const left=blocksTo(p.deadline), n=Math.max(1,Math.ceil(left)), sp=FEE_SPEEDS.find(f=>f[0]===feeSpeed())[1]; warn=efWarn(`Closes in ≈ ${untilText(left)} (${fmt(n)} block${n===1?"":"s"}). ${sp==="Fast"?"Even Fast":sp} may confirm too late and not count${sp==="Fast"?"":": use Fast"}.`,ICONS.latest); }
+  if(walletState()==="none") notes.push(efNote(efIcon("wallet"),`No wallet in this browser yet · set one up to burn. Your ${noun()} is kept.`));
+  const fee=vpay.wallet.fee(), reg=vRegOK()&&$("vreg").checked&&vRegFits(), all=sats+(reg?REG_SATS:0)+tipSats()+(fee||0); if(BTCUSD) notes.push(efNote(efIcon("cost"),`≈ $${(all/1e8*BTCUSD).toFixed(2)} all in`,"cost"));
+  return card+warn+(notes.length?`<ul class="efnotes">${notes.join("")}</ul>`:"");
 }
+// the amount view (the footer's edit): the same action while the amount falls short; once it is enough, said, with the exact amount one tap away when it overshoots
+function leadNoteHtml(){
+  const p=scope.spec||{}, num=!!p.range, need=num?estAmt():leadAmt(), b=burnSats(), what=num?"would be the estimate":"would lead"; if(!need) return "";
+  return b<need ? efGo(need,what,efB(p,norm(stmt.value))) : efOk(what)+(b>need?`<button type="button" class="linkbtn" data-make="${need}">${fmt(need)} sats is enough</button>`:""); }
 $("veffect").addEventListener("click",e=>{
   const m=e.target.closest("[data-make]"), w=e.target.closest("[data-switch]"), u=e.target.closest("[data-use]");
-  if(m){ vAmt.reset(+m.dataset.make); update(); }
+  if(m){ vAmt.reset(+m.dataset.make); AMTFOR=norm(stmt.value); update(); }
   if(w){ stmt.value=w.dataset.switch; vLock(); update(); }
-  if(u){ stmt.value=u.dataset.use; vLocked=true; vLock(); update(); }
+  if(u){ stmt.value=u.dataset.use; vLocked=true; vLock(); update(); $("votehead").textContent=burnTitle(); $("votesub").textContent=vSub(); }
+  if(m||w||u) efRefocus($("veffect"));
 });
-$("leadnote").addEventListener("click",e=>{ const m=e.target.closest("[data-make]"); if(m){ vAmt.reset(+m.dataset.make); update(); } });
+$("leadnote").addEventListener("click",e=>{ const m=e.target.closest("[data-make]"); if(m){ vAmt.reset(+m.dataset.make); AMTFOR=norm(stmt.value); update(); efRefocus($("leadnote")); } });
 // the answer chips carry where each answer stands (from fresh data only): a yes-no's share in its side's color, a poll's share and rank
 function paintOpts(){
   const p=scope.spec||{}, k=kindKey(p); if(!p.opts) return;
@@ -617,11 +671,12 @@ function paintNumPick(){
   if($("numquick")._h!==qh){ $("numquick")._h=qh; $("numquick").innerHTML=qh; }
 }
 $("numquick").onclick=e=>{ const b=e.target.closest("[data-q]"); if(!b) return; $("num").value=b.dataset.q; stmt.value=b.dataset.q; update(); };
+function vSub(){ return vLocked ? [kindKey(scope.spec||{})==="yes-no"?niceQ(scope.name):"in "+topicName(scope.name).replace(/&amp;/g,"&"), ...(scope.rules||[])].join(" · ") : scope.sub||""; }   // the dialog's subtitle: a given take, the question it goes to; a new one, the typing hint
 function vGo(n){
   n=Math.max(n,2); vStep=n; const amtView=vEdit;   // view 2: the take (none for Burn for it and sponsoring), or the amount in its place (the price's edit; registering, a fixed 330, has none)
   $("vstep-4").hidden=n!==4; $("vstep-2").hidden=n!==2||!amtView; $("vstep-1").hidden=n!==2||amtView||vLocked; vPaint(); segThumbs();
   $("votedlg").querySelector(".dlg").scrollTop=0;
-  const first=[...document.querySelectorAll(`#vstep-1 :is(input,button.primary),#vstep-${n} :is(input,button.primary)`)].find(el=>!el.closest("[hidden]")&&!el.disabled&&!el.readOnly&&el.type!=="hidden"&&el.type!=="checkbox");
+  const first=[...document.querySelectorAll(`#vstep-1 :is(input,textarea,button.primary),#vstep-${n} :is(input,textarea,button.primary)`)].find(el=>!el.closest("[hidden]")&&!el.disabled&&!el.readOnly&&el.type!=="hidden"&&el.type!=="checkbox");
   (n===2&&amtView ? ($("vamtseg").hidden?amt:$("vamtseg").querySelector('[aria-pressed="true"]'))||amt : first||$("vsend")).focus({preventScroll:true});
 }
 let vSnap=null;                                              // what the amount view started from: Cancel puts it back
@@ -649,7 +704,7 @@ let vOpener=null; $("votedlg").addEventListener("close",()=>{ vOpener?.focus?.({
   const s=vpay.wallet.status(); if(FUNDING==="vpay"&&!(s&&s.kind==="sent")&&stmt.value.trim()){ FUNDING=null; const e=featureMode&&ROOT ? {name:"", addr:ROOT.addr, statement:scope.name, sats:burnSats(), intent:regMode?"register":"feature"} : {name:scope.name, addr:scope.addr, statement:stmt.value.trim(), sats:burnSats()};   // closed while the wallet was being funded: the take waits in the batch
     if(ballotFind(e.addr)<0){ ballotAdd(e); ballotPill(); toast("Your take is in your batch. It waits there until your wallet is funded."); } } });
 function openVote(locked=false, feature=false, start=1){   // start 2: the take is known (Burn for it), straight to the amount
-  featureMode=!!feature; regMode=featureMode && !featureScore(scope.name);
+  featureMode=!!feature; regMode=featureMode && !featureScore(scope.name); vTip.reset(tipPref());   // the saved tip, whichever dialog chose it
   $("votehead").textContent = regMode ? "Register #"+scope.q : featureMode ? "Sponsor #"+scope.q : burnTitle();
   if(regMode){ $("votesub").textContent= DIRFRESH ? `Nobody has registered this topic yet. Registering burns ${fmt(REG_SATS)} sats so it appears in Explore. Sponsoring it later ranks it higher.` : `Registers this topic so it appears in Explore, or sponsors it if someone already did · ${fmt(REG_SATS)} sats.`; amt.min=330; }   // "nobody" only from a directory read on this visit
   else if(featureMode){ $("votesub").textContent=`Ranks it on Home and in Explore · ${fmt(featureScore(scope.name))} sats so far.`; amt.min=330; }
@@ -657,7 +712,7 @@ function openVote(locked=false, feature=false, start=1){   // start 2: the take 
   update();                                                  // the payload follows the mode at once (root address and minimum when sponsoring)
   $("addr").textContent = featureMode&&ROOT ? ROOT.addr : scope.addr;
   vOpener=document.activeElement instanceof HTMLElement&&document.activeElement!==document.body?document.activeElement:$("burnbtn");
-  vLocked=!!locked; vLock(); if(!featureMode){ $("votehead").textContent=burnTitle(); $("votesub").textContent= vLocked ? [kindKey(scope.spec||{})==="yes-no"?niceQ(scope.name):"in "+topicName(scope.name).replace(/&amp;/g,"&"), ...(scope.rules||[])].join(" · ") : scope.sub||""; }   // a given take: the question it goes to, not the typing hint
+  vLocked=!!locked; vLock(); if(!featureMode){ $("votehead").textContent=burnTitle(); $("votesub").textContent=vSub(); }   // a given take: the question it goes to, not the typing hint
   $("amtlabel").textContent=amtLabelText();
   vEdit=false; vSnap=null; $("vfeeadv").open=false; $("vbatchnote").hidden=true; $("vafter").hidden=true; $("closednote").hidden=featureMode||!closedKnown(); $("votedlg").showModal(); vGo(2); }   // sponsoring: the statement is the topic name, nothing to ask, straight to the amount
 $("copylink").onclick=()=>copyText(location.href,$("copylink"));
@@ -707,7 +762,7 @@ function headMeta(){                                          // the static part
 function paintMbar(){ const p=scope.spec||{}, k=kindKey(p), el=$("mbar");
   el.hidden=scope.name===""; if(el.hidden) return;
   el.innerHTML= isClosed() ? `<button type="button" class="btn" data-seeresult>See the result ↓</button>`
-    : k==="duel"||k==="yes-no" ? (k==="yes-no"?["yes","no"]:p.opts).map((o,i)=>`<button type="button" class="btn${i?" sideb":" primary"}" data-vote="${esc(o)}">Burn for ${esc(k==="yes-no"?o.toUpperCase():o)}</button>`).join("")
+    : k==="duel"||k==="yes-no" ? (k==="yes-no"?["yes","no"]:p.opts).map((o,i)=>`<button type="button" class="btn${i?" sideb":" primary"}" data-vote="${esc(o)}"><span>Burn for ${esc(k==="yes-no"?o.toUpperCase():o)}</span></button>`).join("")
     : `<button type="button" class="btn primary" data-newburn>${esc($("burnbtn").textContent)}</button>`; }
 $("mbar").addEventListener("click",e=>{ if(e.target.closest("[data-seeresult]")) $("hclosed").scrollIntoView({block:"start"}); else if(e.target.closest("[data-newburn]")) $("burnbtn").click(); else boardClick(e); });
 // phones: Sponsor joins Watch and More in the header's action row
