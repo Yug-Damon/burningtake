@@ -4,7 +4,7 @@
   "description": "Burning Take: say it like you mean it, a take is a Bitcoin burn",
   "scripts": {
     "build": "python3 build.py && python3 check-ids.py",
-    "test": "node wallet-test.js && node qr-test.js && node ledger-test.js && node regress-payload.js && node scan-test.js"
+    "test": "node wallet-test.js && node qr-test.js && node ledger-test.js && node regress-payload.js && node scan-test.js && node loader-test.js"
   },
   "keywords": [],
   "author": "",

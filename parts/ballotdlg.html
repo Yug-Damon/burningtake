@@ -1,11 +1,11 @@
 
 <dialog id="ballotdlg" aria-labelledby="b-title"><div class="panel dlg">
   <h3><span><span id="b-title">Your batch</span><span id="bstepn"></span></span> <button class="copy" data-close="ballotdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
-  <p class="note wintro">Burns kept aside, burned in one transaction: each burn is its own output, the takes share one OP_RETURN. One mining fee instead of several. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
+  <p class="note wintro">Several burns, one transaction: you pay the mining fee once. One burn per topic. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
 
   <!-- 1 · Burns: what the batch holds -->
   <section class="wstep" id="bstep-1">
-    <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> in its Transaction step instead of signing right away.</p>
+    <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> from the <b>Validate ▾</b> menu.</p>
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
       <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>

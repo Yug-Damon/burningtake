@@ -128,7 +128,7 @@ question = 1*( lowercase / DIGIT / "-" / "/" / other-unicode )   <span class="c"
   <p>A burn is identified by the txid of its transaction, and by nothing else. There is no receipt object on chain: the transaction <em>is</em> the receipt, and any front end can render it from the txid alone by reading the outputs (burn value, topic address, statement) and the first input's address as the burner. A transaction that burns in several topics is one receipt with several burns, one per topic output, in output order. Anyone can verify a receipt with the recount in the <a href="verify.html#tally">verification page</a>.</p>
 
   <h2 id="statements">5 · Statements</h2>
-  <p>Statements are matched after normalisation: trim, lowercase, collapse whitespace runs to one space, strip trailing <code>. ! ?</code>. The display form is the spelling of the first burn seen. There is no other syntax inside a statement. It is speech.</p>
+  <p>Statements are matched after normalisation: trim, lowercase, collapse whitespace runs to one space, strip trailing <code>. ! ?</code>. The display form is the spelling of the earliest burn: the lowest block height, then the lowest txid, unconfirmed burns last. There is no other syntax inside a statement. It is speech.</p>
   <p>In a numeric topic the normalised statement is parsed as a decimal number. Suffixes <code>k</code> and <code>m</code> multiply by a thousand and a million. Anything that does not parse, or falls outside the range, is an off-list answer.</p>
 
   <h2 id="counting">6 · Counting</h2>
@@ -138,7 +138,7 @@ question = 1*( lowercase / DIGIT / "-" / "/" / other-unicode )   <span class="c"
     <div class="step"><div><h3>Aggregate</h3><p>Counted burns are summed per normalised statement. In a closed question, statements that are not options go to <b>other</b>. In a numeric topic, values outside the range go to <b>other</b>. Buckets are always displayed with their totals, never hidden.</p></div></div>
     <div class="step"><div><h3>Rank</h3><p>By sats. Vote counts are informational only, since anyone can split a burn into many transactions. A topic's own weight, used to rank topics against each other, is the total ever received by its address.</p></div></div>
   </div>
-  <p>Numeric topics also report the burn-weighted mean and the weighted median of counted values.</p>
+  <p>Numeric topics also report the burn-weighted mean and the weighted median of counted values. When the weights split exactly in half between two values, the median is their midpoint.</p>
   <p>Time windows such as "this week" are 144 blocks per day, applied to the confirmation height. All-time totals need only an address summary, windowed totals need the address history.</p>
   <h3 id="snapshots">Snapshots</h3>
   <p>A host may publish a <em>snapshot</em>: the finished scan of a topic as a static file (the burns with their txid, statement, value, height and burner, plus the height it was taken at), keyed by the SHA-256 of the canonical name. A snapshot is a cache the host publishes, not a source of truth: a counter that starts from one must still fetch every burn confirmed after its height, and must treat it like any explorer answer, checkable by re-scanning the address from scratch. A snapshot that disagrees with the chain is wrong, the chain is not.</p>
@@ -196,4 +196,4 @@ export async function topicAddress(canonicalName, hrp = "bc") {
   </ul>
 </main>
 
-<footer><div class="wrap"><span>Burning Take · draft v0 · <a href="verify.html">verify</a> · <a href="node.html">node</a> · <a href="index.html">app</a></span><span class="mono">this page is the protocol</span></div></footer>
+<footer><div class="wrap"><span>Burning Take · draft v0 · <a href="verify.html">verify</a> · <a href="node.html">node</a> · <a href="index.html">app</a> · made by Yug Damon</span><span class="mono">this page is the protocol</span></div></footer>

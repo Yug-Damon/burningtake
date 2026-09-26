@@ -6,8 +6,12 @@ for page in ["index","explore","topic"]+[p for p in ["burner","receipt","embed"]
     js=scripts[0]; jsf=os.path.join(HERE,f"_{page}.check.js"); open(jsf,"w").write(js)
     r=subprocess.run(["node","--check",jsf],capture_output=True,text=True); os.remove(jsf)
     print(f"{page}: node --check", "OK" if r.returncode==0 else "FAIL\n"+r.stderr); bad+=r.returncode
+    fns=collections.Counter(re.findall(r'^(?:async\s+)?function\s+(\w+)', js, re.M))   # one classic script: a second top-level function of the same name silently replaces the first
+    dupf=[k for k,v in fns.items() if v>1]
+    if dupf: print(f"{page}: DUPLICATE top-level functions {dupf}"); bad+=1
     markup=re.sub(r"<script>.*?</script>","",html,flags=re.S)
     ids=collections.Counter(re.findall(r'\sid="([^"]+)"', markup))
+    ids.update(re.findall(r'feeSegHtml\("([^"]+)"\)', js))   # the fee speed seg is written by script into its host
     dup=[k for k,v in ids.items() if v>1]
     if dup: print(f"{page}: DUPLICATE ids {dup}"); bad+=1
     used=set(re.findall(r'(?<![$\w])\$\("([^"]+)"\)', js))   # not $$("k"): walletTab's per-panel prefixed ids|set(re.findall(r'getElementById\("([^"]+)"\)', js))

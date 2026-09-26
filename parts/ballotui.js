@@ -33,10 +33,11 @@ function bPaint(){
   ballotPill();
   $("bprice").hidden=!n||sent;
   if(!n) return;
+  const firstAt=new Map(); e.forEach(x=>{ if(!firstAt.has(x.addr)) firstAt.set(x.addr,x); });   // a second burn to one address in one transaction is summed under the first (spec §4)
   $("b-list").innerHTML=e.map((x,i)=>`<div class="bent${sent?" sent":""}">
       ${x.name?iconBadge("",ICON_TAKE):x.intent==="feature"?iconBadge("feature",ICONS.feature):iconBadge("reg",ICONS.reg)}
-      <span class="topic">${x.name?topicName(x.name):x.intent==="feature"?"sponsor":"register"}</span>
-      <span class="stmt">${x.statement?esc(x.statement):"<i>abstain</i>"}</span>
+      <span class="topic">${x.name?topicLabel(x.name):x.intent==="feature"?"sponsor":"register"}</span>
+      <span class="stmt">${x.statement?esc(x.statement):"<i>no take</i>"}${sent?"":bTag(x, firstAt.get(x.addr))}</span>
       <b class="mono">${fmt(x.sats)}<small> sats</small></b>
       ${sent?`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
     </div>`).join("");
@@ -51,6 +52,25 @@ function bPaint(){
   bwt.paint();
   walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close(), !!bLast);   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, from any step
   if(/^Sign/.test($("bsend").textContent)) $("bsend").onclick=()=>{ if(bStep!==3) bGo(3); bwt.send(); };   // signing shows the Transaction step, where progress and errors show
+}
+// what a batch row would really do, said on the row: summed into an earlier burn to the same topic, too late for a deadline, or an answer off the topic's list
+function bTag(x, first){
+  const t=s=>` <small class="btag">${s}</small>`;
+  if(first!==x) return t(x.name ? `counts as ${first.statement?"“"+esc(first.statement)+"”":"no take"}` : "left out: one root burn per transaction");
+  const p=x.name?parseScope(x.name):null; if(!p) return "";
+  if(p.deadline&&TIP&&tipEst()+1>=p.deadline) return t("closed · this burn would not count");
+  if(p.deadline&&TIP&&blocksTo(p.deadline)<=3) return t(`closes in ≈ ${Math.max(1,Math.ceil(blocksTo(p.deadline)))} blocks · may confirm too late`);
+  const v=norm(x.statement||""); if(v&&(p.opts?!p.opts.includes(v):p.range?!(numOf(v)>=p.range[0]&&numOf(v)<=p.range[1]):false)) return t("not in the result");
+  return "";
+}
+// a burn for a topic the batch already holds: one transaction counts one burn per topic, so the dialog asks (replace it, or add these sats to it) instead of losing one
+function batchConflict(note, i, e, done){
+  const x=ballotGet()[i], q=s=>s?`“${esc(s)}”`:"no take", same=!!e.name&&norm(x.statement)===norm(e.statement);
+  note.innerHTML = !e.name ? `<p>Your batch already ${x.intent==="feature"?"sponsors":"registers"} ${topicName(nameOf(x.statement)||x.statement)}. One transaction carries one burn to the root topic: send this one separately, or replace it.</p><div class="acts"><button type="button" class="btn sm" data-bx="replace">Replace it</button></div>`
+    : same ? `<p>${topicName(e.name)} is already in your batch with ${q(x.statement)}.</p><div class="acts"><button type="button" class="btn sm primary" data-bx="add">Add ${fmt(e.sats)} sats to it</button></div>`
+    : `<p>${topicName(e.name)} is already in your batch with ${q(x.statement)}. One transaction counts one ${kind(parseScope(e.name))==="open"?"take":"answer"} per topic.</p><div class="acts"><button type="button" class="btn sm" data-bx="replace">Replace with ${q(e.statement)}</button><button type="button" class="btn sm" data-bx="add">Add ${fmt(e.sats)} to ${q(x.statement)}</button></div>`;
+  note.hidden=false; note.querySelector("[data-bx]").focus({preventScroll:true});
+  note.onclick=ev=>{ const b=ev.target.closest("[data-bx]"); if(!b) return; ballotSet(i, b.dataset.bx==="replace" ? e : {sats:x.sats+e.sats}); note.hidden=true; done(); };
 }
 PAY.push({paint:bPaint, wallet:bwt});                        // repainted with every wallet change, like the burn dialogs
 bwt.onsent=({txid})=>{                                       // one transaction, N rows: each topic gets its own pending burn (h:null) so the receipt page and the boards find them

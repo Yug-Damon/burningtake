@@ -3,12 +3,13 @@
 "use strict";
 const fs=require("fs"), path=require("path"), assert=require("assert");
 const src=fs.readFileSync(path.join(__dirname,"parts","shared.js"),"utf8");
-const names=["opReturnData","txBurns","nameOf","scanAddress","chainGet","deriveScope","canonical","parseScope","feeRefresh","feeRates"];
+const names=["opReturnData","txBurns","nameOf","scanAddress","chainGet","chainReset","deriveScope","canonical","parseScope","feeRefresh","feeRates"];
 const doc={querySelectorAll:()=>[], getElementById:()=>null, createElement:()=>({style:{}}), body:{appendChild(){}}, documentElement:{style:{}}, fonts:null};
 let fetchImpl=()=>{ throw new Error("fetch not stubbed"); };
+const store={};                                              // localStorage, for the tests that set a key
 const lib=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch",src+"\nreturn {"+names.join(",")+"};")(
-  doc, {}, {getItem:()=>null, setItem(){}}, ()=>({matches:false}), {}, ()=>{}, (...a)=>fetchImpl(...a));
-const {opReturnData,txBurns,nameOf,scanAddress,chainGet,deriveScope,feeRefresh,feeRates}=lib;
+  doc, {}, {getItem:k=>store[k]??null, setItem(k,v){ store[k]=String(v); }}, ()=>({matches:false}), {}, ()=>{}, (...a)=>fetchImpl(...a));
+const {opReturnData,txBurns,nameOf,scanAddress,chainGet,chainReset,deriveScope,feeRefresh,feeRates}=lib;
 
 // ---------- independent helpers: an OP_RETURN script, Esplora-shaped outputs and transactions ----------
 const hex=s=>Buffer.from(s,"utf8").toString("hex");
@@ -93,19 +94,31 @@ let n=0, failed=0; const ok=async(name,fn)=>{ n++; try{ await fn(); console.log(
     assert.strictEqual(r.confirmed.length,30); assert.strictEqual(r.requests,2);
   });
   await ok("chainGet: a 429 is asked again, a 404 is not", async()=>{
-    let calls=0; fetchImpl=async()=>(++calls===1?{ok:false,status:429}:{ok:true,json:async()=>({a:1})});
+    chainReset(); let calls=0; fetchImpl=async()=>(++calls===1?{ok:false,status:429}:{ok:true,json:async()=>({a:1})});
     assert.deepStrictEqual(await chainGet("/x"),{a:1}); assert.strictEqual(calls,2);
     calls=0; fetchImpl=async()=>{ calls++; return {ok:false,status:404}; };
     await assert.rejects(()=>chainGet("/x"), e=>e.status===404); assert.strictEqual(calls,1);
   });
   await ok("chainGet: an unreachable explorer hands over to the other public one", async()=>{
-    const hosts=[]; fetchImpl=async url=>{ hosts.push(new URL(url).host); if(url.startsWith("https://mempool.space/")) throw new TypeError("Failed to fetch"); return {ok:true,text:async()=>"968433"}; };
+    chainReset(); const hosts=[]; fetchImpl=async url=>{ hosts.push(new URL(url).host); if(url.startsWith("https://mempool.space/")) throw new TypeError("Failed to fetch"); return {ok:true,text:async()=>"968433"}; };
     assert.strictEqual(await chainGet("/blocks/tip/height",{text:true}),"968433");
     assert.deepStrictEqual(hosts,["mempool.space","blockstream.info"]);
     hosts.length=0; await chainGet("/blocks/tip/height",{text:true}); assert.deepStrictEqual(hosts,["blockstream.info"],"the one that answered goes first");
   });
+  await ok("chainGet: the only explorer gets a second try when it does not answer", async()=>{
+    chainReset(); store["bv.endpoint.mainnet"]="https://own.example/api"; let calls=0;
+    fetchImpl=async()=>{ calls++; if(calls===1) throw new TypeError("Failed to fetch"); return {ok:true,text:async()=>"968434"}; };
+    try{ assert.strictEqual(await chainGet("/blocks/tip/height",{text:true}),"968434"); assert.strictEqual(calls,2); }
+    finally{ delete store["bv.endpoint.mainnet"]; }
+  });
+  await ok("chainGet: explorers that failed are skipped for a while; all of them down fails at once; Retry clears the marks", async()=>{
+    chainReset(); let hosts=[]; fetchImpl=async url=>{ hosts.push(new URL(url).host); throw new TypeError("Failed to fetch"); };
+    await assert.rejects(()=>chainGet("/x")); assert.strictEqual(hosts.length,3,"one try, then the last explorer twice"); assert.deepStrictEqual([...new Set(hosts)].sort(),["blockstream.info","mempool.space"]);
+    hosts=[]; const t=Date.now(); await assert.rejects(()=>chainGet("/x"), e=>e.down===true); assert.strictEqual(hosts.length,0); assert.ok(Date.now()-t<100,"no timeouts while every explorer is marked");
+    chainReset(); fetchImpl=async()=>({ok:true,json:async()=>({a:1})}); assert.deepStrictEqual(await chainGet("/x"),{a:1});
+  });
   await ok("fees: live estimates rounded up, a floor, never faster for less, a missing target takes the next one", async()=>{
-    const est=j=>{ fetchImpl=async()=>({ok:true,json:async()=>j}); return feeRefresh(); };
+    chainReset(); const est=j=>{ fetchImpl=async()=>({ok:true,json:async()=>j}); return feeRefresh(); };
     assert.deepStrictEqual(await est({"1":12.34,"2":10,"6":3.01,"144":0.5,"504":0.2}),{fast:12.4,normal:3.1,eco:1});
     assert.deepStrictEqual(await est({"1":2,"6":5,"144":9}),{fast:2,normal:2,eco:2},"inverted estimates: the slower speeds are capped");
     assert.deepStrictEqual(await est({"2":4,"25":1.5}),{fast:4,normal:1.5,eco:1.5});

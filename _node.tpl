@@ -104,4 +104,4 @@ node.example.com {
   <div class="box ok"><b>The endpoint is saved per network.</b> A signet node configured while on signet is not used on mainnet, and the other way round, so a mistake there cannot send the app to the wrong chain.</div>
 </main>
 
-<footer><div class="wrap"><span>Burning Take · <a href="verify.html">verify</a> · <a href="spec.html">protocol spec</a> · <a href="index.html">app</a></span><span class="mono">your node, your numbers</span></div></footer>
+<footer><div class="wrap"><span>Burning Take · <a href="verify.html">verify</a> · <a href="spec.html">protocol spec</a> · <a href="index.html">app</a> · made by Yug Damon</span><span class="mono">your node, your numbers</span></div></footer>

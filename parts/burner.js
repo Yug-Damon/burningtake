@@ -32,18 +32,19 @@ function paintLoading(){
   groups.innerHTML=[[3,"120px"],[2,"90px"]].map(([n,w])=>`<div class="bgroup ghost" aria-hidden="true"><div class="divider">${skel(w,11)}</div>${Array.from({length:n},(_,i)=>`<div class="st ghost"><span class="rank"></span><span class="txt">${skel(["54%","40%","62%"][i],14)}</span><span class="sats">${skel("80px",14)}</span><span class="votes">${skel("50px",10)}</span></div>`).join("")}</div>`).join("");
 }
 function countUp(el,to){                                    // the tiles count up to their value; instant under reduced motion or in a hidden tab (no frames there)
-  el.textContent=fmt(to); if(RM.matches||document.hidden||!to) return;
-  const t0=performance.now(), d=480, step=t=>{ const k=Math.min(1,(t-t0)/d); el.textContent=fmt(Math.round(to*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); };
-  el.textContent="0"; requestAnimationFrame(step); setTimeout(()=>{ el.textContent=fmt(to); },d+120);   // the timeout guarantees the final number even if frames stall
+  const tok=el._cu=(el._cu||0)+1; el.textContent=fmt(to); if(RM.matches||document.hidden||!to) return;   // tok: a later paint cancels this one, so an old value never lands on a fresh one
+  const t0=performance.now(), d=480, step=t=>{ if(el._cu!==tok) return; const k=Math.min(1,(t-t0)/d); el.textContent=fmt(Math.round(to*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); };
+  el.textContent="0"; requestAnimationFrame(step); setTimeout(()=>{ if(el._cu===tok) el.textContent=fmt(to); },d+120);   // the timeout guarantees the final number even if frames stall
 }
+const setNum=(el,v)=>{ el._cu=(el._cu||0)+1; el.textContent=fmt(v); };   // no animation, and any count-up still running stops
 function paintRows(animate=false){
   const gs=groupsOf(), total=ROWSB.reduce((a,v)=>a+v.sats,0), takes=takesOf();
   if(animate){ countUp($("tsats"),total); countUp($("tburns"),ROWSB.length); countUp($("ttopics"),gs.length); }
-  else { $("tsats").textContent=fmt(total); $("tburns").textContent=fmt(ROWSB.length); $("ttopics").textContent=fmt(gs.length); }
+  else { setNum($("tsats"),total); setNum($("tburns"),ROWSB.length); setNum($("ttopics"),gs.length); }
   $("exportbtn").disabled=!ROWSB.length;
   $("bcols").hidden=$("bgroupshead").hidden=!gs.length;
   // HOTTEST TAKES: this burner's statements, their sats summed
-  $("bhot").innerHTML=takes.slice(0,8).map(x=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<a class="lbt" href="topic.html#${esc(x.name)}">${x.t?esc(x.t):"<i>no take</i>"}</a><b>${fmt(x.sats)} sats</b><span class="m">${topicName(x.name)} · ${x.burns} burn${x.burns===1?"":"s"}</span></div>`).join("");
+  $("bhot").innerHTML=takes.slice(0,8).map(x=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<a class="lbt" href="topic.html#${esc(x.name)}">${x.t?esc(shownT(parseScope(x.name),x.t)):"<i>no take</i>"}</a><b>${fmt(x.sats)} sats</b><span class="m">${topicName(x.name)} · ${x.burns} burn${x.burns===1?"":"s"}</span></div>`).join("");
   // RECENT: Explore's timeline, this burner's part of it (its takes, the topics it registered or sponsored, its first burn)
   const items=recentDigest(ROWSB.map(v=>({v, name:v.scope})), rootBurns().filter(v=>v.from===ADDR), {burns:12, roots:12, joins:1, all:12});
   $("brecent").innerHTML=items.map(x=>recentRow(x,{self:ADDR})).join("")||`<span class="note">nothing yet</span>`;
@@ -56,9 +57,12 @@ function paintRows(animate=false){
     return `<div class="bgroup" style="--i:${Math.min(gi,8)}">
       <div class="divider"><a href="topic.html#${encodeURIComponent(g.name)}" class="tlink">${topicName(g.name)}</a><span class="more"> · ${kindWord(p)}</span> · ${fmt(g.sats)} sats · ${g.rows.length} burn${g.rows.length===1?"":"s"}</div>
       ${rows.map(x=>{ const sats=x.row?x.row.sats:x.sats, burns=x.row?x.row.burns:x.burns, share=T&&T.sats&&x.rank?x.row.sats/T.sats*100:0;
-        return `<a class="st${x.rank===1?" r1":""}" href="topic.html#${esc(g.name)}">
-        <span class="rank" title="${x.rank?`ranked ${x.rank} in ${esc(topicName(g.name))}`:T?"not ranked: off the topic's list, late or below its minimum":"counting…"}">${T?(x.rank?String(x.rank).padStart(2,"0"):"—"):""}</span>
-        <span class="txt">${x.t?esc(x.t):"<i>no take</i>"}<small class="mine">this burner · ${fmt(x.sats)} sats${x.burns>1?` · ${x.burns} burns`:""}</small></span>
+        const k=kindKey(p), two=k==="duel"||k==="yes-no", lead=T&&T.answers[0], tie=two&&T&&T.answers[1]&&T.answers[1].sats===lead.sats;
+      const tag= !T ? "" : x.rank ? (k==="number" ? "in range" : two ? (tie?"tied":x.rank===1?"leads":"trails") : "") : x.row ? "not in the result" : "not counted";   // a number is not a podium, a side is not a rank; off the list or late: said
+      const rk= !T ? "" : k==="number"||two ? "" : x.rank ? String(x.rank).padStart(2,"0") : "—";
+    return `<a class="st${x.rank===1&&!two&&k!=="number"?" r1":""}" href="topic.html#${esc(g.name)}">
+        <span class="rank" title="${x.rank?`ranked ${x.rank} in ${esc(topicName(g.name))}`:T?"not ranked: off the topic's list, late or below its minimum":"counting…"}">${rk}</span>
+        <span class="txt">${x.t?esc(k==="yes-no"&&p.opts.includes(norm(x.t))?norm(x.t).toUpperCase():shownT(p,x.t)):"<i>no take</i>"}${tag?`<span class="tg${/not/.test(tag)?" warn":""}">${tag}</span>`:""}<small class="mine">this burner · ${fmt(x.sats)} sats${x.burns>1?` · ${x.burns} burns`:""}</small></span>
         <span class="sats">${T?fmt(sats):skel("60px",14)}<small> sats</small></span>
         <span class="votes">${T?`${burns} burn${burns===1?"":"s"}`:""}</span>
         <span class="bar" style="width:${share.toFixed(1)}%"></span>
@@ -76,27 +80,41 @@ async function load(){
   ADDR=hashText().trim().toLowerCase(); ROWSB=[]; TALLY={}; const my=++seq;
   paintHead();
   if(!ADDR||!validAddr(ADDR)){ status.innerHTML=""; paintRows(); $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; paintEmpty(ADDR?"bad":"none"); return; }
-  paintEmpty(null); paintLoading();
-  status.innerHTML=`<span class="spin"></span> reading the directory…`;
+  paintEmpty(null); paintLoading(); status.innerHTML=syncLine({state:"loading"});
+  // saved first: this address's burns in the topics this browser has read, ranked from the same rows. Registrations stay out (Recent shows them, through rootBurns)
+  const [all,recs]=await Promise.all([DB.all(),DB.scopes()]); if(my!==seq) return;
+  await dirFromDisk(); if(my!==seq) return;
+  const rec=new Map((recs||[]).map(r=>[r.name,r])), by=new Map();
+  for(const v of all||[]) if(v.scope) (by.get(v.scope)||by.set(v.scope,[]).get(v.scope)).push(v);
+  const disk=(all||[]).filter(v=>v.from===ADDR&&v.scope).map(v=>v.h===null?{...v, unver:true}:v);
+  let painted=false, low=0;
+  if(disk.length){
+    for(const n of new Set(disk.map(v=>v.scope))){ const r=rec.get(n); if(!r) continue; TALLY[n]=tallyOf(n,by.get(n)||[]); if(r.height) low=low?Math.min(low,r.height):r.height; }
+    ROWSB=disk; paintRows(true); painted=true; status.innerHTML=syncLine({state:"updating", height:low});
+  }
   await dirLoad(); if(my!==seq) return;
   const topics=new Map();                                   // every topic this page can name: the registered ones, and the ones opened in this browser
-  for(const n of new Set([...DIRECTORY.map(d=>d.name), ...((await DB.scopes())||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
+  for(const n of new Set([...DIRECTORY.map(d=>d.name), ...(recs||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
+  if(my!==seq) return;
   let rows, failed=false;
   try{
-    const scan=await scanAddress(ADDR,{maxPages:40, cancelled:()=>my!==seq, onPage:p=>{ status.innerHTML=`<span class="spin"></span> reading this address · request ${p.requests}`; }});
+    const scan=await scanAddress(ADDR,{maxPages:40, cancelled:()=>my!==seq});
     if(!scan) return;
-    rows=[...scan.mempool, ...scan.confirmed].filter(tx=>{ const pv=tx.vin&&tx.vin[0]&&tx.vin[0].prevout; return pv&&pv.scriptpubkey_address===ADDR; }).flatMap(tx=>txBurns(tx,topics));   // its burns: the transactions whose first input it signed
-  }catch{ if(my!==seq) return; failed=true; rows=((await DB.all())||[]).filter(v=>v.from===ADDR); }
+    rows=[...scan.mempool, ...scan.confirmed].filter(tx=>{ const pv=tx.vin&&tx.vin[0]&&tx.vin[0].prevout; return pv&&pv.scriptpubkey_address===ADDR; }).flatMap(tx=>txBurns(tx,topics)).map(v=>cleanVote({...v, scope:v.name})).filter(Boolean);   // its burns: the transactions whose first input it signed
+    const got=new Set(rows.map(v=>v.txid+"|"+v.scope));
+    rows=[...rows, ...disk.filter(v=>v.h!==null&&!got.has(v.txid+"|"+v.scope))];   // the scan stops at 40 pages: confirmed burns saved here stay
+  }catch{ if(my!==seq) return; failed=true; rows=disk; }
   if(my!==seq) return;
-  ROWSB=rows.map(v=>cleanVote({...v, scope:v.scope??v.name})).filter(Boolean); paintRows(true);
-  status.innerHTML= failed ? `the explorer did not answer · the burns this browser knows · <button type="button" class="linkbtn" data-retry>retry</button>` : `<span class="dot"></span> synced · block ${fmt(TIP)}${ROWSB.length?"":" · no burns"}`;
-  if(!ROWSB.length) return paintEmpty("zero");
+  ROWSB=rows; paintRows(!painted);                           // the tiles count up once, on this address's first paint
+  await tipFresh(); if(my!==seq) return;
+  status.innerHTML= failed ? syncLine({state:"failed", height:low}) : syncLine({state:TIPERR?"failed":"fresh", height:TIP, tail:ROWSB.length?"":"no burns"});
+  if(!ROWSB.length){ if(failed) $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; else paintEmpty("zero"); return; }   // "no burns" only from a read that answered
   const todo=[...new Set(ROWSB.map(v=>v.scope))];            // each topic's standings, three at a time (cache first): the ranks land as they come
-  const worker=async()=>{ for(let n; (n=todo.shift())!==undefined; ){ const r=await loadVotes(n).catch(()=>null); if(my!==seq) return; TALLY[n]=tallyOf(n,(r&&r.votes)||cache[n]||[]); paintRows(); } };
+  const worker=async()=>{ for(let n; (n=todo.shift())!==undefined; ){ const r=await loadVotes(n).catch(()=>null); if(my!==seq) return; if(r&&(!r.error||r.height||r.votes.length)) TALLY[n]=tallyOf(n,r.votes); paintRows(); } };   // a topic the explorer did not answer for, with nothing saved, stays "counting"
   await Promise.all([worker(),worker(),worker()]);
 }
 addEventListener("hashchange",load); load();
-status.addEventListener("click",e=>{ if(e.target.closest("[data-retry]")) load(); });   // another try, when the reader asks
+status.addEventListener("click",e=>{ if(e.target.closest("[data-retry]")){ chainReset(); load(); } });   // another try, when the reader asks
 $("bcopy").onclick=()=>copyText(ADDR,$("bcopy"));
 $("bgo").onclick=()=>{ const v=$("bq").value.trim(); if(v) location.hash=v; };
 $("bq").onkeydown=e=>{ if(e.key==="Enter") $("bgo").click(); };

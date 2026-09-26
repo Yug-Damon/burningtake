@@ -35,6 +35,12 @@ const TXURL = txid => "https://mempool.space/" + (NET==="mainnet"?"":"signet/") 
 const enc=new TextEncoder();
 const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
 const cache={};
+// an unconfirmed burn read from disk (unver: not listed again on this visit) says when it was last seen once it is older than a fresh send; the others are "in the mempool"
+const FRESH_PENDING=10*60000;
+const agoText=ms=>{ const m=Math.max(1,Math.round((Date.now()-ms)/60000)); return m<60?`${m} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} d ago`; };
+// a confirmed burn's age in plain words, from blocks (about 10 minutes each), its block in the title (HTML: rows only)
+const blockAgo=h=>{ const m=Math.max(0,tipEst()-h)*10; return m<10?"≈ just now":m<60?`≈ ${m} min ago`:m<2880?`≈ ${Math.round(m/60)} h ago`:`≈ ${Math.round(m/1440)} d ago`; };
+const whenOf=v=>v.h!==null ? `<span title="block ${fmt(v.h)}">${blockAgo(v.h)}</span>` : v.unver&&v.at&&Date.now()-v.at>FRESH_PENDING ? "unconfirmed · last seen "+agoText(v.at) : "in the mempool";
 // ---------- snapshots: static JSON a host may publish (spec §6), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
 const SNAPDIR="snapshots/"+NET+"/";
 const snapshotKey=async name=>toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(name))));   // file name = hex sha256 of the canonical topic name
@@ -44,11 +50,11 @@ const snapshotIndex=()=>SNAPIDX||(SNAPIDX=snapshotGet(SNAPDIR+"index.json").then
 const snapshotFetch=async name=>{ const idx=await snapshotIndex(); if(idx&&!idx.topics.some(t=>t.name===name)) return null;
   const j=await snapshotGet(SNAPDIR+(await snapshotKey(name))+".json"); return j&&j.net===NET&&Array.isArray(j.votes) ? j : null; };   // -> {name, net, height, count, votes:[{txid,t,sats,h,from}]} | null
 // ---------- explorer endpoint: an Esplora API base per network, overridable from the Data source row (index page) ----------
-const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:null} };   // null: the preset has no server for that network
+const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:"https://blockstream.info/signet/api"} };   // null: the preset has no server for that network
 const esploraDefault=net=>ESPLORA_PRESETS.mempool[net]||ESPLORA_PRESETS.mempool.signet;
 const esploraOverride=()=>{ const v=(LS(NETKEY("bv.endpoint"))||"").trim(); if(!v) return ""; if(ESPLORA_PRESETS[v]) return ESPLORA_PRESETS[v][NET]||""; return /^https?:\/\//.test(v) ? v.replace(/\/+$/,"") : ""; };   // stored: preset id or a full API base URL
 const esploraFor=net=>esploraOverride()||esploraDefault(net);                                   // what this page reads the chain through
-const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
+const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); chainReset(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
 globalThis.ESPLORA_OVERRIDE_URL=esploraOverride();                                              // read by wallet.js esploraBase()
 // ---------- the chain: every number on every page is read from the explorer above (Esplora API), cached in IndexedDB (db.js) ----------
 const API_PAGE=25;                                                     // confirmed transactions per history page (Esplora)
@@ -56,37 +62,68 @@ const API_PAGE=25;                                                     // confir
 // so a blocked or down explorer costs one timeout, not every page. The wallet (wallet.js esploraBase) follows the same choice.
 let LIVE_BASE=(()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.livebase"))||"null"); return j&&Date.now()-j.at<3600000 ? j.base : null; }catch{ return null; } })();
 const chainBases=()=>{ const own=esploraOverride(); return own ? [own] : [...new Set([LIVE_BASE, ESPLORA_PRESETS.mempool[NET], ESPLORA_PRESETS.blockstream[NET]].filter(Boolean))]; };
+// an explorer that just failed is skipped for a while: 30 s, doubling on repeats up to 5 min, remembered next to bv.livebase so the next page does not pay the timeouts again.
+// When every explorer is marked, a call fails at once and the page keeps what it has. Offline marks nothing; Retry, the network coming back and a new data source clear the marks
+let DOWN=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.down"))||"{}")||{}; }catch{ return {}; } })();
+const downSave=()=>LS(NETKEY("bv.down"),JSON.stringify(DOWN));
+const downMark=base=>{ if(typeof navigator!=="undefined"&&navigator.onLine===false) return; const o=DOWN[base], n=o&&Date.now()-o.until<600000?Math.min(o.n*2,10):1; DOWN[base]={until:Date.now()+Math.min(300000,30000*n), n}; downSave(); };
+const isDown=base=>!!DOWN[base]&&DOWN[base].until>Date.now();
+function chainReset(){ DOWN={}; downSave(); }
+if(typeof addEventListener==="function") addEventListener("online",chainReset);
 async function chainGet(path,{text=false}={}){                         // GET explorer + path -> JSON (or text); throws when no explorer gives an answer
-  let err;
-  for(const base of chainBases()){
+  let err; const bases=chainBases().filter(b=>!isDown(b));
+  if(!bases.length){ err=new Error("the explorer did not answer"); err.down=true; throw err; }   // every explorer failed moments ago: at once, no timeouts
+  for(const [bi,base] of bases.entries()){
     for(let i=0;i<4;i++){
       if(i) await sleep(800*2**(i-1));                                    // a busy explorer: 0.8 s, 1.6 s, 3.2 s
       let r;
-      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {}); }
-      catch(e){ err=e; break; }                                          // unreachable (offline, blocked, too slow): the next explorer
-      if(r.ok){ if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
+      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(6000)} : {}); }
+      catch(e){ err=e; if(i===0&&bi===bases.length-1) continue; downMark(base); break; }   // unreachable (offline, blocked, too slow): marked, the next explorer; the last one gets a second try (a stale connection often answers the next time)
+      if(r.ok){ if(DOWN[base]){ delete DOWN[base]; downSave(); }
+        if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
         return text ? (await r.text()).trim() : await r.json(); }
       err=new Error(`the explorer answered ${r.status}`); err.status=r.status;
-      if(r.status!==429 && r.status<500) throw err;                       // a 4xx is the answer, whoever is asked
+      if(r.status===429){ if(i>=1){ downMark(base); break; } continue; }   // asked to slow down: one more try, then marked and the next explorer
+      if(r.status<500) throw err;                                         // a 4xx is the answer, whoever is asked
+      if(i===3) downMark(base);                                           // a 5xx four times: marked, the next explorer
     }
   }
   throw err;
 }
 TIP=+(LS(NETKEY("bv.tip"))||0);                                         // the last tip this browser saw: windows and countdowns work at once, the fresh one lands a moment later
-const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=h; LS(NETKEY("bv.tip"),String(h)); } }catch{} return TIP; };
+let TIPAT=+(LS(NETKEY("bv.tipat"))||0), TIPLIVE=0, TIPERR=false;          // when TIP was read (ms), the tip read on this visit (0: none yet), whether the last read failed
+const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=TIPLIVE=h; TIPAT=Date.now(); TIPERR=false; LS(NETKEY("bv.tip"),String(h)); LS(NETKEY("bv.tipat"),String(TIPAT)); return TIP; } }catch{} TIPERR=true; return TIP; };
+// deadlines read the tip as it probably is now: a saved tip ages one block per 10 min since it was read, so a topic that closed since the last visit says so at once
+const tipEst=()=>TIP&&TIPAT ? TIP+Math.floor((Date.now()-TIPAT)/600000) : TIP;
+const blocksTo=h=>h-TIP-(TIP&&TIPAT?(Date.now()-TIPAT)/600000:0);        // blocks left until height h (fractional: the time since the tip was read counts)
+// ---------- the sync line under every page's title: one wording for the same states ----------
+// state: "loading" (nothing saved to show yet) | "updating" (saved data on screen, being checked) | "fresh" (every read of this pass answered) | "failed"
+// height: the block the data on screen is as of, never the current tip (0: nothing saved); tail: what follows "synced · block N"; retry: the attribute of its button
+// "synced" only comes from a pass where every read answered; retry leads the failed line, so a phone's cut-off line still shows it
+function syncLine({state, height=0, tail="", retry="data-retry"}){
+  const blk=height>0?`block ${fmt(height)}`:"";
+  if(state==="failed") return `<button type="button" class="linkbtn" ${retry}>retry</button> · the explorer did not answer · ${blk?"as of "+blk:"nothing saved in this browser"}`;
+  if(state==="fresh") return `<span class="dot"></span> synced${blk?" · "+blk:""}${tail?" · "+tail:""}`;
+  if(state==="updating"&&blk) return `<span class="spin"></span> as of ${blk} · updating…`;
+  return `<span class="spin"></span> reading the chain…`;
+}
+let ANN=null;                                                          // one polite live region per page, made on first use: pages announce entering and leaving the failed state, nothing else
+const announce=t=>{ if(!ANN){ ANN=document.createElement("div"); ANN.setAttribute("aria-live","polite"); ANN.style.cssText="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap"; document.body.appendChild(ANN); } if(ANN.textContent!==t) ANN.textContent=t; };
 let TIPP=null, PRICEP=null;
 const tipReady=()=>TIPP||(TIPP=tipRefresh());                          // started by loader.js on every app page
+const tipFresh=()=>TIPERR?tipRefresh():tipReady();                     // before a pass says "synced": the tip read of this visit, asked again if it failed
 const priceReady=()=>PRICEP||(PRICEP=NET!=="mainnet"||chainBases()[0]!==ESPLORA_PRESETS.mempool.mainnet ? Promise.resolve() : chainGet("/v1/prices").then(j=>{ if(+j.USD>0) BTCUSD=+j.USD; },()=>{}));   // only mempool.space serves a USD price: with another explorer the dollar hints stay hidden
 const usdOf=sats=>BTCUSD ? "≈ $"+(sats/1e8*BTCUSD).toFixed(2) : "";
 // ---------- the mining fee: the explorer's live estimates (Esplora /fee-estimates: {blocks ahead: sat/vB}), one speed chosen per network ----------
 // Signet miners have been taking only 2 sat/vB and up while the estimates said 1: a burn at the minimum waited for days. Signet gets a floor of 2.
 const FEE_SPEEDS=[["fast","Fast",1],["normal","Normal",6],["eco","Economy",144]];   // [id, label, target in blocks]
 const FEE_FLOOR=NET==="signet"?2:1, FEE_FALLBACK=NET==="signet"?{fast:4,normal:3,eco:2}:{fast:5,normal:3,eco:1};   // no estimates: a guess that still confirms
+const FEE_CAP=NET==="signet"?5:Infinity;   // ponytail: signet estimates run wild (blockstream's said 63.9 sat/vB while blocks took 2–4) and its sats are free: a ceiling there; mainnet trusts the estimate
 let FEES=null, FEESAT=0, FEEP=null;
 const feeRefresh=async()=>{ FEESAT=Date.now();
   try{ const j=await chainGet("/fee-estimates"), ks=Object.keys(j).map(Number).filter(n=>+j[n]>0).sort((a,b)=>a-b); if(!ks.length) return FEES;
     let prev=Infinity; const out={};
-    for(const [id,,t] of FEE_SPEEDS){ const k=ks.find(n=>n>=t)??ks[ks.length-1]; out[id]=prev=Math.min(prev, Math.max(FEE_FLOOR, Math.ceil(+j[k]*10)/10)); }   // rounded up, never faster for less
+    for(const [id,,t] of FEE_SPEEDS){ const k=ks.find(n=>n>=t)??ks[ks.length-1]; out[id]=prev=Math.min(prev, FEE_CAP, Math.max(FEE_FLOOR, Math.ceil(+j[k]*10)/10)); }   // rounded up, never faster for less, never past the cap
     FEES=out; }catch{}
   return FEES; };
 const feeReady=()=>{ if(!FEEP||Date.now()-FEESAT>120000) FEEP=feeRefresh(); return FEEP; };   // at most every two minutes
@@ -127,17 +164,36 @@ async function scanAddress(addr,{stopTx=null,maxPages=Infinity,onPage=()=>{},can
 // The root topic's address is also a well-known generic burn address: anything else burned there is some other burn, not a registration.
 // A name is text: binary payloads decode to U+FFFD and control characters (seen on signet), and invisible or unassigned characters are not a name either (the joiner inside emoji is fine).
 const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)||/[\p{C}\uFFFD]/u.test(s.replace(/\u200d/g,""))) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
+// why a name would not be listed once paid for, in the reader's words (null: it registers). The New topic dialog and the topic page's Register check it before signing
+const regIssue=name=>{ const s=String(name||""), n=enc.encode(s).length; if(!s) return "it has no name";
+  if(n>80) return `it is ${n} bytes, 80 at most`; if(/\s/.test(s)) return "it contains spaces"; if(s!==s.toLowerCase()) return "it has capital letters";
+  if(/[\p{C}\uFFFD]/u.test(s.replace(/\u200d/g,""))) return "it has invisible characters"; return nameOf(s)===s ? null : "it is not written the canonical way"; };
 try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
 // ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
 const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]
 const watchSave=a=>{ try{ LS(NETKEY("bv.watch"),JSON.stringify(a)); }catch{} };
 const watchHas=name=>watchGet().some(w=>w.name===name);
 const watchToggle=name=>{ const a=watchGet(), i=a.findIndex(w=>w.name===name); if(i>=0) a.splice(i,1); else a.push({name, seenH:0, seenCount:0}); watchSave(a); return i<0; };   // -> true when now watched
-const watchMarkSeen=(name,count,height)=>{ const a=watchGet(), w=a.find(x=>x.name===name); if(!w) return; w.seenCount=count; w.seenH=height; watchSave(a); };
+const watchMarkSeen=(name,count,height,seen=null)=>{ const a=watchGet(), w=a.find(x=>x.name===name); if(!w) return; w.seenCount=count; w.seenH=height; if(seen) w.seen=seen; w.seenAt=Date.now(); watchSave(a); };   // seen: the call as last seen, written from a synced pass only
+// the call as a watch record keeps it: who led, a yes-no's share, a number's estimate
+const callSeen=(name,T)=>{ const p=parseScope(name), a=T.answers, tot=T.shareSats; return {lead:a[0]?a[0].key:null, yes:kindKey(p)==="yes-no"&&tot?Math.round((a.find(r=>r.key==="yes")||{sats:0}).sats/tot*100):null, med:p.range?weightedMedian(a):null}; };
+// what changed since the last visit, in a few words: "+2 · android took the lead", "+2 · yes 79% (was 71%)", "+2 · estimate ↑ 4%", "Final · YES"
+function watchNews(w, votes, T){
+  const p=parseScope(w.name), k=kindKey(p), st=closeState(p), was=w.seen||{}, now=callSeen(w.name,T), n=Math.max(0,votes.length-(w.seenCount||0));
+  if(st&&st.k==="final"&&T.answers[0]) return `Final · ${k==="yes-no"?T.answers[0].key.toUpperCase():T.answers[0].t}`;
+  if(!n) return null;
+  let what="";
+  if(k==="yes-no"&&was.yes!=null&&now.yes!==was.yes) what=`yes ${now.yes}% (was ${was.yes}%)`;
+  else if(k==="number"&&was.med&&now.med&&now.med!==was.med){ const d=Math.round((now.med-was.med)/Math.abs(was.med)*100); what= d ? `estimate ${d>0?"↑":"↓"} ${Math.abs(d)}%` : ""; }
+  else if(was.lead&&now.lead&&now.lead!==was.lead) what= k==="duel" ? `${T.answers[0].t} took the lead` : "new leader";
+  return `+${fmt(n)}${what?` · ${what}`:""}`;
+}
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
 const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} };
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
+const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
+const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
 const ballotClear=()=>ballotSave([]);
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
@@ -158,15 +214,47 @@ function parseScope(name){
   return {q:q.trim(), opts, range, deadline, min};
 }
 const canonical = p => p.q + (p.opts?"?"+p.opts.join("|"):p.range?`?${p.range[0]}..${p.range[1]}`:"") + (p.deadline?"@"+p.deadline:"") + (p.min?"!"+p.min:"");
-const label = name => { const p=parseScope(name), tags=[];
-  if(p.opts) tags.push("poll · "+esc(p.opts.join(" | "))); if(p.range) tags.push(`number · ${nfc(p.range[0])} – ${nfc(p.range[1])}`);
-  if(p.deadline) tags.push(p.deadline>TIP?`closes in ${fmt(p.deadline-TIP)} blocks`:"closed"); if(p.min) tags.push(`min ${fmt(p.min)} sats`);
-  return esc(p.q) + tags.map(t=>` <span class="pill" style="padding:1px 7px;font-size:11px">${t}</span>`).join(""); };
 const kind = p => p.range ? "number" : p.opts ? (p.opts.length===2?"duel":"poll") : "open";
 // ---------- one way to name, count and time a topic, for Explore and the topic page alike ----------
-const kindWord = p => { const k=kind(p); return k==="duel" ? (p.opts.join("|")==="yes|no"?"yes-no":"duel") : k==="poll" ? `poll · ${p.opts.length} options` : k; };   // open, yes-no, duel, poll · N options, number
+const isYesNo = p => !!p.opts && p.opts.length===2 && p.opts.includes("yes") && p.opts.includes("no");   // in either order: "no|yes" is its own name and address, shown as a yes-no all the same
+const kindKey = p => { const k=kind(p); return k==="duel"&&isYesNo(p) ? "yes-no" : k; };   // open, yes-no, duel, poll, number
+// one vocabulary per kind, on every surface: its word (eyebrows, lists, the embed, the batch), what one answer is called, the embed's call to action, the New topic chip's line
+const KINDS={
+  open:    {word:"open",   noun:"take",   cta:"Burn your take →",   blurb:"Anyone writes their own take. Takes ranked by sats."},
+  "yes-no":{word:"yes-no", noun:"answer", cta:"Burn your answer →", blurb:"A prediction with a closing date. Burns are a signal, not a bet: nobody wins the sats."},
+  duel:    {word:"duel",   noun:"answer", cta:"Burn your answer →", blurb:"Two sides, one bar."},
+  poll:    {word:"poll",   noun:"answer", cta:"Burn your answer →", blurb:"3 or more options race."},
+  number:  {word:"number", noun:"answer", cta:"Burn your answer →", blurb:"Everyone answers with a number; the estimate is weighted by sats."},
+};
+const kindWord = p => { const k=kindKey(p); return k==="poll" ? `poll · ${p.opts.length} options` : KINDS[k].word; };   // open, yes-no, duel, poll · N options, number
+// a topic's question as a heading: hyphens read as spaces, a path as "food › …", a question mark on topics with fixed answers. Display only: links, search and data keep the name
+const niceQ = name => { const p=parseScope(name), s=p.q.replace(/-/g," ").replace(/\//g," › ").replace(/\s+/g," ").trim(); return (s.charAt(0).toUpperCase()+s.slice(1))+(p.opts||p.range?"?":""); };
 const topicName = (name,hash=true) => { const p=parseScope(name); return (hash?"#":"")+esc(p.q)+(p.opts||p.range?"?":""); };   // "#general", "#paris-cars?"  (escaped HTML)
+// a number answer, one way everywhere: digits grouped only when the topic's range reaches 10,000 (years stay bare), no decimals on an integer range, the mean included
+const numFmt = (x,range) => { if(x===null||x===undefined||!Number.isFinite(+x)) return "—"; const [lo,hi]=range||[0,Math.abs(+x)], ints=Number.isInteger(lo)&&Number.isInteger(hi);
+  return (+x).toLocaleString("en-US",{useGrouping:Math.max(Math.abs(lo),Math.abs(hi))>=1e4, maximumFractionDigits:ints?0:2}); };
+// a number topic's unit, when its name ends with one (the New topic dialog appends it): "$150,000", "€150,000", "150,000 sats", "42%"
+const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-usd|in-eur|in-sats|percent)$/); return m?m[1]:null; };
+const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="in-sats" ? s+" sats" : s+"%"; };
+// a statement as the pages show it (escape it before HTML): a number topic's answer formatted like its board, the words as written otherwise
+const shownT = (p,t) => { if(p&&p.range){ const x=numOf(t); if(Number.isFinite(x)) return numU(x,p); } return String(t??""); };
 const numOf = t => { const m=norm(String(t)).match(/^(-?\d+(?:\.\d+)?)([km])?$/); return m ? +m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1) : NaN; };   // spec §5: "150k" = 150000
+// closed to new burns: the next block reaches the deadline, so a burn sent now cannot count (tallyOf counts a pending burn as late from the same moment)
+const closedAt = p => !!p.deadline && TIP>0 && tipEst()+1>=p.deadline;
+// a deadline, one wording on every surface (topic header, Explore, the embed, watch chips): open, closing soon (2 days), last blocks (6), closed to new burns, closed, final.
+// live: the tip read on this visit (TIPLIVE), for "final"; text: the header's words, short: a list's
+const dlWhen = h => new Date(Date.now()+blocksTo(h)*600000).toLocaleDateString(undefined,{dateStyle:"medium"});
+function closeState(p, live=TIPLIVE){
+  if(!p||!p.deadline) return null; if(!TIP) return {k:"checking", text:"checking the deadline…", short:"checking the deadline"};
+  const left=blocksTo(p.deadline), D=fmt(p.deadline), days=Math.round(left/144);
+  if(tipEst()+1<p.deadline){
+    if(left>288) return {k:"open", text:`Closes ≈ ${dlWhen(p.deadline)} · in ${days} days`, short:`closes in ≈ ${days} d`};
+    if(left>6) return {k:"soon", text:`closing in ~${untilText(left)} · ${fmt(Math.ceil(left))} blocks left`, short:`closing in ~${untilText(left)}`};
+    return {k:"last", text:`last blocks · ~${Math.max(1,Math.ceil(left))} left`, short:"last blocks"}; }
+  if(tipEst()<p.deadline) return {k:"closing", text:"closed to new burns · the next block reaches the deadline", short:"closed to new burns"};
+  if(!(live>=p.deadline+6)){ const n=Math.max(1,p.deadline+6-tipEst()); return {k:"closed", text:`Closed at block ${D} · final in ≈ ${untilText(n)} (${n} block${n===1?"":"s"})`, short:"closed"}; }
+  return {k:"final", text:`Final · block ${D}`, short:"final"};
+}
 const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?`${d}d ${h}h`:h?`${h}h ${m%60}m`:`${m}m`; };   // blocks at ~10 min
 const ICON_TAKE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';   // a take: a megaphone, said out loud
 // ---------- icon badges (.fi, base.css), one visual language on every page: the shape says what (ICON_TAKE, a megaphone, for any burn's take or answer,
@@ -175,7 +263,7 @@ const svgIcon = (d,fill) => `<svg width="16" height="16" viewBox="0 0 24 24" ${f
 const ICONS = {
   top: svgIcon('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),   // most burned: a flame
   latest: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),                   // the latest: a clock
-  feature: "✦",                                                                                   // a sponsorship (the key keeps the data's word: intent "feature")
+  feature: svgIcon('<path d="M12 3c.5 4.7 4.3 8.5 9 9-4.7.5-8.5 4.3-9 9-.5-4.7-4.3-8.5-9-9 4.7-.5 8.5-4.3 9-9z"/>',true),   // a sponsorship, ✦ drawn: the glyph falls back to a tiny font on Safari (the key keeps the data's word: intent "feature")
   burner: svgIcon('<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>'),
   join: svgIcon('<circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),   // a new burner
   reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
@@ -192,11 +280,11 @@ function recentDigest(burns, roots, lim={burns:3, roots:2, joins:2, all:6}){   /
 }
 // every take and topic name links to its topic page. o.here: on the topic page a burn names its burner instead of the topic; o.take(html): the take with its top-take star, o.tag(v): late / below min
 function recentRow(x, o={}){
-  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
+  const v=x.v, when=whenOf(v), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
   const href=`topic.html#${esc(x.name)}`, tn=`<a href="${href}">${topicName(x.name)}</a>`, topic=(html,cls="")=>`<a class="fa${cls}" href="${href}">${html}</a>`;
   const row=(kind,icon,word,meta,what,right="")=>`<div class="fr ${kind}"><span class="fi" aria-hidden="true">${icon}</span><span class="fm"><span class="ft">${word}</span> · ${meta}</span>${right}${what}<b>${fmt(v.sats)} sats</b></div>`;
   if(x.kind==="burn") return row("burn", ICON_TAKE, kind(parseScope(x.name))==="open"?"take":"answer", (o.here?(v.from?addr(v.from):"unknown burner"):tn)+" · "+when+(o.tag?o.tag(v):""),
-    o.take?o.take(v,topic):topic(v.t?esc(v.t):"<i>no take</i>"), `<a class="frx" href="receipt.html#${esc(v.txid)}">receipt →</a>`);
+    o.take?o.take(v,topic):topic(v.t?esc(shownT(parseScope(x.name),v.t)):"<i>no take</i>"), `<a class="frx" href="receipt.html?in=${encodeURIComponent(x.name)}#${esc(v.txid)}">receipt →</a>`);
   if(x.kind==="reg") return row("reg", ICONS.reg, "new topic", by+when, topic(topicName(x.name)+" registered"));
   if(x.kind==="feature") return row("feature", ICONS.feature, "sponsor", by+when, topic(topicName(x.name)+" sponsored"));
   return row("burner", ICONS.join, "new burner", `first burn in ${tn} · ${when}`, `<a class="fa" href="burner.html#${esc(x.addr)}" title="${esc(x.addr)}">${esc(x.addr.slice(0,6)+"…"+x.addr.slice(-4))} joined</a>`);
@@ -204,21 +292,64 @@ function recentRow(x, o={}){
 const satsShort = n => n<1e3 ? String(n) : n<1e4 ? (n/1e3).toFixed(1).replace(/\.0$/,"")+"k" : n<1e6 ? Math.round(n/1e3)+"k" : (n/1e6).toFixed(1).replace(/\.0$/,"")+"M";   // "210k" on buttons
 // counted burns of one topic, with the topic page's rules: late and below-minimum burns do not count; poll and number answers
 // are kept apart from off-list ones (on:false), and number answers merge by value ("150k" and "150000" are one row)
+// A burn with no take backs the topic: it counts in the topic's total, never as a row, a rank or a share (none). A row shows the spelling of its earliest burn
 function tallyOf(name, votes){
-  const p=parseScope(name), rows={}; let sats=0, burns=0;
+  const p=parseScope(name), rows={}, none={sats:0, burns:0}, late={sats:0, burns:0}, dust={sats:0, burns:0}; let sats=0, burns=0;
   for(const v of votes){
-    if(p.deadline && (v.h===null ? TIP+1>=p.deadline : v.h>=p.deadline)) continue;
-    if(p.min && v.sats<p.min) continue;
+    if(p.deadline && (v.h===null ? tipEst()+1>=p.deadline : v.h>=p.deadline)){ late.sats+=v.sats; late.burns++; continue; }
+    if(p.min && v.sats<p.min){ dust.sats+=v.sats; dust.burns++; continue; }
     let key=norm(v.t), t=v.t, on=true;
+    if(!key){ none.sats+=v.sats; none.burns++; sats+=v.sats; burns++; continue; }
     if(p.range){ const x=numOf(v.t); on=Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]; if(on){ key="n:"+x; t=String(x); } }
     else if(p.opts) on=p.opts.includes(key);
-    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
+    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on, h0:Infinity, tx0:""}); r.sats+=v.sats; r.burns++; spell(r,v,t);
     if(on){ sats+=v.sats; burns++; }
   }
-  const list=Object.values(rows).sort((a,b)=>b.sats-a.sats);
-  return {sats, burns, answers:list.filter(r=>r.on), other:list.filter(r=>!r.on)};
+  const list=Object.values(rows).sort((a,b)=>b.sats-a.sats), answers=list.filter(r=>r.on);
+  return {sats, burns, answers, other:list.filter(r=>!r.on), none, late, dust, shareSats:answers.reduce((a,r)=>a+r.sats,0)};   // shareSats: what shares are of (no-take sats left out); late and dust: shown, not counted
 }
-const weightedMedian = rows => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; for(const r of rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t))){ acc+=r.sats; if(acc>=tot/2) return numOf(r.t); } return null; };
+// the display spelling of a row: its earliest burn's (lowest height, then lowest txid; unconfirmed last), so a later burn never restyles a take (spec §5)
+const spell=(r,v,t)=>{ const h=v.h??Infinity; if(h<r.h0||h===r.h0&&String(v.txid)<r.tx0){ r.t=t; r.h0=h; r.tx0=String(v.txid); } };
+const weightedMedian = rows => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; const s=rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t));
+  for(let i=0;i<s.length;i++){ acc+=s[i].sats; if(acc*2===tot&&i+1<s.length) return (numOf(s[i].t)+numOf(s[i+1].t))/2; if(acc*2>tot) return numOf(s[i].t); } return null; };   // an exact half split: the midpoint of the two values (spec §6)
+function binsOf(lo,hi){                                      // round bins: 8 to 12 of {1, 2, 2.5, 5}×10^n across the range (50k..500k: 9 of 50k)
+  const span=hi-lo||1, e0=Math.floor(Math.log10(span)); let step=null;
+  for(let e=e0-2; e<=e0+1&&!step; e++) for(const m of [1,2,2.5,5]){ const s=m*10**e, n=Math.ceil(span/s-1e-9); if(n>=8&&n<=12){ step=s; break; } }
+  step=step||span/10; const start=Math.floor(lo/step+1e-9)*step; return {start, step, n:Math.max(1,Math.ceil((hi-start)/step-1e-9))};
+}
+// a topic's current call in a few words, for lists and chips (T: tallyOf over the burns the result counts): the split, who leads, the estimate
+function callOf(name, T){
+  const p=parseScope(name), k=kindKey(p), a=T.answers, tot=T.shareSats; if(!a.length||!tot) return null;
+  if(k==="yes-no") return `${Math.round((a.find(r=>r.key==="yes")||{sats:0}).sats/tot*100)}% yes`;
+  if(k==="duel"){ const [x,y]=a; return y&&y.sats===x.sats ? `${x.t} ties with ${y.t}` : `${x.t} leads ${p.opts.find(o=>o!==x.key)}`; }
+  if(k==="poll") return `${a[0].t} leads`;
+  if(k==="number") return `≈ ${numU(weightedMedian(a),p)}`;
+  return `leads “${a[0].t}”`;
+}
+// one burn's fate under its topic's rules, from the burn and the name alone (exact in a fresh browser): counted, in the total only, not in the result, not counted, pending
+function burnStatus(p,v){ const t=norm(v.t||""), late=p.deadline&&(v.h===null?tipEst()+1>=p.deadline:v.h>=p.deadline);
+  if(late) return "late · after the deadline, not counted";
+  if(p.min&&v.sats<p.min) return `below this topic's ${fmt(p.min)}-sat minimum · not counted`;
+  if(!t) return "no take · this burn backs the topic, not a statement";
+  if(p.opts&&!p.opts.includes(t)) return "not one of the options · not in the result";
+  if(p.range){ const x=numOf(t); if(!(Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1])) return "outside the range · not in the result"; }
+  if(v.h===null) return p.deadline ? `pending · counts if it confirms before block ${fmt(p.deadline)}` : "pending · counts once it confirms";
+  return p.deadline ? `counted · before the deadline (block ${fmt(p.deadline)})` : "counted";
+}
+// a topic in a list or on a receipt: its name and, compactly, the rules that make it another topic than its lookalikes
+const topicLabel = name => { const p=parseScope(name), r=[p.opts&&kindKey(p)!=="yes-no"?p.opts.join(" | "):null, p.range?`${nfc(p.range[0])} – ${nfc(p.range[1])}`:null, p.deadline?`closes ≈ ${dlWhen(p.deadline)}`:null, p.min?`min ${nfc(p.min)}`:null].filter(Boolean);
+  return topicName(name)+(r.length?` <span class="tl2">· ${esc(r.join(" · "))}</span>`:""); };
+// ---------- what this site and this viewer chose not to show (spec: a front end may refuse to display a topic or a take): the text goes, its sats and bars stay ----------
+// the site's list is a static hide.json next to snapshots/ ({"takes":[{"topic","take"}],"topics":[name]}); the viewer's lives in this browser
+let HIDE={site:new Set(), topics:new Set(), mine:new Set()}, HIDEP=null;
+try{ HIDE.mine=new Set(JSON.parse(LS(NETKEY("bv.hide"))||"[]")); }catch{}
+const hideKey=(name,t)=>name+"\u0000"+norm(String(t||""));
+const hideReady=()=>HIDEP||(HIDEP=snapshotGet("hide.json").then(j=>{ if(j&&Array.isArray(j.takes)) for(const x of j.takes) if(x&&typeof x.topic==="string") HIDE.site.add(hideKey(x.topic,x.take)); if(j&&Array.isArray(j.topics)) for(const n of j.topics) if(typeof n==="string") HIDE.topics.add(n); }));
+const hiddenBy = (name,t) => HIDE.site.has(hideKey(name,t)) ? "site" : HIDE.mine.has(hideKey(name,t)) ? "you" : null;
+const hideMine = (name,t,on=true) => { const k=hideKey(name,t); on?HIDE.mine.add(k):HIDE.mine.delete(k); LS(NETKEY("bv.hide"),JSON.stringify([...HIDE.mine])); };
+const hiddenTxt = by => by==="site" ? "hidden by this site" : "hidden by you";
+// the weighted quartiles, for the "middle half" of a number topic
+const weightedQuantile = (rows,q) => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; for(const r of rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t))){ acc+=r.sats; if(acc>=tot*q) return numOf(r.t); } return null; };
 
 // ---------- scope: name -> P2WSH(OP_RETURN name) ----------
 const CH="qpzry9x8gf2tvdw0s3jn54khce6mua7l";
@@ -343,7 +474,7 @@ function payPanel(prefix, opts){
   const api={wallet:wtab, onpaint:null};
   const paint=()=>{ pre.textContent=last?last.rawHex:"…"; copy.disabled=!last; if(wtab) wtab.paint(); if(api.onpaint) api.onpaint(); };
   copy.onclick=()=>{ if(last) copyText(pre.textContent,copy); };
-  const set=args=>{ try{ last=buildPayload(args); }catch{ last=null; } tipnote.hidden=!(last&&last.tipOmitted); if(wtab) wtab.update(last); paint(); };
+  const set=args=>{ try{ last=args.entries ? buildBallotPayload(args.entries,{tipAddr:args.tipAddr, tipSats:args.tipSats}) : buildPayload(args); }catch{ last=null; } tipnote.hidden=!(last&&last.tipOmitted); if(wtab) wtab.update(last); paint(); };   // entries: several burns in one transaction (a registration with its first answer)
   api.set=set; api.paint=paint;
   paint();
   return api;
@@ -373,6 +504,40 @@ function amountChips(seg, input, onchange){
   const reset=def=>{ custom=false; input.value=Math.max(+def,+input.min||0); sync(); };   // the default, or the minimum when that is higher
   sync();
   return {sync, reset};
+}
+
+// ---------- share cards: 1200×630 (the size link previews use), the ember theme; the receipt and the topic page paint their own content ----------
+const CF={D:'"Unbounded",system-ui,sans-serif', B:'"Instrument Sans",system-ui,sans-serif', M:'"JetBrains Mono",ui-monospace,Menlo,monospace'};
+function wrapLines(x,text,max){ const out=[]; let line=""; for(const w of text.split(/\s+/)){ const t=line?line+" "+w:w; if(x.measureText(t).width>max&&line){ out.push(line); line=w; } else line=t; } if(line) out.push(line); return out; }
+function rr(x,X,Y,W,H,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+W,Y,X+W,Y+H,r); x.arcTo(X+W,Y+H,X,Y+H,r); x.arcTo(X,Y+H,X,Y,r); x.arcTo(X,Y,X+W,Y,r); x.closePath(); }
+// the frame every card shares: the brand, a word in the corner, the page's address and a right-hand note at the foot; paint(x) draws the rest (y from 170 to 500)
+async function drawCard(label, paint, footRight=""){
+  const c=document.createElement("canvas"); c.width=1200; c.height=630; const x=c.getContext("2d");
+  try{ await Promise.all(['600 56px "Unbounded"','400 26px "Instrument Sans"','400 20px "JetBrains Mono"'].map(f=>document.fonts.load(f))); }catch{}
+  x.fillStyle="#0b0a0e"; x.fillRect(0,0,1200,630);
+  let g=x.createRadialGradient(1040,60,0,1040,60,720); g.addColorStop(0,"rgba(255,106,26,.30)"); g.addColorStop(1,"rgba(255,106,26,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
+  g=x.createRadialGradient(120,640,0,120,640,520); g.addColorStop(0,"rgba(255,181,71,.14)"); g.addColorStop(1,"rgba(255,181,71,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
+  rr(x,40,40,1120,550,30); x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=2; x.stroke();
+  g=x.createRadialGradient(92,98,2,96,102,20); g.addColorStop(0,"#ffb547"); g.addColorStop(.6,"#ff6a1a"); g.addColorStop(1,"#7a2200"); x.fillStyle=g; x.beginPath(); x.arc(96,102,18,0,6.29); x.fill();
+  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning Take",128,102);
+  x.fillStyle="#ffb547"; x.font=`500 18px ${CF.M}`; x.textAlign="right"; try{ x.letterSpacing="3px"; }catch{} x.fillText(`${label} · ${NET.toUpperCase()}`,1104,102); try{ x.letterSpacing="0px"; }catch{} x.textAlign="left"; x.textBaseline="alphabetic";
+  paint(x);
+  x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);
+  x.font=`400 18px ${CF.M}`; x.fillStyle="#8a8177"; x.fillText((()=>{ try{ return decodeURIComponent(location.href); }catch{ return location.href; } })().replace(/^https?:\/\//,"").replace(/[?&]burn=[^#&]*/,"").slice(0,64),96,566);   // the address as a person reads it
+  x.textAlign="right"; x.fillText(footRight||"burned for good on bitcoin · recount it yourself",1104,566); x.textAlign="left";
+  return c;
+}
+// a horizontal bar of segments (a duel's sides, a poll's race), each [share, color]
+function cardBar(x,X,Y,W,H,segs){ rr(x,X,Y,W,H,H/3); x.save(); x.clip(); x.fillStyle="rgba(255,255,255,.07)"; x.fillRect(X,Y,W,H); let at=X; const tot=segs.reduce((a,s)=>a+s[0],0)||1; for(const [v,col] of segs){ const w=W*v/tot; x.fillStyle=col; x.fillRect(at,Y,w,H); at+=w+(w?3:0); } x.restore(); }
+// share: the system's share sheet with the image where it takes files, else the text and link copied and the image saved
+async function shareCard({title, text, url, canvas, stem}){
+  let blob=null; try{ blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error("no image")),"image/png")); }catch{}
+  try{ const file=blob&&new File([blob],stem+".png",{type:"image/png"});
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({title, text, url, files:[file]}); return; }
+    if(navigator.share){ await navigator.share({title, text, url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  copyText(`${text} ${url}`, document.createElement("span"));
+  if(blob) try{ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=stem+".png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch{}
+  if(typeof toast==="function") toast(blob?"Text and link copied · image saved":"Text and link copied");
 }
 
 // ---------- copy ----------

@@ -20,12 +20,32 @@ renderChips();
 let heroReady=false;
 function renderStats(){
   if(!heroReady) return;
+  if(DIRERR){ for(const id of ["stburned","sttakes","stburns","stusd"]) $(id).textContent="—"; return; }   // nothing saved and the explorer did not answer: no false zeros
   const all=[...rootBurns(), ...DIRECTORY.flatMap(d=>cache[d.name]||[])], sats=all.reduce((a,v)=>a+v.sats,0);   // registrations and sponsorships count; other burns to the root address do not
-  const takes=DIRECTORY.reduce((a,d)=>a+new Set((cache[d.name]||[]).map(v=>norm(v.t)).filter(Boolean)).size,0);
+  const takes=DIRECTORY.reduce((a,d)=>a+new Set((cache[d.name]||[]).map(v=>{ const p=parseScope(d.name), x=p.range?numOf(v.t):NaN; return Number.isFinite(x)?"n:"+x:norm(v.t); }).filter(Boolean)).size,0);   // number answers merge by value, like their boards
   $("stburned").textContent=fmt(sats)+" sats"; $("sttakes").textContent=fmt(takes); $("stburns").textContent=fmt(all.length);
   $("stusd").textContent=BTCUSD ? "≈ $"+fmt(Math.round(sats/1e8*BTCUSD)) : "—";
 }
-(async()=>{ await dirLoad(); chipsReady=true; renderChips(); await dirTopics({onTopic:renderChips}); chipsDone=true; renderChips(); heroReady=true; renderStats(); priceReady().then(renderStats); })();   // also warms Explore's cache
+// ---------- five ways to ask: each kind with its most-burned topic and where it stands, or a way to start the first one ----------
+const KCOPY={open:["Open","A wall of takes"],"yes-no":["Yes / No","Call it before it closes"],duel:["Duel","Two sides, one bar"],poll:["Poll","A race between options"],number:["Number","Everyone answers with a number"]};
+function renderKinds(){
+  if(!chipsReady){ $("kcards").innerHTML=Object.keys(KCOPY).map(()=>`<div class="kcard ghost"><span class="sk" style="width:60%"></span><span class="sk" style="width:80%"></span></div>`).join(""); return; }
+  $("kcards").innerHTML=Object.entries(KCOPY).map(([k,[word,line]])=>{
+    const d=DIRECTORY.filter(d=>!HIDE.topics.has(d.name)&&kindKey(parseScope(d.name))===k&&d.stats).map(d=>({d,T:tallyOf(d.name,cache[d.name]||[])})).filter(x=>x.T.sats).sort((a,b)=>b.T.sats-a.T.sats)[0];
+    if(!d) return `<a class="kcard empty" href="explore.html?create=${k}"><span class="eyebrow">${word}</span><b>${line}</b><span class="kc">${chipsDone&&DIRFRESH?`No ${k==="open"?"open topic":k} yet · `:""}Start one →</span></a>`;
+    const p=parseScope(d.d.name), c=callOf(d.d.name,d.T), ia=k==="yes-no"?p.opts.indexOf("yes"):0, s=o=>(d.T.answers.find(r=>r.key===o)||{sats:0}).sats;
+    const bar= k==="duel"||k==="yes-no" ? `<span class="viz two"><i style="flex:${s(p.opts[ia])||0.0001}"></i><i class="b" style="flex:${s(p.opts[1-ia])||0.0001}"></i></span>`
+      : k==="poll" ? `<span class="viz race">${d.T.answers.map((r,i)=>`<i class="s${Math.min(i,3)}" style="flex:${r.sats}"></i>`).join("")}</span>`
+      : k==="number" ? (()=>{ const [lo,hi]=p.range, m=weightedMedian(d.T.answers); return `<span class="viz num"><i style="left:${hi>lo?(m-lo)/(hi-lo)*100:50}%"></i></span>`; })()
+      : `<span class="viz"><i style="width:${Math.round(d.T.answers[0].sats/d.T.shareSats*100)}%"></i></span>`;
+    return `<a class="kcard" href="topic.html#${esc(d.d.name)}"><span class="eyebrow">${word}</span><b>${line}</b><span class="kn">${topicName(d.d.name)}</span><span class="kc">${esc(c||"")}</span>${bar}</a>`; }).join("");
+}
+renderKinds();
+(async()=>{
+  if(await dirFromDisk()&&DIRECTORY.length){ chipsReady=chipsDone=heroReady=true; renderChips(); renderStats(); renderKinds(); }   // a returning visit: what this browser knows, at once (totals can only be too low)
+  hideReady().then(renderKinds);
+  await dirLoad(); chipsReady=true; renderChips(); renderKinds(); await dirTopics({onTopic:()=>{ renderChips(); renderKinds(); }}); chipsDone=true; renderChips(); renderKinds(); heroReady=true; renderStats(); priceReady().then(renderStats);
+})();   // also warms Explore's cache
 
 // ---------- embers ----------
 const c=document.getElementById("embers"), ctx=c.getContext("2d");

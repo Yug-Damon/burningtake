@@ -9,7 +9,7 @@
   <canvas id="embers"></canvas>
   <div class="wrap">
     <div>
-      <span class="eyebrow" id="heroeyebrow">Onchain polls</span>
+      <span class="eyebrow" id="heroeyebrow">Proof of conviction</span>
       <h1>Say it like you <em>mean it.</em></h1>
       <p class="sub">Put your sats where your take&nbsp;is.</p>
       <p class="lede">Ask anything. Takes are weighed in sats, not accounts. Every take is a bitcoin transaction that burns a little to say something for good. No servers, no take-backs, nothing to trust but the chain.</p>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="illo">
-      <svg viewBox="0 0 520 396" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ledger of burned takes: six confirmed and one pending in the mempool">
+      <svg viewBox="0 0 520 396" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Example: a ledger of burned takes, six confirmed and one pending in the mempool">
         <defs>
           <linearGradient id="h3-card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17141c"/><stop offset="1" stop-color="#0e0c12"/></linearGradient>
           <linearGradient id="h3-ember" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff6a1a"/></linearGradient>
@@ -35,7 +35,7 @@
         <rect x="20" y="20" width="480" height="356" rx="18" fill="url(#h3-card)" stroke="rgba(255,255,255,.1)"/>
 
         <g font-family="'JetBrains Mono',ui-monospace,Menlo,monospace" font-size="11" letter-spacing="1.5" fill="#6d665f">
-          <text x="44" y="44" fill="#ffb547" font-weight="500">TOPIC LEDGER</text>
+          <text x="44" y="44" fill="#ffb547" font-weight="500">TOPIC LEDGER <tspan fill="#8a8177">· EXAMPLE</tspan></text>
           <text x="476" y="44" text-anchor="end">bc1qa7v…3ktq <tspan fill="#ffb547">· unspendable</tspan></text>
           <line x1="20" y1="58" x2="500" y2="58" stroke="rgba(255,255,255,.09)"/>
           <text class="h3-blk" x="44" y="82" font-size="10">BLOCK</text>
@@ -76,11 +76,16 @@
   <div>
     <div class="sec-head"><div><span class="eyebrow">Protocol</span><h2>How it works</h2></div><a class="btn sm" href="spec.html">Read the full spec →</a></div>
     <div class="steps">
-      <a class="step" href="spec.html#derivation"><div class="n">#</div><div><h3>Pick a topic</h3><p>A name becomes an address: hash the script <code class="mono">OP_RETURN &lt;name&gt;</code>, wrap it as P2WSH. Unspendable by consensus, indexed by every explorer.</p></div></a>
-      <a class="step" href="spec.html#vote"><div class="n">₿</div><div><h3>Burn to it</h3><p>Send sats to the topic address and add an OP_RETURN with your take, 80 bytes max. Sats are the weight. A burn with no take counts as abstain.</p></div></a>
-      <a class="step" href="spec.html#counting"><div class="n">Σ</div><div><h3>Anyone can count</h3><p>List the address's transactions, read each OP_RETURN, sum sats per take after trimming, lowercasing and stripping punctuation. This page does it in your browser.</p></div></a>
+      <a class="step" href="spec.html#derivation"><div class="n">#</div><div><h3>Pick a topic</h3><p>Every topic is a Bitcoin address nobody can spend from.</p></div></a>
+      <a class="step" href="spec.html#vote"><div class="n">₿</div><div><h3>Burn for your take</h3><p>Send a few sats there with your words attached. They're gone for good. A burn with no take adds weight to the topic, not to any take.</p></div></a>
+      <a class="step" href="spec.html#counting"><div class="n">Σ</div><div><h3>Anyone can count</h3><p>The ranking is a sum over the blockchain. This page does it in your browser, and so can you.</p></div></a>
     </div>
   </div>
+</div></section>
+
+<section id="kinds"><div class="wrap">
+  <div class="sec-head"><div><span class="eyebrow">Five ways to ask</span><h2>Pick how the burns answer</h2></div><a class="btn sm" href="explore.html">All topics →</a></div>
+  <div class="kcards" id="kcards"></div>
 </div></section>
 
 <section id="source" style="padding-top:0"><div class="wrap">

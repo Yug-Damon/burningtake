@@ -1,6 +1,12 @@
 <meta charset="utf-8">
 <title>Receipt · Burning Take</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Put your sats where your take is. Every take is a Bitcoin burn, and anyone can count them.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Burning Take"><meta property="og:title" content="Burning Take">
+<meta property="og:description" content="Put your sats where your take is. Every take is a Bitcoin burn, and anyone can count them.">
+<meta property="og:image" content="https://burningtake.com/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0b0a0e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='40%25' cy='35%25' r='60%25'%3E%3Cstop offset='0' stop-color='%23ffb547'/%3E%3Cstop offset='.6' stop-color='%23ff6a1a'/%3E%3Cstop offset='1' stop-color='%237a2200'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='14' fill='url(%23g)'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
@@ -11,6 +17,7 @@
   --bg:#0b0a0e; --bg2:#121016; --panel:rgba(255,255,255,.035); --line:rgba(255,255,255,.09);
   --ink:#f3efe9; --ink2:#a89f95; --ink3:#8a8177;
   --ember:#ff6a1a; --ember2:#ffb547; --ember-dim:rgba(255,106,26,.16);
+  --side-b:#3d7bff; --side-b2:#7fa8ff;   /* a duel's second side: its own color on every surface, never the leader's */
   --ok:#5fd39a; --font-d:"Unbounded",system-ui,sans-serif; --font-b:"Instrument Sans",system-ui,sans-serif; --font-m:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
@@ -223,13 +230,14 @@ section{padding-block:64px}
 .duel{padding:22px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:14px}
 .duel-head{display:flex;justify-content:space-between;font-family:var(--font-d);font-weight:600;font-size:18px}
 .duel-head .a,.duel-head .b{color:var(--ink)}.duel-head .side{font-family:var(--font-m);font-size:12px;font-weight:500;color:var(--ink2);margin:0 8px}
-.dbtn{background:transparent}.dbtn.da{border-color:rgba(255,154,82,.55)}.dbtn.db{border-color:rgba(122,145,176,.6)}
+.dbtn{background:transparent}.dbtn.da{border-color:rgba(255,154,82,.55)}.dbtn.db{border-color:color-mix(in srgb,var(--side-b2) 60%,transparent)}
 .duel.empty .duel-bar div.a,.duel.empty .duel-bar div.b{background:transparent}.duel.ghost .duel-bar{background:rgba(255,255,255,.04)}
 .duel-bar{position:relative;display:flex;height:44px;border-radius:12px;overflow:hidden;background:var(--bg)}
 .duel-bar div.a{background:linear-gradient(90deg,var(--ember),var(--ember2));transition:width .4s}   /* div only: the .pct labels share the a/b class */
-.duel-bar div.b{background:linear-gradient(90deg,#26303f,#3b4a60);transition:width .4s}
+.duel-bar div.b{background:linear-gradient(90deg,var(--side-b2),var(--side-b));transition:width .4s}
+@media (prefers-reduced-motion:reduce){.duel-bar div.a,.duel-bar div.b{transition:none}.pend i{animation:none}}   /* the duel's bars and the pending pulse hold still too */
 .duel-bar .pct{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--font-d);font-weight:800;font-size:16px}
-.duel-bar .pct.a{left:14px;color:#1a0900}.duel-bar .pct.b{right:14px;color:#dfe6f0}
+.duel-bar .pct.a{left:14px;color:#1a0900}.duel-bar .pct.b{right:14px;color:#fff}
 .duel-foot{display:flex;justify-content:space-between;gap:16px;font-size:13px;color:var(--ink2);line-height:2}
 .duel-foot b{font-family:var(--font-d);font-size:15px;color:var(--ink)}
 .numview{padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:6px;margin-bottom:14px}
@@ -256,6 +264,8 @@ section{padding-block:64px}
 .srow .v{font-family:var(--font-m);font-size:12px;color:var(--ink2);text-align:right}
 .srow{grid-template-areas:"r n s v" "r k s v";row-gap:2px}.srow .rank{grid-area:r}.srow .nm{grid-area:n;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.srow .sats{grid-area:s}.srow .v{grid-area:v}
 .srow .kl{grid-area:k;font-family:var(--font-m);font-size:11.5px;color:var(--ink3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (min-width:861px){.srow{grid-template-columns:36px 1fr 150px;grid-template-areas:"r n s" "r k s"}.srow .v{display:none}}   /* desktop: the burns count ends line 2, after the lead */
+@media (max-width:860px){.srow .klv{display:none}}   /* tablets and phones: the burns keep their cell under the sats */
 .quiet{color:var(--ink2);margin:10px 0}.emptybox{border:1px dashed var(--line);border-radius:14px;padding:22px;text-align:center;color:var(--ink2)}
 .recent{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #scoperecent[hidden]{display:none}
@@ -269,9 +279,11 @@ section{padding-block:64px}
 .st{display:grid;grid-template-columns:36px minmax(0,1fr) 140px 80px 110px;gap:16px;align-items:center;padding:14px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);transition:.15s;position:relative;overflow:hidden}
 .st:hover{border-color:rgba(255,181,71,.35);background:rgba(255,255,255,.05)}
 .st .rank{font-family:var(--font-d);font-weight:600;color:var(--ink3);font-size:14px}
-.st:nth-child(1) .rank{color:var(--ember2)}
+.st.r1 .rank{color:var(--ember2)}
 .st .txt{font-weight:500;font-size:16px}
-.st .bar{position:absolute;left:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--ember2),var(--ember));opacity:.8;transition:width .4s ease}
+.st .bar{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(255,106,26,.11),rgba(255,181,71,.07));box-shadow:inset 0 -2px 0 rgba(255,106,26,.8);transition:width .4s ease;pointer-events:none}   /* the row's share: a low fill behind it, its ember edge at the bottom */
+.st>:not(.bar){position:relative;z-index:1}
+.st.poll:not(.lead) .bar{background:rgba(122,145,176,.12)}   /* a poll's lanes: the leader in ember, the others slate */
 @media (prefers-reduced-motion:reduce){.st .bar{transition:none}}
 .st .sats{font-family:var(--font-d);font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
 .st .sats small{display:inline;margin-left:4px;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3)}
@@ -341,8 +353,6 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .navchips{display:flex;align-items:center;gap:8px;margin-left:auto}
 .pill.wallet::after{content:"▾";font-size:9px;color:var(--ink3);margin-left:2px}
 .pill.wallet:hover{border-color:rgba(255,255,255,.25);color:var(--ink)}
-.wgrid{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;margin-top:12px}
-.wgrid .qrwrap{width:auto;padding:8px}.wgrid .qrwrap img{width:184px;height:184px}
 .wbal{display:flex;align-items:baseline;gap:10px;margin-top:12px;flex-wrap:wrap}
 .wbal b{font-family:var(--font-d);font-weight:600;font-size:22px;color:var(--ember2);font-variant-numeric:tabular-nums}
 .wbal .mono{font-size:11px;color:var(--ink3)}
@@ -351,16 +361,35 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .words li::before{content:counter(w,decimal-leading-zero);font-size:11px;color:var(--ink3);min-width:2ch;letter-spacing:.04em}
 .words-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
 .wsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.wsum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.wsum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
-.wsum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.wsum div,.wdonesum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.wsum b,.wdonesum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
+.wsum span,.wdonesum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
 .wledger{margin-top:8px}.wledger>.note{margin:0;font-size:11px;color:var(--ink3);line-height:1.4}#w-none .divider{margin-top:16px}
 .wbox{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,140,92,.35);border-radius:12px;background:rgba(255,106,26,.06)}
 #w-forgetok{min-height:40px;padding-inline:16px}
 #w-forgetok:not(:disabled){background:#ff5c5c;color:#1a0000;border:0}
 #w-none:has(#w-restorebox:not([hidden])) #w-create{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:none}
-#w-addr{font-size:13px;line-height:1.45}
-@media (max-width:640px){.wgrid{grid-template-columns:1fr}.wgrid .qrwrap{justify-self:center}.words{grid-template-columns:repeat(2,1fr)}.wsum{grid-template-columns:1fr 1fr}.wsum div:first-child{grid-column:1/-1}.wsum b{font-size:14px}}
+/* the wallet, ready: a balance card, then a receive card */
+.wlabel{font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.wbalcard{display:grid;gap:4px;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.wbalrow{display:flex;align-items:center;justify-content:space-between}.wbalcard .wbal{margin-top:0}.wbalcard .wbal b{font-size:26px}
+.copy.wicon{display:inline-grid;place-items:center;min-width:32px;min-height:32px;padding:0}
+.wburns{justify-self:start;margin-top:4px;font-size:13px;color:var(--ember2)}.wburns:hover{color:var(--ink)}
+.wrecv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;margin-top:12px;padding:14px 16px;border:1px solid var(--line);border-radius:14px}
+.wrecv .qrwrap{width:auto;padding:6px}.wrecv .qrwrap img{width:132px;height:132px}
+.wrecvtxt{display:grid;gap:8px;min-width:0}.wrecvtxt .note{margin:0}
+.waddr{font-family:var(--font-m);font-size:15px;color:var(--ink);overflow-wrap:anywhere}
+.wrecvtxt .qrow{display:flex;gap:8px;flex-wrap:wrap}.wrecvtxt .btn svg{margin-right:4px}
+.wpath{font-size:11px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:480px){.wrecv{grid-template-columns:1fr;justify-items:center;text-align:center}.wrecvtxt .qrow{justify-content:center}}
+/* a transaction panel once sent: what went out, the fee, what is left, the txid */
+.wdone{display:grid;gap:12px;margin-top:2px}
+.wdonehead{display:flex;align-items:center;gap:12px}.wdonehead b{display:block;font-family:var(--font-d);font-weight:600;font-size:17px;color:var(--ink)}.wdonehead .mono{font-size:11.5px;color:var(--ink3)}
+.fi.okfi{width:36px;height:36px;background:color-mix(in srgb,var(--ok) 22%,var(--bg));color:var(--ok)}
+.wdonesum{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.wrcpt{justify-self:start;font-size:13px;color:var(--ember2)}.wrcpt:hover{color:var(--ink)}
+.dlgfoot [data-txlink] svg{margin-right:6px}
+@media (max-width:640px){.words{grid-template-columns:repeat(2,1fr)}.wsum{grid-template-columns:1fr 1fr}.wsum div:first-child{grid-column:1/-1}.wsum b{font-size:14px}}
 .pill.net{color:var(--ink3);border-style:dashed;background:transparent}
 .pill.net::after{content:"▾";font-size:9px;margin-left:2px}
 .pill.net:hover,.pill.net[aria-expanded="true"]{border-color:rgba(255,255,255,.25);color:var(--ink)}
@@ -378,9 +407,9 @@ nav .pill,.logo{white-space:nowrap}
 
 /* ===== topic header: kind, title, badges, live countdown, actions ===== */
 .thead{position:relative;padding:0;margin-bottom:18px;display:grid;gap:14px}   /* a header, not a card: no border, no fill */
-.thead.closed{filter:saturate(.55)}
-.thead.closed .thead-txt{opacity:.72}
-.hclosed{margin:-18px -22px 0;padding:7px 22px;font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#ffb4a0;background:repeating-linear-gradient(-45deg,rgba(255,92,92,.16) 0 10px,rgba(255,92,92,.06) 10px 20px);border-bottom:1px solid rgba(255,92,92,.35)}
+.hclosed{margin:0 0 18px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}   /* a closed topic's result, said once at the top */
+.hclosed .verdict{margin:0;font:600 clamp(18px,2.6vw,24px)/1.25 var(--font-d);letter-spacing:-.01em;overflow-wrap:anywhere}.hclosed .vnote{margin:0;font-size:12.5px;color:var(--ink3)}
+.hclosed .vacts{display:flex;gap:8px;flex-wrap:wrap}
 .thead-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .hactions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .btn.act{gap:6px;color:var(--ink2);min-height:36px;padding:6px 11px}
@@ -447,7 +476,7 @@ nav .pill,.logo{white-space:nowrap}
 }
 @media (max-width:480px){
   .thead{gap:12px}
-  .hclosed{margin:-14px -16px 0;padding:6px 16px}
+  .hclosed{padding:14px 16px}
   .hactions{gap:4px;margin-left:auto}.btn.act{width:40px;padding:0;justify-content:center;min-height:40px}.btn.act .lbl{display:none}
   .thead .titlerow h2{font-size:20px}
   .badge{font-size:12px;padding:5px 10px}
@@ -509,6 +538,7 @@ nav .pill,.logo{white-space:nowrap}
 
 /* burner page: placeholders while the cache and snapshots load, then the groups rise in */
 .bgroup.ghost,.bchip.ghost,.fr.ghost{pointer-events:none}
+#bhot{display:grid;gap:6px}   /* burner page: its hottest takes spaced like Explore's */
 .bgroup .st{grid-template-columns:36px minmax(0,1fr) 140px 80px}.bgroup .st.r1 .rank{color:var(--ember2)}   /* burner page: a take as its topic's board row, its rank there */
 .st .txt .mine{display:block;margin-top:3px;font-family:var(--font-m);font-size:11px;font-weight:400;color:var(--ink3)}
 .board.rise .bgroup{animation:rowin .42s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(var(--i,0)*70ms)}
@@ -518,8 +548,12 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .stepper li[hidden]+li::before{display:none}   /* a skipped first step (featuring) leaves no dangling connector */
 .thead-txt .status{margin-top:0}
 /* topic header: kind, title and the actions at its right on desktop; on phones the actions take their own row under the badges */
-#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "status status" "meta meta";column-gap:20px}
-#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}
+#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "slug slug" "status status" "meta meta" "tleft tleft" "rule rule" "twins twins";column-gap:20px}
+#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}#board .thead-txt>.slug{grid-area:slug}#board .thead-txt>.tleft{grid-area:tleft}#board .thead-txt>.hrule{grid-area:rule}#board .thead-txt>.twins{grid-area:twins}
+.slug{font-family:var(--font-m);font-size:12px;color:var(--ink3);overflow-wrap:anywhere;margin-top:-4px}   /* the topic's name, exactly: the heading above only reads it out */
+.titlerow .folder{color:var(--ink2);border-bottom:1px dashed var(--ink3)}.titlerow .folder:hover{color:var(--ember2)}
+.tleft{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;max-width:420px}.tleft i{display:block;height:100%;background:var(--ember2)}
+.hrule{margin:0;font-size:13px;color:var(--ink2)}
 .tactions{grid-area:actions;align-self:end;display:flex;gap:8px;align-items:center;justify-content:flex-end}
 /* standings head: what the board totals, the window at its right, then the search */
 .standings{display:grid;gap:10px;margin-bottom:14px}
@@ -528,10 +562,10 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 .quietbox{padding:18px}
 @media (max-width:860px){
-  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "status" "meta" "actions"}
+  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "slug" "status" "meta" "tleft" "rule" "twins" "actions"}
   .tactions{justify-content:flex-start}.tactions .btn{min-height:44px}
 }
-@media (max-width:480px){ #board{padding-top:14px} .stand-head .seg{width:100%} .stand-head .seg button{flex:1} }
+@media (max-width:480px){ #board{padding-top:14px} .stand-head .seg button{padding:6px 9px} }   /* phones: the window stays a compact pill on the standings line */
 /* timeline (Recent, on Explore and the topic page): a vertical timeline. A rail runs through the nodes (the kind icons); each entry reads kind and time first, then what happened */
 .tl{position:relative;display:grid}
 .tl::before{content:"";position:absolute;left:14px;top:16px;bottom:16px;width:2px;border-radius:2px;background:linear-gradient(180deg,var(--line) 75%,transparent);transform:translateX(-50%)}
@@ -569,8 +603,116 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .amtx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--ink3);cursor:pointer;font-size:13px}.amtx:hover,.amtx:focus-visible{color:var(--ink);background:rgba(255,255,255,.06)}
 .dlgprice{display:inline-grid;gap:1px;font-family:var(--font-m);font-size:12px;color:var(--ink2)}.dlgprice .w{margin-left:8px}.dlgprice .w .linkbtn{margin-left:6px}.dlgprice small{font-size:11px;color:var(--ink3);white-space:nowrap}.dlgprice b{font-family:var(--font-d);font-weight:600;font-size:15px;color:var(--ink)}   /* what signing costs, at the footer's left: the amount, then one line per extra (tip, mining fees) */
 .rulesline{margin:10px 0 0}.rulesline .linkbtn{font-size:12px}
+.regline{display:grid;gap:3px;font-size:12.5px}.regline .rl1{color:var(--ink2)}.regline .rl1 b{color:var(--ink);font-weight:600}   /* New topic: what gets registered, the name and its bytes, then why not */
+.regline .rl2{font-family:var(--font-m);font-size:11.5px;color:var(--ink3);overflow-wrap:anywhere}.regline .rl2 code{font-family:inherit;color:var(--ember2)}
+.regline .warn,.regline .warn code{color:var(--ember2)}.regline .bad,.regline .bad code{color:#ff5c5c}
+#sqdatef{margin-top:8px}#sqdatef input{width:100%}#sqdatef .note{margin-top:6px}
 @media (max-width:480px){.dlgfoot .dlgprice{display:inline-grid;justify-content:center;text-align:center;padding:4px 0;order:9}}   /* phone: the cost over the stacked buttons */
 .feeseg{margin-top:10px;width:100%}.feeseg button{flex:1;white-space:nowrap}.feeseg button span{color:var(--ink3);font-size:11px}   /* the mining fee speed under the tiles */
+.batchnote{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,181,71,.35);border-radius:12px;background:var(--ember-dim);color:var(--ink2);display:grid;gap:10px}.batchnote p{margin:0}.batchnote .acts{display:flex;gap:8px;flex-wrap:wrap}   /* the batch already holds this topic: replace or add, never lose a burn */
+.btag{display:block;margin-top:2px;font-family:var(--font-m);font-size:11px;color:#ff8c5c}   /* a batch row that would not count as written */
+
+/* ===== topic results, one shape per kind (topic.js): the open wall's leader, the poll's race, the number's estimate, the duel's sides ===== */
+.hero{margin-bottom:14px}
+.hero.lead1{padding:18px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:6px}
+.lead1 .lq{margin:0;font:600 clamp(20px,3vw,26px)/1.2 var(--font-d);letter-spacing:-.01em;overflow-wrap:anywhere}
+.lead1 .lm,.rline,.duel-verdict{margin:0;font-family:var(--font-m);font-size:12.5px;color:var(--ink2)}
+.lead1 .lg{margin:4px 0 0;font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.hero.race,.hero.est{display:grid;gap:10px}
+.racebar{display:flex;gap:2px;height:44px;border-radius:12px;overflow:hidden;background:var(--bg)}
+.racebar i{display:flex;align-items:center;min-width:3px;padding:0 10px;overflow:hidden;white-space:nowrap;transition:flex-grow .4s}
+.racebar b{font:600 12px var(--font-d);color:#dfe6f0;overflow:hidden;text-overflow:ellipsis}.racebar .s0 b{color:#1a0900}
+.racebar .s0{background:linear-gradient(90deg,var(--ember),var(--ember2))}.racebar .s1{background:#3b4a60}.racebar .s2{background:#334055}.racebar .s3{background:#2b3545}
+.racebar.ghost{background:rgba(255,255,255,.04)}
+.rmom,.duel-x{margin:0;font-family:var(--font-m);font-size:11.5px;color:var(--ink3)}.duel-x{display:grid;gap:2px}.duel-x:empty{display:none}
+.esttop{display:flex;align-items:end;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
+.esthero{display:grid;gap:2px}.esthero .lbl,.eststats span{font-family:var(--font-m);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.esthero b{font:600 30px/1.1 var(--font-d);color:var(--ember2);font-variant-numeric:tabular-nums}.esthero .sub{font-size:12px;color:var(--ink3)}
+.eststats{display:flex;gap:20px;flex-wrap:wrap}.eststats div{display:grid;gap:2px}.eststats b{font:600 15px var(--font-d);color:var(--ink);font-variant-numeric:tabular-nums}
+.hero .numview{margin-bottom:0}.numview.empty{justify-items:center;text-align:center;border-style:dashed;gap:10px}.numview.empty .hist-axis{width:100%}
+.hist{height:96px}
+.hist .hb{height:100%;display:flex;align-items:end;background:rgba(255,255,255,.03);border:0;border-radius:6px;padding:0;position:relative;cursor:pointer}
+.hist .hb:hover,.hist .hb.on{background:rgba(255,181,71,.09)}
+.hist .you{position:absolute;top:3px;left:50%;transform:translateX(-50%);font:normal 9px/1.4 var(--font-m);color:var(--ink);background:var(--bg2);border-radius:4px;padding:0 4px}
+.hist-ticks i.avg{color:var(--ink3)}.hist-ticks i.avg::before{background:var(--ink3)}
+.hist-axis.pos{position:relative;display:block;height:14px}.hist-axis.pos span{position:absolute;transform:translateX(-50%);white-space:nowrap}.hist-axis.pos span:first-child{transform:none}.hist-axis.pos span:last-child{transform:translateX(-100%)}
+.hcap{margin:6px 0 0;font-family:var(--font-m);font-size:12px;color:var(--ink2)}
+.spark{display:flex;align-items:center;gap:12px;color:var(--ember2)}.spark svg{width:160px;height:36px;flex:none}.spark span{font-family:var(--font-m);font-size:11.5px;color:var(--ink3)}
+.duel.yesno .fc{display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap}
+.fcbig{font:800 clamp(30px,6vw,40px)/1 var(--font-d);letter-spacing:-.02em;color:var(--ink)}.fcbig.a{color:var(--ember2)}.fcbig.b{color:var(--side-b2)}
+.fcmeta{font-family:var(--font-m);font-size:12px;color:var(--ink3)}
+.fcx{display:block;margin-top:4px;font-family:var(--font-b);font-size:12.5px;color:var(--ink3)}
+.duel-head .a{color:var(--ember2)}.duel-head .b{color:var(--side-b2)}   /* each side in its color */
+.duel-head{gap:12px;align-items:flex-start}.duel-head>span{min-width:0;overflow-wrap:anywhere}
+.vs{font-style:normal;font-family:var(--font-m);font-size:11px;font-weight:500;letter-spacing:.12em;color:var(--ink3);align-self:center}
+.dhint{display:block;margin-top:6px;font-family:var(--font-m);font-size:11.5px;color:var(--ember2)}.dhint:empty{display:none}
+.duel.empty .duel-bar{background:repeating-linear-gradient(-45deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px),var(--bg)}
+.duel-bar .nocall{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-m);font-size:12px;color:var(--ink3)}
+.tg{display:inline-block;margin-left:8px;padding:0 6px;border-radius:4px;font:500 10.5px/1.6 var(--font-m);color:var(--ink3);background:rgba(255,255,255,.06);vertical-align:2px;white-space:nowrap}
+.tg.pend{color:var(--ember2);background:var(--ember-dim)}.tg.warn{color:#ff8c5c;background:rgba(255,92,92,.12)}.tg.up{color:var(--ok)}
+.st .tt,.lq,.lbt,.fr .fa,.rstmt,.orow span:first-child,.bent .stmt{unicode-bidi:isolate}   /* a take is text: right-to-left marks inside it never reorder the page */
+.stand-segs{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.standchip{border:1px solid rgba(255,181,71,.35);background:var(--ember-dim);color:var(--ember2);border-radius:999px;padding:3px 10px;font:500 11px var(--font-m);cursor:pointer}.standchip:hover{color:var(--ink)}
+.standhint{margin:0;font-size:12.5px;color:var(--ink3)}
+.searchnote{font-family:var(--font-m);font-size:11.5px;color:var(--ink3);padding:0 4px}
+.emptybox.first{display:grid;gap:8px;justify-items:center}.emptybox.first b{color:var(--ink);font-size:16px;font-weight:600}.emptybox .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.orow a{color:var(--ink3)}.orow a:hover{color:var(--ink)}button.orow.more{background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:var(--ember2)}
+.signal{margin:4px 0 0}
+.st.compact{padding:8px 14px;min-height:44px}.st.compact .txt{font-size:14px}
+@media (max-width:480px){
+  .racebar{height:30px}.esthero b{font-size:24px}.hist{height:72px}
+  .duel{padding:16px}.duel-foot{display:grid;grid-template-columns:1fr 1fr}.duel-foot .dbtn{width:100%;justify-content:center;min-height:44px;margin-top:6px}
+  .duel-head:has(.vs){display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}.duel-head:has(.vs) .b{text-align:right}
+}
+/* ===== the burn dialog: the take as it is typed, what the burn changes, the answers with where they stand ===== */
+.field textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;font-size:15px;color:var(--ink);resize:none;line-height:1.4;transition:.15s}
+.field textarea.locked{border-style:dashed;color:var(--ink2);caret-color:transparent;cursor:default}
+.meter{display:block;height:3px;margin-top:6px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}.meter i{display:block;height:100%;width:0;background:var(--ember2);transition:width .15s}.meter.over i{background:#ff5c5c}
+#byteshint.over{color:#ff5c5c}
+.veffect{margin-top:14px;display:grid;gap:6px}.veffect[hidden]{display:none}
+.effect{margin:0;font-family:var(--font-m);font-size:12.5px;color:var(--ink2);line-height:1.5}.effect.warn{color:#ff8c5c}.effect.cost{color:var(--ink3);font-size:11.5px}
+.mini{position:relative;display:flex;height:16px;border-radius:5px;overflow:hidden;background:linear-gradient(90deg,var(--side-b2),var(--side-b))}.mini i.a{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2))}.mini i.b{flex:1}
+.mini .proj{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
+.choice .btn small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);margin-top:2px}.choice .btn{flex-direction:column;gap:0}
+.choice .btn.side-a:not(.primary){border-color:rgba(255,154,82,.45)}.choice .btn.side-a:not(.primary) small{color:var(--ember2)}
+.choice .btn.side-b:not(.primary){border-color:color-mix(in srgb,var(--side-b2) 55%,transparent)}.choice .btn.side-b:not(.primary) small{color:var(--side-b2)}
+.choice .btn.side-b.primary{background:linear-gradient(135deg,var(--side-b2),var(--side-b));color:#fff;box-shadow:0 8px 30px -8px rgba(61,123,255,.7)}.choice .btn.primary small{color:inherit;opacity:.75}
+.numbins{position:relative;display:flex;align-items:flex-end;gap:1px;height:22px;margin-top:10px;opacity:.45}.numbins i{flex:1;background:var(--ember2);border-radius:2px 2px 0 0;min-height:1px}.numbins b{position:absolute;top:-4px;bottom:0;width:2px;background:var(--ink);transform:translateX(-50%)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.quick:empty{display:none}
+.sincebar{margin:0 0 14px;padding:10px 14px;border:1px solid rgba(255,181,71,.3);border-radius:12px;background:var(--ember-dim);display:grid;gap:2px;font-size:13px;color:var(--ink)}   /* a watched topic: what changed since the last visit */
+/* ===== the small bars that say where a topic stands, one per kind (Hottest takes, Home, the New topic chips) ===== */
+.viz{position:relative;display:flex;gap:2px;width:96px;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.07)}
+.viz i{min-width:3px;background:linear-gradient(90deg,var(--ember),var(--ember2))}
+.viz i.b{background:#3b4a60}   /* a poll's other options, slate */
+.viz.two i.b{background:linear-gradient(90deg,var(--side-b2),var(--side-b))}   /* a duel's second side, in its own color */
+.viz.num{height:2px;margin-block:2px;overflow:visible;background:rgba(255,255,255,.2)}
+.viz.num::before,.viz.num::after{content:"";position:absolute;top:-3px;width:1px;height:8px;background:rgba(255,255,255,.3)}.viz.num::before{left:0}.viz.num::after{right:0}
+.viz.num i{position:absolute;top:50%;width:9px;height:9px;min-width:0;border-radius:50%;transform:translate(-50%,-50%);background:var(--ember2)}   /* the estimate */
+.viz.num b{position:absolute;top:-3px;height:8px;border-radius:3px;background:rgba(255,181,71,.25)}   /* the middle half around it */
+.viz.race i.s1{background:#56667f}.viz.race i.s2{background:#44526a}.viz.race i.s3{background:#343f52}   /* a poll's runners-up, stepped slate */
+.viz.two i.b{background:linear-gradient(90deg,var(--side-b2),var(--side-b))}   /* a duel's second side, in its own color */
+.viz.race i.s1{background:#56667f}.viz.race i.s2{background:#44526a}.viz.race i.s3{background:#343f52}   /* a poll's runners-up, stepped slate */
+/* the receipt: the take, the question in words, what the topic makes of it, where it stands */
+.rq{margin:-8px 0 0;font-size:16px;color:var(--ink2)}.rq:empty{display:none}
+.rstmt.sa{color:var(--ember2)}.rstmt.sb{color:var(--side-b2)}
+.rstatus{margin:0;display:inline-flex;justify-self:start;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-family:var(--font-m);font-size:12px;color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 40%,transparent)}.rstatus:empty{display:none}
+.rstatus.off{color:#ff8c5c;border-color:rgba(255,140,92,.4)}
+.rstand{margin:0;font-size:14px;color:var(--ink2)}
+.vafter{margin-top:12px;padding:12px 14px;border:1px solid rgba(95,211,154,.35);border-radius:12px;display:grid;gap:8px;justify-items:start}.vafter p{margin:0;font-size:13.5px;color:var(--ink)}   /* after a burn: where it stands, and Share */
+.twins{margin:0;display:grid;gap:2px;font-size:13px}.twins a{color:var(--ember2)}.twins a:hover{color:var(--ink)}   /* the same question under other rules: another topic, linked */
+.st .txt .tt{cursor:pointer}.st.open{border-color:rgba(255,181,71,.45)}.st.hl{box-shadow:0 0 0 2px var(--ember2)}
+.stdetail{margin:-4px 0 4px;padding:12px 16px;border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;background:var(--bg2);display:grid;gap:6px;font-size:13px;color:var(--ink2)}.stdetail p{margin:0}.stdetail a{color:var(--ember2)}
+.duel-x .spark{display:flex;align-items:center;gap:10px;color:var(--ember2)}.duel-x .spark svg{width:160px;height:28px;flex:none}
+/* phones: the burn within thumb reach, hidden under any open dialog */
+.mbar{display:none}
+@media (max-width:480px){
+  .mbar:not([hidden]){display:flex;position:fixed;left:0;right:0;bottom:0;z-index:6;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(11,10,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+  .mbar .btn{flex:1;justify-content:center;min-height:44px}.mbar .btn.sideb{background:linear-gradient(135deg,var(--side-b2),var(--side-b));color:#fff;border:0}
+  #board:has(.mbar:not([hidden])){padding-bottom:84px}html:has(dialog[open]) .mbar{display:none!important}
+  .hactions #featurebtn{min-height:40px}
+}
+#vregf,#sqfirstf .check{margin-top:12px;font-size:13px;color:var(--ink2)}#sqfirstopts{margin-top:10px}
+.st .tt.hid{color:var(--ink3);font-style:italic}.bent .tl2{font-family:var(--font-m);font-size:10.5px}
 </style>
 
 <nav><div class="wrap">
@@ -584,14 +726,17 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   <div class="rcard" id="rcard" hidden>
     <div class="rtop"><span class="rkind"><span class="fi" id="ricon" aria-hidden="true"></span><span class="eyebrow">Receipt<span class="more"> · one burn on the bitcoin ledger</span></span></span><span class="badge" id="rnet">mainnet</span></div>
     <p class="rstmt" id="rstmt">…</p>
-    <p class="rline">burned <b id="rsats">…</b> sats <span id="rin">in</span> <a id="rtopic" href="topic.html">#…</a></p>
+    <p class="rq" id="rquest"></p>
+    <p class="rline">burned <b id="rsats">…</b> sats <span id="rin">in</span> <a id="rtopic" href="topic.html">#…</a><span id="rkind"></span></p>
+    <p class="rstatus" id="rstatus"></p>
+    <p class="rstand" id="rstand" hidden></p>
     <div class="rgrid">
       <div><span class="k">Block</span><b id="rblock">…</b><small id="rconf"></small></div>
       <div><span class="k">Burner<span class="more"> · first input</span></span><a class="mono" id="rfrom" href="burner.html">…</a><small>every burn from this address</small></div>
       <div><span class="k">Transaction</span><code id="rtxid">…</code><span class="qrow"><button type="button" class="copy" id="rcopytx">copy</button><a class="copy" id="rexp" target="_blank" rel="noopener">explorer ↗</a></span></div>
     </div>
     <p class="ralso" id="ralso" hidden></p>
-    <div class="ractions"><a class="btn sm" href="verify.html#tally">Verify this burn</a><button type="button" class="btn sm" id="rshare">Copy link</button><button type="button" class="btn sm primary" id="rimg">Save as image</button></div>
+    <div class="ractions"><a class="btn sm primary" id="ragain" hidden>Burn for it too</a><a class="btn sm" href="verify.html#tally">Verify this burn</a><button type="button" class="btn sm" id="rshare">Copy link</button><button type="button" class="btn sm" id="rimg">Save as image</button></div>
     <div class="rpreview" id="rpreview" hidden><img id="rpng" alt="The receipt as an image, 1200 by 630"><p class="note">If no download started (some hosts block them), <a id="rpnglink" target="_blank" rel="noopener" style="color:var(--ember2)">open the PNG in a new tab</a> and save it from there.</p></div>
   </div>
   <div class="empty" id="runknown" hidden>
@@ -635,14 +780,20 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   </section>
 
   <section id="w-ready" hidden>
-    <div class="wgrid">
-      <div class="qrwrap"><img id="w-qr" alt="Wallet address as QR" width="184" height="184"></div>
-      <div>
-        <div class="kv" style="grid-template-columns:1fr auto"><code id="w-addr"></code><button class="copy" id="w-copy" aria-label="Copy address">copy</button></div>
-        <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span><button class="copy" id="w-refresh" aria-label="Refresh balance">refresh</button></div>
-        <p class="note" style="margin-top:6px" id="w-fundnote">Fund it by sending sats to this address.</p>
-        <p class="note" style="margin-top:4px" id="w-keysnote" hidden>Keys on your Ledger: every burn is confirmed on its screen, nothing secret is stored here.</p>
-        <p class="note mono" style="margin-top:2px;white-space:nowrap"><span id="w-netlabel"></span> · <span id="w-path">m/84'/…/0/0</span></p>
+    <div class="wbalcard">
+      <div class="wbalrow"><span class="wlabel">Balance</span><button type="button" class="copy wicon" id="w-refresh" aria-label="Refresh balance" title="Refresh balance"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button></div>
+      <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span></div>
+      <a class="wburns" id="w-burns" href="burner.html">Your burns →</a>
+    </div>
+    <div class="wrecv">
+      <div class="qrwrap"><img id="w-qr" alt="Wallet address as QR" width="132" height="132"></div>
+      <div class="wrecvtxt">
+        <span class="wlabel">Receive</span>
+        <code class="waddr" id="w-addr"></code>
+        <div class="qrow"><button type="button" class="btn sm" id="w-copy">Copy address</button><a class="btn sm" id="w-explorer" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg><span>Explorer</span></a></div>
+        <p class="note" id="w-fundnote">Fund it by sending sats to this address.</p>
+        <p class="note" id="w-keysnote" hidden>Keys on your Ledger: every burn is confirmed on its screen, nothing secret is stored here.</p>
+        <p class="note mono wpath"><span id="w-netlabel"></span> · <span id="w-path">m/84'/…/0/0</span></p>
       </div>
     </div>
     <div class="wbox" id="w-backupbox" hidden>
@@ -660,11 +811,11 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 <dialog id="ballotdlg" aria-labelledby="b-title"><div class="panel dlg">
   <h3><span><span id="b-title">Your batch</span><span id="bstepn"></span></span> <button class="copy" data-close="ballotdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
-  <p class="note wintro">Burns kept aside, burned in one transaction: each burn is its own output, the takes share one OP_RETURN. One mining fee instead of several. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
+  <p class="note wintro">Several burns, one transaction: you pay the mining fee once. One burn per topic. <a href="spec.html#batching" style="color:var(--ember2)">How batching works</a>.</p>
 
   <!-- 1 · Burns: what the batch holds -->
   <section class="wstep" id="bstep-1">
-    <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> in its Transaction step instead of signing right away.</p>
+    <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> from the <b>Validate ▾</b> menu.</p>
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
       <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
@@ -706,7 +857,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 </div></dialog>
 
 <footer><div class="wrap">
-  <p class="footlinks"><b>Burning Take</b><a href="spec.html">protocol spec</a><a href="verify.html">verify</a><a href="node.html">run your own node</a></p>
+  <p class="footlinks"><b>Burning Take</b><a href="spec.html">protocol spec</a><a href="verify.html">verify</a><span>made by Yug Damon</span></p>
   <div class="footep">
     <label for="ep">Reads the chain through</label>
     <select id="ep" aria-describedby="epactive">
@@ -758,6 +909,12 @@ const TXURL = txid => "https://mempool.space/" + (NET==="mainnet"?"":"signet/") 
 const enc=new TextEncoder();
 const toHex=u8=>[...u8].map(b=>b.toString(16).padStart(2,"0")).join("");
 const cache={};
+// an unconfirmed burn read from disk (unver: not listed again on this visit) says when it was last seen once it is older than a fresh send; the others are "in the mempool"
+const FRESH_PENDING=10*60000;
+const agoText=ms=>{ const m=Math.max(1,Math.round((Date.now()-ms)/60000)); return m<60?`${m} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} d ago`; };
+// a confirmed burn's age in plain words, from blocks (about 10 minutes each), its block in the title (HTML: rows only)
+const blockAgo=h=>{ const m=Math.max(0,tipEst()-h)*10; return m<10?"≈ just now":m<60?`≈ ${m} min ago`:m<2880?`≈ ${Math.round(m/60)} h ago`:`≈ ${Math.round(m/1440)} d ago`; };
+const whenOf=v=>v.h!==null ? `<span title="block ${fmt(v.h)}">${blockAgo(v.h)}</span>` : v.unver&&v.at&&Date.now()-v.at>FRESH_PENDING ? "unconfirmed · last seen "+agoText(v.at) : "in the mempool";
 // ---------- snapshots: static JSON a host may publish (spec §6), same shape as a finished scan, so a cold page starts from disk instead of the explorer ----------
 const SNAPDIR="snapshots/"+NET+"/";
 const snapshotKey=async name=>toHex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(name))));   // file name = hex sha256 of the canonical topic name
@@ -767,11 +924,11 @@ const snapshotIndex=()=>SNAPIDX||(SNAPIDX=snapshotGet(SNAPDIR+"index.json").then
 const snapshotFetch=async name=>{ const idx=await snapshotIndex(); if(idx&&!idx.topics.some(t=>t.name===name)) return null;
   const j=await snapshotGet(SNAPDIR+(await snapshotKey(name))+".json"); return j&&j.net===NET&&Array.isArray(j.votes) ? j : null; };   // -> {name, net, height, count, votes:[{txid,t,sats,h,from}]} | null
 // ---------- explorer endpoint: an Esplora API base per network, overridable from the Data source row (index page) ----------
-const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:null} };   // null: the preset has no server for that network
+const ESPLORA_PRESETS={ mempool:{mainnet:"https://mempool.space/api", signet:"https://mempool.space/signet/api"}, blockstream:{mainnet:"https://blockstream.info/api", signet:"https://blockstream.info/signet/api"} };   // null: the preset has no server for that network
 const esploraDefault=net=>ESPLORA_PRESETS.mempool[net]||ESPLORA_PRESETS.mempool.signet;
 const esploraOverride=()=>{ const v=(LS(NETKEY("bv.endpoint"))||"").trim(); if(!v) return ""; if(ESPLORA_PRESETS[v]) return ESPLORA_PRESETS[v][NET]||""; return /^https?:\/\//.test(v) ? v.replace(/\/+$/,"") : ""; };   // stored: preset id or a full API base URL
 const esploraFor=net=>esploraOverride()||esploraDefault(net);                                   // what this page reads the chain through
-const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
+const esploraSet=v=>{ LS(NETKEY("bv.endpoint"),v||""); globalThis.ESPLORA_OVERRIDE_URL=esploraOverride(); chainReset(); };   // v: "" (mempool default) | "blockstream" | "https://…/api"
 globalThis.ESPLORA_OVERRIDE_URL=esploraOverride();                                              // read by wallet.js esploraBase()
 // ---------- the chain: every number on every page is read from the explorer above (Esplora API), cached in IndexedDB (db.js) ----------
 const API_PAGE=25;                                                     // confirmed transactions per history page (Esplora)
@@ -779,37 +936,68 @@ const API_PAGE=25;                                                     // confir
 // so a blocked or down explorer costs one timeout, not every page. The wallet (wallet.js esploraBase) follows the same choice.
 let LIVE_BASE=(()=>{ try{ const j=JSON.parse(LS(NETKEY("bv.livebase"))||"null"); return j&&Date.now()-j.at<3600000 ? j.base : null; }catch{ return null; } })();
 const chainBases=()=>{ const own=esploraOverride(); return own ? [own] : [...new Set([LIVE_BASE, ESPLORA_PRESETS.mempool[NET], ESPLORA_PRESETS.blockstream[NET]].filter(Boolean))]; };
+// an explorer that just failed is skipped for a while: 30 s, doubling on repeats up to 5 min, remembered next to bv.livebase so the next page does not pay the timeouts again.
+// When every explorer is marked, a call fails at once and the page keeps what it has. Offline marks nothing; Retry, the network coming back and a new data source clear the marks
+let DOWN=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.down"))||"{}")||{}; }catch{ return {}; } })();
+const downSave=()=>LS(NETKEY("bv.down"),JSON.stringify(DOWN));
+const downMark=base=>{ if(typeof navigator!=="undefined"&&navigator.onLine===false) return; const o=DOWN[base], n=o&&Date.now()-o.until<600000?Math.min(o.n*2,10):1; DOWN[base]={until:Date.now()+Math.min(300000,30000*n), n}; downSave(); };
+const isDown=base=>!!DOWN[base]&&DOWN[base].until>Date.now();
+function chainReset(){ DOWN={}; downSave(); }
+if(typeof addEventListener==="function") addEventListener("online",chainReset);
 async function chainGet(path,{text=false}={}){                         // GET explorer + path -> JSON (or text); throws when no explorer gives an answer
-  let err;
-  for(const base of chainBases()){
+  let err; const bases=chainBases().filter(b=>!isDown(b));
+  if(!bases.length){ err=new Error("the explorer did not answer"); err.down=true; throw err; }   // every explorer failed moments ago: at once, no timeouts
+  for(const [bi,base] of bases.entries()){
     for(let i=0;i<4;i++){
       if(i) await sleep(800*2**(i-1));                                    // a busy explorer: 0.8 s, 1.6 s, 3.2 s
       let r;
-      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {}); }
-      catch(e){ err=e; break; }                                          // unreachable (offline, blocked, too slow): the next explorer
-      if(r.ok){ if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
+      try{ r=await fetch(base+path, typeof AbortSignal!=="undefined"&&AbortSignal.timeout ? {signal:AbortSignal.timeout(6000)} : {}); }
+      catch(e){ err=e; if(i===0&&bi===bases.length-1) continue; downMark(base); break; }   // unreachable (offline, blocked, too slow): marked, the next explorer; the last one gets a second try (a stale connection often answers the next time)
+      if(r.ok){ if(DOWN[base]){ delete DOWN[base]; downSave(); }
+        if(base!==LIVE_BASE&&!esploraOverride()){ LIVE_BASE=base; LS(NETKEY("bv.livebase"),JSON.stringify({base, at:Date.now()})); if(typeof dispatchEvent==="function") dispatchEvent(new Event("chainbase")); }
         return text ? (await r.text()).trim() : await r.json(); }
       err=new Error(`the explorer answered ${r.status}`); err.status=r.status;
-      if(r.status!==429 && r.status<500) throw err;                       // a 4xx is the answer, whoever is asked
+      if(r.status===429){ if(i>=1){ downMark(base); break; } continue; }   // asked to slow down: one more try, then marked and the next explorer
+      if(r.status<500) throw err;                                         // a 4xx is the answer, whoever is asked
+      if(i===3) downMark(base);                                           // a 5xx four times: marked, the next explorer
     }
   }
   throw err;
 }
 TIP=+(LS(NETKEY("bv.tip"))||0);                                         // the last tip this browser saw: windows and countdowns work at once, the fresh one lands a moment later
-const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=h; LS(NETKEY("bv.tip"),String(h)); } }catch{} return TIP; };
+let TIPAT=+(LS(NETKEY("bv.tipat"))||0), TIPLIVE=0, TIPERR=false;          // when TIP was read (ms), the tip read on this visit (0: none yet), whether the last read failed
+const tipRefresh=async()=>{ try{ const h=+(await chainGet("/blocks/tip/height",{text:true})); if(Number.isInteger(h)&&h>0){ TIP=TIPLIVE=h; TIPAT=Date.now(); TIPERR=false; LS(NETKEY("bv.tip"),String(h)); LS(NETKEY("bv.tipat"),String(TIPAT)); return TIP; } }catch{} TIPERR=true; return TIP; };
+// deadlines read the tip as it probably is now: a saved tip ages one block per 10 min since it was read, so a topic that closed since the last visit says so at once
+const tipEst=()=>TIP&&TIPAT ? TIP+Math.floor((Date.now()-TIPAT)/600000) : TIP;
+const blocksTo=h=>h-TIP-(TIP&&TIPAT?(Date.now()-TIPAT)/600000:0);        // blocks left until height h (fractional: the time since the tip was read counts)
+// ---------- the sync line under every page's title: one wording for the same states ----------
+// state: "loading" (nothing saved to show yet) | "updating" (saved data on screen, being checked) | "fresh" (every read of this pass answered) | "failed"
+// height: the block the data on screen is as of, never the current tip (0: nothing saved); tail: what follows "synced · block N"; retry: the attribute of its button
+// "synced" only comes from a pass where every read answered; retry leads the failed line, so a phone's cut-off line still shows it
+function syncLine({state, height=0, tail="", retry="data-retry"}){
+  const blk=height>0?`block ${fmt(height)}`:"";
+  if(state==="failed") return `<button type="button" class="linkbtn" ${retry}>retry</button> · the explorer did not answer · ${blk?"as of "+blk:"nothing saved in this browser"}`;
+  if(state==="fresh") return `<span class="dot"></span> synced${blk?" · "+blk:""}${tail?" · "+tail:""}`;
+  if(state==="updating"&&blk) return `<span class="spin"></span> as of ${blk} · updating…`;
+  return `<span class="spin"></span> reading the chain…`;
+}
+let ANN=null;                                                          // one polite live region per page, made on first use: pages announce entering and leaving the failed state, nothing else
+const announce=t=>{ if(!ANN){ ANN=document.createElement("div"); ANN.setAttribute("aria-live","polite"); ANN.style.cssText="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap"; document.body.appendChild(ANN); } if(ANN.textContent!==t) ANN.textContent=t; };
 let TIPP=null, PRICEP=null;
 const tipReady=()=>TIPP||(TIPP=tipRefresh());                          // started by loader.js on every app page
+const tipFresh=()=>TIPERR?tipRefresh():tipReady();                     // before a pass says "synced": the tip read of this visit, asked again if it failed
 const priceReady=()=>PRICEP||(PRICEP=NET!=="mainnet"||chainBases()[0]!==ESPLORA_PRESETS.mempool.mainnet ? Promise.resolve() : chainGet("/v1/prices").then(j=>{ if(+j.USD>0) BTCUSD=+j.USD; },()=>{}));   // only mempool.space serves a USD price: with another explorer the dollar hints stay hidden
 const usdOf=sats=>BTCUSD ? "≈ $"+(sats/1e8*BTCUSD).toFixed(2) : "";
 // ---------- the mining fee: the explorer's live estimates (Esplora /fee-estimates: {blocks ahead: sat/vB}), one speed chosen per network ----------
 // Signet miners have been taking only 2 sat/vB and up while the estimates said 1: a burn at the minimum waited for days. Signet gets a floor of 2.
 const FEE_SPEEDS=[["fast","Fast",1],["normal","Normal",6],["eco","Economy",144]];   // [id, label, target in blocks]
 const FEE_FLOOR=NET==="signet"?2:1, FEE_FALLBACK=NET==="signet"?{fast:4,normal:3,eco:2}:{fast:5,normal:3,eco:1};   // no estimates: a guess that still confirms
+const FEE_CAP=NET==="signet"?5:Infinity;   // ponytail: signet estimates run wild (blockstream's said 63.9 sat/vB while blocks took 2–4) and its sats are free: a ceiling there; mainnet trusts the estimate
 let FEES=null, FEESAT=0, FEEP=null;
 const feeRefresh=async()=>{ FEESAT=Date.now();
   try{ const j=await chainGet("/fee-estimates"), ks=Object.keys(j).map(Number).filter(n=>+j[n]>0).sort((a,b)=>a-b); if(!ks.length) return FEES;
     let prev=Infinity; const out={};
-    for(const [id,,t] of FEE_SPEEDS){ const k=ks.find(n=>n>=t)??ks[ks.length-1]; out[id]=prev=Math.min(prev, Math.max(FEE_FLOOR, Math.ceil(+j[k]*10)/10)); }   // rounded up, never faster for less
+    for(const [id,,t] of FEE_SPEEDS){ const k=ks.find(n=>n>=t)??ks[ks.length-1]; out[id]=prev=Math.min(prev, FEE_CAP, Math.max(FEE_FLOOR, Math.ceil(+j[k]*10)/10)); }   // rounded up, never faster for less, never past the cap
     FEES=out; }catch{}
   return FEES; };
 const feeReady=()=>{ if(!FEEP||Date.now()-FEESAT>120000) FEEP=feeRefresh(); return FEEP; };   // at most every two minutes
@@ -850,17 +1038,36 @@ async function scanAddress(addr,{stopTx=null,maxPages=Infinity,onPage=()=>{},can
 // The root topic's address is also a well-known generic burn address: anything else burned there is some other burn, not a registration.
 // A name is text: binary payloads decode to U+FFFD and control characters (seen on signet), and invisible or unassigned characters are not a name either (the joiner inside emoji is fine).
 const nameOf=t=>{ const s=String(t||""); if(!s||s!==s.toLowerCase()||/\s/.test(s)||/[\p{C}\uFFFD]/u.test(s.replace(/\u200d/g,""))) return null; const c=canonical(parseScope(s)); return c===s ? c : null; };
+// why a name would not be listed once paid for, in the reader's words (null: it registers). The New topic dialog and the topic page's Register check it before signing
+const regIssue=name=>{ const s=String(name||""), n=enc.encode(s).length; if(!s) return "it has no name";
+  if(n>80) return `it is ${n} bytes, 80 at most`; if(/\s/.test(s)) return "it contains spaces"; if(s!==s.toLowerCase()) return "it has capital letters";
+  if(/[\p{C}\uFFFD]/u.test(s.replace(/\u200d/g,""))) return "it has invisible characters"; return nameOf(s)===s ? null : "it is not written the canonical way"; };
 try{ const e=new URLSearchParams(location.search).get("endpoint"); if(e!==null) esploraSet(e.trim()); }catch{}   // ?endpoint=https://your-node/api (or blockstream, or empty for the default) sets it for this network and sticks (node.html)
 // ---------- watchlist: topics this browser follows, with the count/height last seen (per network) ----------
 const watchGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.watch"))||"[]"); return Array.isArray(a)?a.filter(w=>w&&typeof w.name==="string"):[]; }catch{ return []; } };   // -> [{name, seenH, seenCount}]
 const watchSave=a=>{ try{ LS(NETKEY("bv.watch"),JSON.stringify(a)); }catch{} };
 const watchHas=name=>watchGet().some(w=>w.name===name);
 const watchToggle=name=>{ const a=watchGet(), i=a.findIndex(w=>w.name===name); if(i>=0) a.splice(i,1); else a.push({name, seenH:0, seenCount:0}); watchSave(a); return i<0; };   // -> true when now watched
-const watchMarkSeen=(name,count,height)=>{ const a=watchGet(), w=a.find(x=>x.name===name); if(!w) return; w.seenCount=count; w.seenH=height; watchSave(a); };
+const watchMarkSeen=(name,count,height,seen=null)=>{ const a=watchGet(), w=a.find(x=>x.name===name); if(!w) return; w.seenCount=count; w.seenH=height; if(seen) w.seen=seen; w.seenAt=Date.now(); watchSave(a); };   // seen: the call as last seen, written from a synced pass only
+// the call as a watch record keeps it: who led, a yes-no's share, a number's estimate
+const callSeen=(name,T)=>{ const p=parseScope(name), a=T.answers, tot=T.shareSats; return {lead:a[0]?a[0].key:null, yes:kindKey(p)==="yes-no"&&tot?Math.round((a.find(r=>r.key==="yes")||{sats:0}).sats/tot*100):null, med:p.range?weightedMedian(a):null}; };
+// what changed since the last visit, in a few words: "+2 · android took the lead", "+2 · yes 79% (was 71%)", "+2 · estimate ↑ 4%", "Final · YES"
+function watchNews(w, votes, T){
+  const p=parseScope(w.name), k=kindKey(p), st=closeState(p), was=w.seen||{}, now=callSeen(w.name,T), n=Math.max(0,votes.length-(w.seenCount||0));
+  if(st&&st.k==="final"&&T.answers[0]) return `Final · ${k==="yes-no"?T.answers[0].key.toUpperCase():T.answers[0].t}`;
+  if(!n) return null;
+  let what="";
+  if(k==="yes-no"&&was.yes!=null&&now.yes!==was.yes) what=`yes ${now.yes}% (was ${was.yes}%)`;
+  else if(k==="number"&&was.med&&now.med&&now.med!==was.med){ const d=Math.round((now.med-was.med)/Math.abs(was.med)*100); what= d ? `estimate ${d>0?"↑":"↓"} ${Math.abs(d)}%` : ""; }
+  else if(was.lead&&now.lead&&now.lead!==was.lead) what= k==="duel" ? `${T.answers[0].t} took the lead` : "new leader";
+  return `+${fmt(n)}${what?` · ${what}`:""}`;
+}
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
 const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} };
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
+const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
+const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
 const ballotClear=()=>ballotSave([]);
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
@@ -881,15 +1088,47 @@ function parseScope(name){
   return {q:q.trim(), opts, range, deadline, min};
 }
 const canonical = p => p.q + (p.opts?"?"+p.opts.join("|"):p.range?`?${p.range[0]}..${p.range[1]}`:"") + (p.deadline?"@"+p.deadline:"") + (p.min?"!"+p.min:"");
-const label = name => { const p=parseScope(name), tags=[];
-  if(p.opts) tags.push("poll · "+esc(p.opts.join(" | "))); if(p.range) tags.push(`number · ${nfc(p.range[0])} – ${nfc(p.range[1])}`);
-  if(p.deadline) tags.push(p.deadline>TIP?`closes in ${fmt(p.deadline-TIP)} blocks`:"closed"); if(p.min) tags.push(`min ${fmt(p.min)} sats`);
-  return esc(p.q) + tags.map(t=>` <span class="pill" style="padding:1px 7px;font-size:11px">${t}</span>`).join(""); };
 const kind = p => p.range ? "number" : p.opts ? (p.opts.length===2?"duel":"poll") : "open";
 // ---------- one way to name, count and time a topic, for Explore and the topic page alike ----------
-const kindWord = p => { const k=kind(p); return k==="duel" ? (p.opts.join("|")==="yes|no"?"yes-no":"duel") : k==="poll" ? `poll · ${p.opts.length} options` : k; };   // open, yes-no, duel, poll · N options, number
+const isYesNo = p => !!p.opts && p.opts.length===2 && p.opts.includes("yes") && p.opts.includes("no");   // in either order: "no|yes" is its own name and address, shown as a yes-no all the same
+const kindKey = p => { const k=kind(p); return k==="duel"&&isYesNo(p) ? "yes-no" : k; };   // open, yes-no, duel, poll, number
+// one vocabulary per kind, on every surface: its word (eyebrows, lists, the embed, the batch), what one answer is called, the embed's call to action, the New topic chip's line
+const KINDS={
+  open:    {word:"open",   noun:"take",   cta:"Burn your take →",   blurb:"Anyone writes their own take. Takes ranked by sats."},
+  "yes-no":{word:"yes-no", noun:"answer", cta:"Burn your answer →", blurb:"A prediction with a closing date. Burns are a signal, not a bet: nobody wins the sats."},
+  duel:    {word:"duel",   noun:"answer", cta:"Burn your answer →", blurb:"Two sides, one bar."},
+  poll:    {word:"poll",   noun:"answer", cta:"Burn your answer →", blurb:"3 or more options race."},
+  number:  {word:"number", noun:"answer", cta:"Burn your answer →", blurb:"Everyone answers with a number; the estimate is weighted by sats."},
+};
+const kindWord = p => { const k=kindKey(p); return k==="poll" ? `poll · ${p.opts.length} options` : KINDS[k].word; };   // open, yes-no, duel, poll · N options, number
+// a topic's question as a heading: hyphens read as spaces, a path as "food › …", a question mark on topics with fixed answers. Display only: links, search and data keep the name
+const niceQ = name => { const p=parseScope(name), s=p.q.replace(/-/g," ").replace(/\//g," › ").replace(/\s+/g," ").trim(); return (s.charAt(0).toUpperCase()+s.slice(1))+(p.opts||p.range?"?":""); };
 const topicName = (name,hash=true) => { const p=parseScope(name); return (hash?"#":"")+esc(p.q)+(p.opts||p.range?"?":""); };   // "#general", "#paris-cars?"  (escaped HTML)
+// a number answer, one way everywhere: digits grouped only when the topic's range reaches 10,000 (years stay bare), no decimals on an integer range, the mean included
+const numFmt = (x,range) => { if(x===null||x===undefined||!Number.isFinite(+x)) return "—"; const [lo,hi]=range||[0,Math.abs(+x)], ints=Number.isInteger(lo)&&Number.isInteger(hi);
+  return (+x).toLocaleString("en-US",{useGrouping:Math.max(Math.abs(lo),Math.abs(hi))>=1e4, maximumFractionDigits:ints?0:2}); };
+// a number topic's unit, when its name ends with one (the New topic dialog appends it): "$150,000", "€150,000", "150,000 sats", "42%"
+const unitOf = p => { const m=((p&&p.q)||"").match(/-(in-usd|in-eur|in-sats|percent)$/); return m?m[1]:null; };
+const numU = (x,p) => { const s=numFmt(x,p.range), u=unitOf(p); return s==="—"||!u ? s : u==="in-usd" ? "$"+s : u==="in-eur" ? "€"+s : u==="in-sats" ? s+" sats" : s+"%"; };
+// a statement as the pages show it (escape it before HTML): a number topic's answer formatted like its board, the words as written otherwise
+const shownT = (p,t) => { if(p&&p.range){ const x=numOf(t); if(Number.isFinite(x)) return numU(x,p); } return String(t??""); };
 const numOf = t => { const m=norm(String(t)).match(/^(-?\d+(?:\.\d+)?)([km])?$/); return m ? +m[1]*(m[2]==="k"?1e3:m[2]==="m"?1e6:1) : NaN; };   // spec §5: "150k" = 150000
+// closed to new burns: the next block reaches the deadline, so a burn sent now cannot count (tallyOf counts a pending burn as late from the same moment)
+const closedAt = p => !!p.deadline && TIP>0 && tipEst()+1>=p.deadline;
+// a deadline, one wording on every surface (topic header, Explore, the embed, watch chips): open, closing soon (2 days), last blocks (6), closed to new burns, closed, final.
+// live: the tip read on this visit (TIPLIVE), for "final"; text: the header's words, short: a list's
+const dlWhen = h => new Date(Date.now()+blocksTo(h)*600000).toLocaleDateString(undefined,{dateStyle:"medium"});
+function closeState(p, live=TIPLIVE){
+  if(!p||!p.deadline) return null; if(!TIP) return {k:"checking", text:"checking the deadline…", short:"checking the deadline"};
+  const left=blocksTo(p.deadline), D=fmt(p.deadline), days=Math.round(left/144);
+  if(tipEst()+1<p.deadline){
+    if(left>288) return {k:"open", text:`Closes ≈ ${dlWhen(p.deadline)} · in ${days} days`, short:`closes in ≈ ${days} d`};
+    if(left>6) return {k:"soon", text:`closing in ~${untilText(left)} · ${fmt(Math.ceil(left))} blocks left`, short:`closing in ~${untilText(left)}`};
+    return {k:"last", text:`last blocks · ~${Math.max(1,Math.ceil(left))} left`, short:"last blocks"}; }
+  if(tipEst()<p.deadline) return {k:"closing", text:"closed to new burns · the next block reaches the deadline", short:"closed to new burns"};
+  if(!(live>=p.deadline+6)){ const n=Math.max(1,p.deadline+6-tipEst()); return {k:"closed", text:`Closed at block ${D} · final in ≈ ${untilText(n)} (${n} block${n===1?"":"s"})`, short:"closed"}; }
+  return {k:"final", text:`Final · block ${D}`, short:"final"};
+}
 const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?`${d}d ${h}h`:h?`${h}h ${m%60}m`:`${m}m`; };   // blocks at ~10 min
 const ICON_TAKE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';   // a take: a megaphone, said out loud
 // ---------- icon badges (.fi, base.css), one visual language on every page: the shape says what (ICON_TAKE, a megaphone, for any burn's take or answer,
@@ -898,7 +1137,7 @@ const svgIcon = (d,fill) => `<svg width="16" height="16" viewBox="0 0 24 24" ${f
 const ICONS = {
   top: svgIcon('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),   // most burned: a flame
   latest: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'),                   // the latest: a clock
-  feature: "✦",                                                                                   // a sponsorship (the key keeps the data's word: intent "feature")
+  feature: svgIcon('<path d="M12 3c.5 4.7 4.3 8.5 9 9-4.7.5-8.5 4.3-9 9-.5-4.7-4.3-8.5-9-9 4.7-.5 8.5-4.3 9-9z"/>',true),   // a sponsorship, ✦ drawn: the glyph falls back to a tiny font on Safari (the key keeps the data's word: intent "feature")
   burner: svgIcon('<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>'),
   join: svgIcon('<circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),   // a new burner
   reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
@@ -915,11 +1154,11 @@ function recentDigest(burns, roots, lim={burns:3, roots:2, joins:2, all:6}){   /
 }
 // every take and topic name links to its topic page. o.here: on the topic page a burn names its burner instead of the topic; o.take(html): the take with its top-take star, o.tag(v): late / below min
 function recentRow(x, o={}){
-  const v=x.v, when=v.h===null?"in the mempool":"block "+fmt(v.h), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
+  const v=x.v, when=whenOf(v), addr=a=>`<a href="burner.html#${esc(a)}" title="${esc(a)}">${esc(a.slice(0,6)+"…"+a.slice(-4))}</a>`, by=v.from&&v.from!==o.self?addr(v.from)+" · ":"";   // o.self: the burner page's own address goes without saying
   const href=`topic.html#${esc(x.name)}`, tn=`<a href="${href}">${topicName(x.name)}</a>`, topic=(html,cls="")=>`<a class="fa${cls}" href="${href}">${html}</a>`;
   const row=(kind,icon,word,meta,what,right="")=>`<div class="fr ${kind}"><span class="fi" aria-hidden="true">${icon}</span><span class="fm"><span class="ft">${word}</span> · ${meta}</span>${right}${what}<b>${fmt(v.sats)} sats</b></div>`;
   if(x.kind==="burn") return row("burn", ICON_TAKE, kind(parseScope(x.name))==="open"?"take":"answer", (o.here?(v.from?addr(v.from):"unknown burner"):tn)+" · "+when+(o.tag?o.tag(v):""),
-    o.take?o.take(v,topic):topic(v.t?esc(v.t):"<i>no take</i>"), `<a class="frx" href="receipt.html#${esc(v.txid)}">receipt →</a>`);
+    o.take?o.take(v,topic):topic(v.t?esc(shownT(parseScope(x.name),v.t)):"<i>no take</i>"), `<a class="frx" href="receipt.html?in=${encodeURIComponent(x.name)}#${esc(v.txid)}">receipt →</a>`);
   if(x.kind==="reg") return row("reg", ICONS.reg, "new topic", by+when, topic(topicName(x.name)+" registered"));
   if(x.kind==="feature") return row("feature", ICONS.feature, "sponsor", by+when, topic(topicName(x.name)+" sponsored"));
   return row("burner", ICONS.join, "new burner", `first burn in ${tn} · ${when}`, `<a class="fa" href="burner.html#${esc(x.addr)}" title="${esc(x.addr)}">${esc(x.addr.slice(0,6)+"…"+x.addr.slice(-4))} joined</a>`);
@@ -927,21 +1166,64 @@ function recentRow(x, o={}){
 const satsShort = n => n<1e3 ? String(n) : n<1e4 ? (n/1e3).toFixed(1).replace(/\.0$/,"")+"k" : n<1e6 ? Math.round(n/1e3)+"k" : (n/1e6).toFixed(1).replace(/\.0$/,"")+"M";   // "210k" on buttons
 // counted burns of one topic, with the topic page's rules: late and below-minimum burns do not count; poll and number answers
 // are kept apart from off-list ones (on:false), and number answers merge by value ("150k" and "150000" are one row)
+// A burn with no take backs the topic: it counts in the topic's total, never as a row, a rank or a share (none). A row shows the spelling of its earliest burn
 function tallyOf(name, votes){
-  const p=parseScope(name), rows={}; let sats=0, burns=0;
+  const p=parseScope(name), rows={}, none={sats:0, burns:0}, late={sats:0, burns:0}, dust={sats:0, burns:0}; let sats=0, burns=0;
   for(const v of votes){
-    if(p.deadline && (v.h===null ? TIP+1>=p.deadline : v.h>=p.deadline)) continue;
-    if(p.min && v.sats<p.min) continue;
+    if(p.deadline && (v.h===null ? tipEst()+1>=p.deadline : v.h>=p.deadline)){ late.sats+=v.sats; late.burns++; continue; }
+    if(p.min && v.sats<p.min){ dust.sats+=v.sats; dust.burns++; continue; }
     let key=norm(v.t), t=v.t, on=true;
+    if(!key){ none.sats+=v.sats; none.burns++; sats+=v.sats; burns++; continue; }
     if(p.range){ const x=numOf(v.t); on=Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]; if(on){ key="n:"+x; t=String(x); } }
     else if(p.opts) on=p.opts.includes(key);
-    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on}); r.sats+=v.sats; r.burns++;
+    const r=rows[key]||(rows[key]={key, t, sats:0, burns:0, on, h0:Infinity, tx0:""}); r.sats+=v.sats; r.burns++; spell(r,v,t);
     if(on){ sats+=v.sats; burns++; }
   }
-  const list=Object.values(rows).sort((a,b)=>b.sats-a.sats);
-  return {sats, burns, answers:list.filter(r=>r.on), other:list.filter(r=>!r.on)};
+  const list=Object.values(rows).sort((a,b)=>b.sats-a.sats), answers=list.filter(r=>r.on);
+  return {sats, burns, answers, other:list.filter(r=>!r.on), none, late, dust, shareSats:answers.reduce((a,r)=>a+r.sats,0)};   // shareSats: what shares are of (no-take sats left out); late and dust: shown, not counted
 }
-const weightedMedian = rows => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; for(const r of rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t))){ acc+=r.sats; if(acc>=tot/2) return numOf(r.t); } return null; };
+// the display spelling of a row: its earliest burn's (lowest height, then lowest txid; unconfirmed last), so a later burn never restyles a take (spec §5)
+const spell=(r,v,t)=>{ const h=v.h??Infinity; if(h<r.h0||h===r.h0&&String(v.txid)<r.tx0){ r.t=t; r.h0=h; r.tx0=String(v.txid); } };
+const weightedMedian = rows => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; const s=rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t));
+  for(let i=0;i<s.length;i++){ acc+=s[i].sats; if(acc*2===tot&&i+1<s.length) return (numOf(s[i].t)+numOf(s[i+1].t))/2; if(acc*2>tot) return numOf(s[i].t); } return null; };   // an exact half split: the midpoint of the two values (spec §6)
+function binsOf(lo,hi){                                      // round bins: 8 to 12 of {1, 2, 2.5, 5}×10^n across the range (50k..500k: 9 of 50k)
+  const span=hi-lo||1, e0=Math.floor(Math.log10(span)); let step=null;
+  for(let e=e0-2; e<=e0+1&&!step; e++) for(const m of [1,2,2.5,5]){ const s=m*10**e, n=Math.ceil(span/s-1e-9); if(n>=8&&n<=12){ step=s; break; } }
+  step=step||span/10; const start=Math.floor(lo/step+1e-9)*step; return {start, step, n:Math.max(1,Math.ceil((hi-start)/step-1e-9))};
+}
+// a topic's current call in a few words, for lists and chips (T: tallyOf over the burns the result counts): the split, who leads, the estimate
+function callOf(name, T){
+  const p=parseScope(name), k=kindKey(p), a=T.answers, tot=T.shareSats; if(!a.length||!tot) return null;
+  if(k==="yes-no") return `${Math.round((a.find(r=>r.key==="yes")||{sats:0}).sats/tot*100)}% yes`;
+  if(k==="duel"){ const [x,y]=a; return y&&y.sats===x.sats ? `${x.t} ties with ${y.t}` : `${x.t} leads ${p.opts.find(o=>o!==x.key)}`; }
+  if(k==="poll") return `${a[0].t} leads`;
+  if(k==="number") return `≈ ${numU(weightedMedian(a),p)}`;
+  return `leads “${a[0].t}”`;
+}
+// one burn's fate under its topic's rules, from the burn and the name alone (exact in a fresh browser): counted, in the total only, not in the result, not counted, pending
+function burnStatus(p,v){ const t=norm(v.t||""), late=p.deadline&&(v.h===null?tipEst()+1>=p.deadline:v.h>=p.deadline);
+  if(late) return "late · after the deadline, not counted";
+  if(p.min&&v.sats<p.min) return `below this topic's ${fmt(p.min)}-sat minimum · not counted`;
+  if(!t) return "no take · this burn backs the topic, not a statement";
+  if(p.opts&&!p.opts.includes(t)) return "not one of the options · not in the result";
+  if(p.range){ const x=numOf(t); if(!(Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1])) return "outside the range · not in the result"; }
+  if(v.h===null) return p.deadline ? `pending · counts if it confirms before block ${fmt(p.deadline)}` : "pending · counts once it confirms";
+  return p.deadline ? `counted · before the deadline (block ${fmt(p.deadline)})` : "counted";
+}
+// a topic in a list or on a receipt: its name and, compactly, the rules that make it another topic than its lookalikes
+const topicLabel = name => { const p=parseScope(name), r=[p.opts&&kindKey(p)!=="yes-no"?p.opts.join(" | "):null, p.range?`${nfc(p.range[0])} – ${nfc(p.range[1])}`:null, p.deadline?`closes ≈ ${dlWhen(p.deadline)}`:null, p.min?`min ${nfc(p.min)}`:null].filter(Boolean);
+  return topicName(name)+(r.length?` <span class="tl2">· ${esc(r.join(" · "))}</span>`:""); };
+// ---------- what this site and this viewer chose not to show (spec: a front end may refuse to display a topic or a take): the text goes, its sats and bars stay ----------
+// the site's list is a static hide.json next to snapshots/ ({"takes":[{"topic","take"}],"topics":[name]}); the viewer's lives in this browser
+let HIDE={site:new Set(), topics:new Set(), mine:new Set()}, HIDEP=null;
+try{ HIDE.mine=new Set(JSON.parse(LS(NETKEY("bv.hide"))||"[]")); }catch{}
+const hideKey=(name,t)=>name+"\u0000"+norm(String(t||""));
+const hideReady=()=>HIDEP||(HIDEP=snapshotGet("hide.json").then(j=>{ if(j&&Array.isArray(j.takes)) for(const x of j.takes) if(x&&typeof x.topic==="string") HIDE.site.add(hideKey(x.topic,x.take)); if(j&&Array.isArray(j.topics)) for(const n of j.topics) if(typeof n==="string") HIDE.topics.add(n); }));
+const hiddenBy = (name,t) => HIDE.site.has(hideKey(name,t)) ? "site" : HIDE.mine.has(hideKey(name,t)) ? "you" : null;
+const hideMine = (name,t,on=true) => { const k=hideKey(name,t); on?HIDE.mine.add(k):HIDE.mine.delete(k); LS(NETKEY("bv.hide"),JSON.stringify([...HIDE.mine])); };
+const hiddenTxt = by => by==="site" ? "hidden by this site" : "hidden by you";
+// the weighted quartiles, for the "middle half" of a number topic
+const weightedQuantile = (rows,q) => { const tot=rows.reduce((a,r)=>a+r.sats,0); if(!tot) return null; let acc=0; for(const r of rows.slice().sort((a,b)=>numOf(a.t)-numOf(b.t))){ acc+=r.sats; if(acc>=tot*q) return numOf(r.t); } return null; };
 
 // ---------- scope: name -> P2WSH(OP_RETURN name) ----------
 const CH="qpzry9x8gf2tvdw0s3jn54khce6mua7l";
@@ -1066,7 +1348,7 @@ function payPanel(prefix, opts){
   const api={wallet:wtab, onpaint:null};
   const paint=()=>{ pre.textContent=last?last.rawHex:"…"; copy.disabled=!last; if(wtab) wtab.paint(); if(api.onpaint) api.onpaint(); };
   copy.onclick=()=>{ if(last) copyText(pre.textContent,copy); };
-  const set=args=>{ try{ last=buildPayload(args); }catch{ last=null; } tipnote.hidden=!(last&&last.tipOmitted); if(wtab) wtab.update(last); paint(); };
+  const set=args=>{ try{ last=args.entries ? buildBallotPayload(args.entries,{tipAddr:args.tipAddr, tipSats:args.tipSats}) : buildPayload(args); }catch{ last=null; } tipnote.hidden=!(last&&last.tipOmitted); if(wtab) wtab.update(last); paint(); };   // entries: several burns in one transaction (a registration with its first answer)
   api.set=set; api.paint=paint;
   paint();
   return api;
@@ -1096,6 +1378,40 @@ function amountChips(seg, input, onchange){
   const reset=def=>{ custom=false; input.value=Math.max(+def,+input.min||0); sync(); };   // the default, or the minimum when that is higher
   sync();
   return {sync, reset};
+}
+
+// ---------- share cards: 1200×630 (the size link previews use), the ember theme; the receipt and the topic page paint their own content ----------
+const CF={D:'"Unbounded",system-ui,sans-serif', B:'"Instrument Sans",system-ui,sans-serif', M:'"JetBrains Mono",ui-monospace,Menlo,monospace'};
+function wrapLines(x,text,max){ const out=[]; let line=""; for(const w of text.split(/\s+/)){ const t=line?line+" "+w:w; if(x.measureText(t).width>max&&line){ out.push(line); line=w; } else line=t; } if(line) out.push(line); return out; }
+function rr(x,X,Y,W,H,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+W,Y,X+W,Y+H,r); x.arcTo(X+W,Y+H,X,Y+H,r); x.arcTo(X,Y+H,X,Y,r); x.arcTo(X,Y,X+W,Y,r); x.closePath(); }
+// the frame every card shares: the brand, a word in the corner, the page's address and a right-hand note at the foot; paint(x) draws the rest (y from 170 to 500)
+async function drawCard(label, paint, footRight=""){
+  const c=document.createElement("canvas"); c.width=1200; c.height=630; const x=c.getContext("2d");
+  try{ await Promise.all(['600 56px "Unbounded"','400 26px "Instrument Sans"','400 20px "JetBrains Mono"'].map(f=>document.fonts.load(f))); }catch{}
+  x.fillStyle="#0b0a0e"; x.fillRect(0,0,1200,630);
+  let g=x.createRadialGradient(1040,60,0,1040,60,720); g.addColorStop(0,"rgba(255,106,26,.30)"); g.addColorStop(1,"rgba(255,106,26,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
+  g=x.createRadialGradient(120,640,0,120,640,520); g.addColorStop(0,"rgba(255,181,71,.14)"); g.addColorStop(1,"rgba(255,181,71,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
+  rr(x,40,40,1120,550,30); x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=2; x.stroke();
+  g=x.createRadialGradient(92,98,2,96,102,20); g.addColorStop(0,"#ffb547"); g.addColorStop(.6,"#ff6a1a"); g.addColorStop(1,"#7a2200"); x.fillStyle=g; x.beginPath(); x.arc(96,102,18,0,6.29); x.fill();
+  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning Take",128,102);
+  x.fillStyle="#ffb547"; x.font=`500 18px ${CF.M}`; x.textAlign="right"; try{ x.letterSpacing="3px"; }catch{} x.fillText(`${label} · ${NET.toUpperCase()}`,1104,102); try{ x.letterSpacing="0px"; }catch{} x.textAlign="left"; x.textBaseline="alphabetic";
+  paint(x);
+  x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);
+  x.font=`400 18px ${CF.M}`; x.fillStyle="#8a8177"; x.fillText((()=>{ try{ return decodeURIComponent(location.href); }catch{ return location.href; } })().replace(/^https?:\/\//,"").replace(/[?&]burn=[^#&]*/,"").slice(0,64),96,566);   // the address as a person reads it
+  x.textAlign="right"; x.fillText(footRight||"burned for good on bitcoin · recount it yourself",1104,566); x.textAlign="left";
+  return c;
+}
+// a horizontal bar of segments (a duel's sides, a poll's race), each [share, color]
+function cardBar(x,X,Y,W,H,segs){ rr(x,X,Y,W,H,H/3); x.save(); x.clip(); x.fillStyle="rgba(255,255,255,.07)"; x.fillRect(X,Y,W,H); let at=X; const tot=segs.reduce((a,s)=>a+s[0],0)||1; for(const [v,col] of segs){ const w=W*v/tot; x.fillStyle=col; x.fillRect(at,Y,w,H); at+=w+(w?3:0); } x.restore(); }
+// share: the system's share sheet with the image where it takes files, else the text and link copied and the image saved
+async function shareCard({title, text, url, canvas, stem}){
+  let blob=null; try{ blob=await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error("no image")),"image/png")); }catch{}
+  try{ const file=blob&&new File([blob],stem+".png",{type:"image/png"});
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({title, text, url, files:[file]}); return; }
+    if(navigator.share){ await navigator.share({title, text, url}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  copyText(`${text} ${url}`, document.createElement("span"));
+  if(blob) try{ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=stem+".png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }catch{}
+  if(typeof toast==="function") toast(blob?"Text and link copied · image saved":"Text and link copied");
 }
 
 // ---------- copy ----------
@@ -1466,12 +1782,14 @@ async function decryptSecret(blob,pass){                         // -> Promise<s
 const WALLET_ESPLORA={mainnet:"", signet:"signet/", testnet:"testnet/", testnet4:"testnet4/"};
 const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : (typeof LIVE_BASE==="string"&&LIVE_BASE&&typeof NET==="string"&&network===NET) ? LIVE_BASE : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
 async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure
-  try{
-    const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}});
-    if(!r.ok) return null;
-    const j=await r.json();
-    return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
-  }catch{ return null; }
+  for(let i=0;i<2;i++){                                             // 6 s each, a second try: a stale connection often answers the next time
+    try{
+      const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
+      if(!r.ok) return null;
+      const j=await r.json();
+      return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
+    }catch{ if(i) return null; }
+  }
 }
 async function broadcastTx(hex,network="mainnet"){               // -> {txid} | {error}
   try{
@@ -1637,7 +1955,7 @@ async function ledgerSign({utxos=[], outputs=[], changeAddr, feeRate=1, wallet, 
 // ponytail: one BIP84 key, stored in localStorage (encrypted when a passphrase is set). Coins here are meant to be burned.
 // Or a Ledger (ledger.js): {kind:"ledger", net, addr, xpub, fp} — the first receive address of account 0, keys on the device, every burn signed there.
 let WALLET=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.wallet"))||"null"); }catch{ return null; } })();   // {net, enc, data, addr} | {kind:"ledger", net, addr, xpub, fp}, one per network (bv.wallet.mainnet / bv.wallet.signet)
-let wKey=null, walletUtxos=null;                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
+let wKey=null, walletUtxos=null, WFUND=0, FUNDING=null;   // WFUND: sats a dialog needs, for the receive QR; FUNDING: the dialog waiting on the wallet (its pay panel's prefix)                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
 const walletIsLedger=()=>!!(WALLET&&WALLET.kind==="ledger");
 const walletState=()=> !WALLET ? "none" : walletIsLedger() ? "ready" : wKey ? "ready" : WALLET.enc ? "locked" : "sealed";   // sealed: stored in clear, derive on demand. A Ledger is always "ready": viewing needs nothing, signing asks the device
 const walletSave=()=>{ try{ LS(NETKEY("bv.wallet"),JSON.stringify(WALLET)); }catch{} };
@@ -1647,10 +1965,11 @@ async function walletLoadKey(pass=""){                    // derive the key from
   wKey = await walletDerive(words, WALLET.enc?pass:"", NET);
   wKey.words=words; return wKey;
 }
+let WREADING=false;                                        // a balance read is running: "checking", not "unknown"
 async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page
   if(!WALLET) return null;
   if(walletUtxos && !force) return walletUtxos;
-  walletUtxos = await fetchUtxos(WALLET.addr, NET);
+  WREADING=true; try{ walletUtxos = await fetchUtxos(WALLET.addr, NET); } finally{ WREADING=false; }
   return walletUtxos;
 }
 const walletSats=()=>(walletUtxos||[]).reduce((a,u)=>a+u.value,0);
@@ -1669,14 +1988,16 @@ async function walletPaint(){
   $("w-title").textContent= st==="none"?"Connect a wallet" : st==="locked"?"Unlock wallet" : ledger?"Your Ledger" : "Your wallet";
   if(st==="ready"||st==="sealed"){
     const a=WALLET.addr; $("w-addr").textContent=a.slice(0,10)+"…"+a.slice(-6); $("w-addr").title=a; $("w-netlabel").textContent=NET;   // condensed; copy and the QR carry the full address
+    $("w-explorer").href="https://mempool.space/"+(NET==="mainnet"?"":"signet/")+"address/"+a; $("w-burns").href="burner.html#"+a;
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
     $("w-fundnote").textContent= ledger ? "Burns spend from this address only (the account's first receive address). Send sats here from Ledger Live or anywhere." : "Fund it by sending sats to this address.";
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
-    try{ const q=qrcode(0,"M"); q.addData("bitcoin:"+a,"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); }catch{}
+    try{ const q=qrcode(0,"M"); q.addData("bitcoin:"+a+(WFUND?`?amount=${(WFUND/1e8).toFixed(8)}`:""),"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); }catch{}   // a dialog waiting on funds: the amount rides in the QR
+    if(WFUND) $("w-fundnote").textContent=`Send about ${fmt(WFUND)} sats to this address · your take is waiting`;
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`explorer unreachable · <button type="button" class="linkbtn" data-wretry>retry</button>`;
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer`;
   }
   walletPill();
 }
@@ -1732,8 +2053,24 @@ addEventListener("resize",walletPill);
 walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
 if(WALLET) walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });
+priceReady(); feeReady().then(()=>PAY.forEach(p=>p.paint()));      // the BTC price and the fee estimates, once per page: only the pages that pay load this file (not the embed)
 
-document.addEventListener("click",e=>{ if(e.target.closest("[data-wretry]")) walletBalance(true).then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); if($("walletdlg")?.open) walletPaint(); }); });   // the wallet's balance: another try, when the reader asks
+// ---------- once sent: the panel says what went out, the footer offers the transaction on the explorer ----------
+const ICON_OK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const ICON_EXT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+const sentHtml=(s,rcpt)=>{ const sum=re=>(s.outs||[]).filter(o=>re.test(o.label)).reduce((a,o)=>a+o.sats,0), burned=sum(/^(burn|register|sponsor)/), tip=sum(/^tip$/);
+  const tiles=[burned&&[burned,"burned"], tip&&[tip,burned?"tip":"sent"], Number.isFinite(s.fee)&&[s.fee,"mining fee"], Number.isFinite(s.after)&&[s.after,"balance after"]].filter(Boolean);
+  return `<div class="wdone"><div class="wdonehead"><span class="fi okfi" aria-hidden="true">${ICON_OK}</span><div><b>${burned?"Burned":"Sent"}</b><span class="mono">in the mempool · waiting for its first block</span></div></div>
+    <div class="wdonesum">${tiles.map(([v,k])=>`<div><b>${fmt(v)} sats</b><span>${k}</span></div>`).join("")}</div>
+    <div class="kv"><span class="k">Transaction</span><code title="${esc(s.txid)}">${esc(s.txid.slice(0,12))}…${esc(s.txid.slice(-8))}</code><button type="button" class="copy" data-copytx="${esc(s.txid)}">copy</button></div>
+    ${rcpt?`<a class="wrcpt" href="receipt.html#${esc(s.txid)}">View receipt →</a>`:""}</div>`; };
+function txLink(btn,s){ const foot=btn.closest(".dlgfoot"); if(!foot) return; let a=foot.querySelector("[data-txlink]");
+  if(!a){ a=document.createElement("a"); a.className="btn"; a.dataset.txlink=""; a.target="_blank"; a.rel="noopener"; a.innerHTML=ICON_EXT+"<span>Explorer</span>"; (btn.closest(".signwrap")||btn).before(a); }
+  const sent=!!(s&&s.kind==="sent"); a.hidden=!sent; if(sent) a.href=TXURL(s.txid); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-copytx]"); if(b) copyText(b.dataset.copytx,b); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-fund]"); if(!b) return; const [pre,n]=b.dataset.fund.split(":"); FUNDING=pre; WFUND=+n; walletOpen(); });   // short of funds: the wallet opens with the amount in its QR
+document.addEventListener("click",e=>{ if(!e.target.closest("[data-wretry]")) return; chainReset(); const p=walletBalance(true); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) $("w-balhint").textContent="checking…";   // the wallet's balance: another try, when the reader asks
+  p.then(()=>{ walletPill(); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) walletPaint(); }); });
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
 const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
 function feeSegPaint(seg, off=false, sum=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; });
@@ -1749,7 +2086,7 @@ function walletTab(prefix, root, {speed=true}={}){
       <div class="wsum"><div><b id="${id("total")}">…</b><span>to send</span></div><div><b id="${id("fee")}">…</b><span>mining fee<span class="more" id="${id("rate")}"></span></span></div><div><b id="${id("after")}">…</b><span>balance after</span></div></div>
       ${speed?feeSegHtml(id("speed")):""}
       <p class="note mono" id="${id("msg")}" style="margin:8px 0 0" aria-live="polite"></p>
-      <p class="note mono" id="${id("result")}" style="margin:6px 0 0" aria-live="polite" hidden></p>
+      <div id="${id("result")}" aria-live="polite" hidden></div>
     </div></div>`;
   const $$=k=>$(id(k)); let last=null, status=null;   // status: null | {kind:"busy"} | {kind:"sent", txid} | {kind:"err", msg}
   const api={ update(p){ last=p; if(!status||status.kind!=="busy") status=null; }, onsent:null };   // onsent({txid, outputs, hex}): the page records what went out (pending burns for the receipt page); status.msg: the Ledger stage
@@ -1760,8 +2097,8 @@ function walletTab(prefix, root, {speed=true}={}){
     root.closest(".pay")?.classList.toggle("sent",sent);   // sent: the txid and the receipt link stay, the rest goes (base.css)
     $$("none").hidden=st!=="none"; $$("locked").hidden=!(st==="locked"||st==="sealed"); $$("ready").hidden=st!=="ready";
     $$("result").hidden=!status||status.kind==="busy";
-    if(status&&status.kind==="sent") $$("result").innerHTML=`broadcast · <a href="${TXURL(status.txid)}" target="_blank" rel="noopener" style="color:var(--ember2)">${status.txid.slice(0,10)}…${status.txid.slice(-6)}</a>${api.onsent?` · <a class="receipt" href="receipt.html#${status.txid}">View receipt →</a>`:""}`;   // a receipt only where the page recorded a burn (not for a plain tip)
-    else if(status&&status.kind==="err") $$("result").textContent=status.msg;
+    if(status&&status.kind==="sent") $$("result").innerHTML=sentHtml(status, !!api.onsent);   // a receipt only where the page recorded a burn (not for a plain tip)
+    else if(status&&status.kind==="err") $$("result").innerHTML=`<p class="note mono" style="margin:6px 0 0">${esc(status.msg)}</p>`;
     if(st!=="ready") return;
     const r=feeRates(), sp=feeSpeed(); $$("rate").textContent=` · ${r[sp]} sat/vB`;
     if(speed) feeSegPaint($$("speed"), !!(status&&status.kind!=="err"));
@@ -1770,9 +2107,10 @@ function walletTab(prefix, root, {speed=true}={}){
     const {total,fee,bal,mismatch}=calc();
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
-    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML=`balance unknown: the explorer at ${esc(esploraBase(NET))} is unreachable from this page · <button type="button" class="linkbtn" data-wretry>retry</button>`; return; }
-    $$("msg").textContent = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
-      : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. Fund it from the wallet chip in the top bar.`
+    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML= WREADING ? "checking the balance…" : `<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer · balance unknown`; return; }
+    if(FUNDING===prefix&&!mismatch&&bal>=total+fee){ FUNDING=null; WFUND=0; toast("Funds arrived · your burn is ready to sign"); }   // the wallet caught up with the dialog waiting on it
+    $$("msg").innerHTML = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
+      : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. <button type="button" class="linkbtn" data-fund="${prefix}:${total+fee-bal+500}">Add funds</button>`
       : "";                                                   // all is well: nothing to say
   };
   const send=async()=>{
@@ -1787,39 +2125,41 @@ function walletTab(prefix, root, {speed=true}={}){
         : await signP2wpkh({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:feeRate(), key:wKey});
       const b=await broadcastTx(r.hex, NET);
       if(b.error) throw new Error(b.error);                // the explorer's rejection, verbatim
-      status={kind:"sent", txid:b.txid||r.txid};
+      const outSum=last.outputs.reduce((a,o)=>a+o.sats,0);
+      status={kind:"sent", txid:b.txid||r.txid, fee:r.fee, outs:last.outputs, after:Number.isFinite(r.fee)?walletSats()-outSum-r.fee:null};   // what went out, for the success panel
       try{ api.onsent?.({txid:status.txid, outputs:last.outputs, hex:r.hex}); }catch{}
       walletUtxos=null; walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });   // coins spent: the change shows once the explorer sees it
     }catch(e){ status={kind:"err", msg:walletIsLedger()?ledgerError(e).message:e.message}; }
     PAY.forEach(p=>p.paint());
   };
   if(speed) feeSegWire($$("speed"));
-  const fee=()=>walletState()==="ready"&&last&&walletUtxos ? calc().fee : null;
-  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, status:()=>status });
+  const fee=()=>last ? calc().fee : null;                     // coins unknown (no wallet yet, or the explorer has not answered): priced for one coin, exact once they load
+  const need=()=>last ? calc().total+calc().fee+500 : 0;       // what to send the wallet for this burn: its outputs, the fee, a little margin
+  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, need, prefix, status:()=>status });
 }
 // the dialogs' primary from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch (batch null: no batch item).
 // Broadcast walks the wallet (connect, unlock), brings up the Transaction step (show), where progress and errors show, then signs and sends; once sent the button is Done.
 const CARET='<svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 function signMenu(btn, menu, wt, {label, ok=true, show=()=>{}, batch=null, tx=null, done}){   // tx: bring up the transaction details (null: already there)
   if(!btn._close){ btn._close=dropMenu(btn,menu); btn._toggle=btn.onclick; }       // the menu's toggle, outside click and Escape: wired once
-  const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]');
+  const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]'); txLink(btn,s);
   if(s&&s.kind==="sent"){ btn._close(); btn.textContent="Done"; btn.disabled=false; btn.removeAttribute("aria-haspopup"); btn.onclick=done; return; }
   btn.setAttribute("aria-haspopup","menu"); btn.onclick=btn._toggle;
   if(s&&s.kind==="busy"){ btn._close(); btn.textContent=walletIsLedger()?"On the Ledger…":"Signing…"; btn.disabled=true; return; }
   btn.innerHTML=label+CARET; btn.disabled=!ok;
-  bc.textContent= st==="none" ? "Broadcast · connect a wallet first" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
-  bc.onclick=()=>{ btn._close(); if(st!=="ready") return walletOpen(); show(); if(wt.canSend()) wt.send(); };
+  bc.textContent= st==="none" ? "Broadcast · set up a wallet (your take is kept)" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
+  bc.onclick=()=>{ btn._close(); if(st!=="ready"){ if(st==="none"){ FUNDING=wt.prefix; WFUND=wt.need(); } return walletOpen(); } show(); if(wt.canSend()) wt.send(); };   // no wallet yet: the dialog stays open under the wallet's, the take kept
   ba.hidden=!batch; ba.onclick=()=>{ btn._close(); if(batch) batch(); };
   tt.hidden=!tx; tt.onclick=()=>{ btn._close(); if(tx) tx(); };
 }
-// the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the wallet can build it)
+// the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the dialog has a transaction to price)
 function dlgPrice(host, sats, word, fee, extra=[]){
   const h=`<span><b>${fmt(sats)} sats</b><span class="w">${word}</span></span>${[...extra, fee!=null?`+${fmt(fee)} sats mining fees`:"+ mining fees"].map(x=>`<small>${x}</small>`).join("")}`;
   if(host._h!==h){ host._h=h; host.innerHTML=h; }             // unchanged: left alone, a focused link keeps its focus
 }
 // the dialog footer's primary button, from the wallet state: none → Connect a wallet, locked → Unlock wallet, ready → Sign & broadcast (Sign on Ledger), sent → Done
 function walletPrimary(btn, wt, done, ok=true){
-  const st=walletState(), s=wt.status();
+  const st=walletState(), s=wt.status(); txLink(btn,s);
   let label, act, off=false;
   if(s&&s.kind==="sent"){ label="Done"; act=done; }
   else if(st==="none"){ label="Connect a wallet"; act=walletOpen; }
@@ -1856,9 +2196,9 @@ const DB=(()=>{
     async all(){ try{ const db=await open(); return (await tx(db,["votes"],"readonly",t=>all(t.objectStore("votes")))).map(cleanVote).filter(Boolean); }catch{ return null; } },                                            // -> every cached burn of every topic (burner page filters by from) | null
     async scopes(){ try{ const db=await open(); return await tx(db,["scopes"],"readonly",t=>all(t.objectStore("scopes"))); }catch{ return null; } },                                       // -> every sync record [{name,lastTx,height,count,at}] | null
     async byTx(txid){ try{ const db=await open(); const rows=await tx(db,["votes"],"readonly",t=>all(t.objectStore("votes").index("txid"),txid)).then(p=>p); return (await rows).map(cleanVote).filter(Boolean); }catch{ return null; } },            // -> every burn of one transaction, one row per topic (a ballot has several) | null
-    async put(name,page,all){ try{ const db=await open(); await tx(db,["votes","scopes"],"readwrite",t=>{
+    async put(name,page,all,height=TIP,at=Date.now()){ try{ const db=await open(); await tx(db,["votes","scopes"],"readwrite",t=>{   // height: the tip the scan read at (a snapshot's own height); at: 0 for a snapshot, so it never counts as a recent read
         const vs=t.objectStore("votes"); for(const v of page) if(v.h!==null) vs.put({...v,scope:name});           // the mempool part goes through putPending (loader.js persist)
-        if(all){ const conf=all.filter(v=>v.h!==null); t.objectStore("scopes").put({name, lastTx:conf[0]?conf[0].txid:null, height:TIP, count:conf.length, at:Date.now()}); }   // sync record once the whole scan landed
+        if(all){ const conf=all.filter(v=>v.h!==null); t.objectStore("scopes").put({name, lastTx:conf[0]?conf[0].txid:null, height, count:conf.length, at}); }   // sync record once the whole scan landed
       }); }catch{} },
     async putPending(name,votes){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const vs=t.objectStore("votes"); for(const v of votes) vs.put({...v, h:null, scope:name, at:v.at||Date.now()}); }); }catch{} },   // a burn signed here, before the explorer sees it: the receipt page finds it by txid; the next scan overwrites the row with the confirmed one
     async prunePending(name,keep){ try{ const db=await open(); await tx(db,["votes"],"readwrite",t=>{ const r=t.objectStore("votes").index("scope").openCursor(IDBKeyRange.only(name));   // mempool burns the explorer no longer lists: replaced or dropped
@@ -1900,10 +2240,11 @@ function bPaint(){
   ballotPill();
   $("bprice").hidden=!n||sent;
   if(!n) return;
+  const firstAt=new Map(); e.forEach(x=>{ if(!firstAt.has(x.addr)) firstAt.set(x.addr,x); });   // a second burn to one address in one transaction is summed under the first (spec §4)
   $("b-list").innerHTML=e.map((x,i)=>`<div class="bent${sent?" sent":""}">
       ${x.name?iconBadge("",ICON_TAKE):x.intent==="feature"?iconBadge("feature",ICONS.feature):iconBadge("reg",ICONS.reg)}
-      <span class="topic">${x.name?topicName(x.name):x.intent==="feature"?"sponsor":"register"}</span>
-      <span class="stmt">${x.statement?esc(x.statement):"<i>abstain</i>"}</span>
+      <span class="topic">${x.name?topicLabel(x.name):x.intent==="feature"?"sponsor":"register"}</span>
+      <span class="stmt">${x.statement?esc(x.statement):"<i>no take</i>"}${sent?"":bTag(x, firstAt.get(x.addr))}</span>
       <b class="mono">${fmt(x.sats)}<small> sats</small></b>
       ${sent?`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
     </div>`).join("");
@@ -1918,6 +2259,25 @@ function bPaint(){
   bwt.paint();
   walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close(), !!bLast);   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, from any step
   if(/^Sign/.test($("bsend").textContent)) $("bsend").onclick=()=>{ if(bStep!==3) bGo(3); bwt.send(); };   // signing shows the Transaction step, where progress and errors show
+}
+// what a batch row would really do, said on the row: summed into an earlier burn to the same topic, too late for a deadline, or an answer off the topic's list
+function bTag(x, first){
+  const t=s=>` <small class="btag">${s}</small>`;
+  if(first!==x) return t(x.name ? `counts as ${first.statement?"“"+esc(first.statement)+"”":"no take"}` : "left out: one root burn per transaction");
+  const p=x.name?parseScope(x.name):null; if(!p) return "";
+  if(p.deadline&&TIP&&tipEst()+1>=p.deadline) return t("closed · this burn would not count");
+  if(p.deadline&&TIP&&blocksTo(p.deadline)<=3) return t(`closes in ≈ ${Math.max(1,Math.ceil(blocksTo(p.deadline)))} blocks · may confirm too late`);
+  const v=norm(x.statement||""); if(v&&(p.opts?!p.opts.includes(v):p.range?!(numOf(v)>=p.range[0]&&numOf(v)<=p.range[1]):false)) return t("not in the result");
+  return "";
+}
+// a burn for a topic the batch already holds: one transaction counts one burn per topic, so the dialog asks (replace it, or add these sats to it) instead of losing one
+function batchConflict(note, i, e, done){
+  const x=ballotGet()[i], q=s=>s?`“${esc(s)}”`:"no take", same=!!e.name&&norm(x.statement)===norm(e.statement);
+  note.innerHTML = !e.name ? `<p>Your batch already ${x.intent==="feature"?"sponsors":"registers"} ${topicName(nameOf(x.statement)||x.statement)}. One transaction carries one burn to the root topic: send this one separately, or replace it.</p><div class="acts"><button type="button" class="btn sm" data-bx="replace">Replace it</button></div>`
+    : same ? `<p>${topicName(e.name)} is already in your batch with ${q(x.statement)}.</p><div class="acts"><button type="button" class="btn sm primary" data-bx="add">Add ${fmt(e.sats)} sats to it</button></div>`
+    : `<p>${topicName(e.name)} is already in your batch with ${q(x.statement)}. One transaction counts one ${kind(parseScope(e.name))==="open"?"take":"answer"} per topic.</p><div class="acts"><button type="button" class="btn sm" data-bx="replace">Replace with ${q(e.statement)}</button><button type="button" class="btn sm" data-bx="add">Add ${fmt(e.sats)} to ${q(x.statement)}</button></div>`;
+  note.hidden=false; note.querySelector("[data-bx]").focus({preventScroll:true});
+  note.onclick=ev=>{ const b=ev.target.closest("[data-bx]"); if(!b) return; ballotSet(i, b.dataset.bx==="replace" ? e : {sats:x.sats+e.sats}); note.hidden=true; done(); };
 }
 PAY.push({paint:bPaint, wallet:bwt});                        // repainted with every wallet change, like the burn dialogs
 bwt.onsent=({txid})=>{                                       // one transaction, N rows: each topic gets its own pending burn (h:null) so the receipt page and the boards find them
@@ -1947,54 +2307,59 @@ function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bSync(); $("ballotdlg").
 addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
 ballotPill();
 // ---------- the data path, no rendering (every app page): IndexedDB first, then the explorer for everything newer ----------
-// loadVotes(name, {onPage, onPhase, cancelled}) -> Promise<{votes, source:"cache"|"snapshot"|"scan", requests, error?}|null>
+// loadVotes(name, {onPage, onPhase, cancelled}) -> Promise<{votes, source:"cache"|"snapshot"|"scan", requests, height, error?}|null>
+//   height: the block the votes are as of: the tip the scan read at, or the saved record's (0: nothing saved) when the explorer did not answer
 //   onPage(votes)   burns that just landed, each txid once: what this browser (or a published snapshot) knows, then every explorer page
 //   onPhase(p)      progress: {phase:"cache"|"snapshot"|"scan"|"done"|"error", source?, count?, page?, lastTx?, height?, requests?}
 //   cancelled()     -> true when the caller moved on: the loader stops and resolves null
 // The result's votes are the whole list with the mempool as the explorer lists it now: pages recount from it, not from the batches.
-tipReady(); priceReady(); feeReady().then(()=>PAY.forEach(p=>p.paint()));   // the chain tip, the BTC price and the fee estimates, once per page (shared.js)
+tipReady();                                                               // the chain tip, once per page (shared.js); the price and the fees start in walletui.js, on the pages that pay
 const ADDRS=new Map();                                                    // topic name -> address, derived once per page
 const topicAddr=async name=>{ if(!ADDRS.has(name)) ADDRS.set(name,(await deriveScope(name)).addr); return ADDRS.get(name); };
-const FRESH_PENDING=10*60000;                                             // a burn signed in this browser stays pending this long, even before the explorer lists it
-async function loadVotes(name,{addr:raw=null,onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
+// force: always ask the explorer. Without it, a topic any page read in the last 60 s, at the current tip, is answered from disk with no request (Retry and the topic page's minute refresh force)
+async function loadVotes(name,{addr:raw=null,force=false,onPage=()=>{},onPhase=()=>{},cancelled=()=>false}={}){
   if(!TIP) await tipReady();                                              // windows and deadlines need a tip: the cached one, else the first answer
   const addr=raw||await topicAddr(name), shown=new Set(), show=vs=>{ const f=vs.filter(v=>!shown.has(v.txid)); f.forEach(v=>shown.add(v.txid)); if(f.length) onPage(f); };
   let known=[], source="scan";
   onPhase({phase:"cache"});
-  const rec=await DB.sync(name); if(cancelled()) return null;
-  if(rec&&(rec.count||rec.lastTx)){ known=(await DB.votes(name))||[]; source="cache"; onPhase({phase:"cache", source, count:known.length, lastTx:rec.lastTx}); }
+  const rec=await DB.sync(name), disk=((await DB.votes(name))||[]).map(v=>v.h===null?{...v, unver:true}:v); if(cancelled()) return null;   // unconfirmed rows from disk: not verified on this visit yet
+  let height=0;
+  if(rec){ known=disk; source="cache"; height=rec.height||0; onPhase({phase:"cache", source, count:known.length, lastTx:rec.lastTx, height, at:rec.at||0}); }   // any record, even one that counted 0 burns, is what this browser knows
   else{
+    known=disk.filter(v=>v.h===null);                                     // no record yet (a first read that failed or is still running): a burn just signed here survives it
     onPhase({phase:"snapshot"});
     const snap=await snapshotFetch(name); if(cancelled()) return null;
-    if(snap){ known=snap.votes.map(cleanVote).filter(Boolean); source="snapshot"; DB.put(name, known, known); onPhase({phase:"snapshot", source, count:known.length, height:snap.height}); }
+    if(snap){ const sv=snap.votes.map(cleanVote).filter(Boolean); known=[...known.filter(v=>!sv.some(x=>x.txid===v.txid)), ...sv]; source="snapshot"; height=+snap.height||0; DB.put(name, sv, sv, height, 0); onPhase({phase:"snapshot", source, count:known.length, height}); }
   }
   if(known.length){ cache[name]=known; show(known); }
+  if(!force&&rec&&rec.at&&Date.now()-rec.at<60000){ await tipReady(); if(cancelled()) return null;   // read moments ago, by this page or another tab: no request
+    if(rec.height>=TIP){ cache[name]=known; onPhase({phase:"done", source, count:known.length, requests:0, height:rec.height}); return {votes:known, source, requests:0, height:rec.height}; } }
   const topics=new Map([[addr,name]]), burns=txs=>txs.flatMap(tx=>txBurns(tx,topics)).map(cleanVote).filter(Boolean);
   const conf=known.filter(v=>v.h!==null), pend=[], fresh=[];              // newest first: the scan stops at the newest confirmed burn already known
   let scan;
   try{ scan=await scanAddress(addr,{stopTx:conf.length?conf[0].txid:null, cancelled, onPage:p=>{
     const m=burns(p.mempool), c=burns(p.confirmed); pend.push(...m); fresh.push(...c); show([...m,...c]);
     onPhase({phase:"scan", page:p.requests, count:shown.size}); }}); }
-  catch(e){ if(cancelled()) return null; onPhase({phase:"error", source, count:known.length}); return {votes:known, source, requests:0, error:String((e&&e.message)||e)}; }
+  catch(e){ if(cancelled()) return null; onPhase({phase:"error", source, count:known.length, height}); return {votes:known, source, requests:0, height, error:String((e&&e.message)||e)}; }
   if(!scan) return null;
   const listed=new Set([...pend,...fresh].map(v=>v.txid)), now=Date.now();
   const votes=[...pend, ...known.filter(v=>v.h===null&&!listed.has(v.txid)&&now-(v.at||0)<FRESH_PENDING), ...fresh, ...conf.filter(v=>!listed.has(v.txid))];   // a mempool burn the explorer stopped listing was replaced or dropped
-  DB.put(name, fresh, votes); DB.putPending(name, pend); DB.prunePending(name, new Set(votes.filter(v=>v.h===null).map(v=>v.txid)));
+  DB.put(name, fresh, votes, TIP); DB.putPending(name, pend); DB.prunePending(name, new Set(votes.filter(v=>v.h===null).map(v=>v.txid)));
   cache[name]=votes;
-  onPhase({phase:"done", source, count:votes.length, requests:scan.requests});
-  return {votes, source, requests:scan.requests};
+  onPhase({phase:"done", source, count:votes.length, requests:scan.requests, height:TIP});
+  return {votes, source, requests:scan.requests, height:TIP};
 }
 // ---------- the directory (spec §7): registrations are burns to the root topic whose statement is a topic name ----------
 // dirLoad(fresh) -> Promise<DIRECTORY>, once per page unless fresh: the root topic through loadVotes (cache first, then only what is newer).
 // d.reg (the sponsor score) and d.listings sum the root burns naming the topic, d.first and d.last are their heights; d.stats and d.active come from dirTopics.
-let ROOTV=[], DIRP=null, DIRERR=false;
-const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("").then(async r=>{ ROOTV=(r&&r.votes)||[]; DIRERR=!!(r&&r.error)&&!ROOTV.length; await Promise.race([regTies(), sleep(1500)]); return dirBuild(); }));   // the ties never hold the directory long: a late answer shows at the next paint
+let ROOTV=[], DIRP=null, DIRERR=false, ROOTERR=false, ROOTH=0, DIRFRESH=false, DIRNET=0;   // ROOTERR: the root's last read failed (DIRERR: and nothing is saved); ROOTH: the block the directory is as of; DIRFRESH: read from the explorer on this visit; DIRNET: bumped when it lands
+const dirLoad=(fresh=false)=>(!fresh&&DIRP)||(DIRP=loadVotes("",{force:fresh}).then(async r=>{ DIRNET++; ROOTV=(r&&r.votes)||[]; ROOTERR=!!(r&&r.error); ROOTH=(r&&r.height)||0; DIRERR=ROOTERR&&!ROOTV.length; DIRFRESH=DIRFRESH||!ROOTERR; await Promise.race([regTies(), sleep(1500)]); return dirBuild(); }));   // the ties never hold the directory long: a late answer shows at the next paint
 // a registration or sponsorship signed in this browser: the directory takes it at once, in the mempool (it is on disk too: DB.putPending), until the explorer lists it
 const dirAddPending=vs=>{ ROOTV=[...vs, ...ROOTV.filter(v=>!vs.some(x=>x.txid===v.txid))]; return dirBuild(); };
 function dirBuild(){                                                      // the directory from the root topic's burns, keeping what the pages already counted
   const was=new Map(DIRECTORY.map(d=>[d.name,d])), next=new Map();
   for(const v of ROOTV){ const name=nameOf(v.t); if(!name) continue; const h=v.h??TIP+1;
-    const d=next.get(name)||{name, stats:null, active:0, ...(was.get(name)||{}), reg:0, listings:0, first:Infinity, last:0};
+    const d=next.get(name)||Object.assign(was.get(name)||{name, stats:null, active:0}, {reg:0, listings:0, first:Infinity, last:0});   // the same object: a count still running writes to the live entry
     d.reg+=v.sats; d.listings++; d.first=Math.min(d.first,h); d.last=Math.max(d.last,h); next.set(name,d); }
   DIRECTORY=[...next.values()].sort((a,b)=>a.first-b.first); return DIRECTORY;
 }
@@ -2006,20 +2371,39 @@ const regBefore=(a,b)=>{ const c=(x,y)=>x<y?-1:x>y?1:0, at=v=>v.h===null ? SEENT
   return c(a.h??Infinity,b.h??Infinity) || c(at(a),at(b)); };
 async function regTies(){
   const low=new Map(); for(const v of ROOTV){ const n=nameOf(v.t); if(!n) continue; const h=v.h??Infinity, o=low.get(n); if(!o||h<o.h) low.set(n,{h,vs:[v]}); else if(h===o.h) o.vs.push(v); }
-  const tied=[...low.values()].filter(g=>g.vs.length>1).flatMap(g=>g.vs), ask=tied.filter(v=>v.h!==null&&!(v.txid in POS)), seen=tied.filter(v=>v.h===null&&!(v.txid in SEENT));
+  const tied=[...low.values()].filter(g=>g.vs.length>1).flatMap(g=>g.vs), ask=tied.filter(v=>v.h!==null&&!(v.txid in POS)), seen=(chainBases()[0]||"").startsWith("https://mempool.space/")?tied.filter(v=>v.h===null&&!(v.txid in SEENT)):[];   // first-seen times: mempool.space only
   await Promise.all([...ask.map(v=>chainGet(`/tx/${v.txid}/merkle-proof`).then(r=>{ POS[v.txid]=r.pos; }).catch(()=>{})),
-    seen.length && chainGet("/v1/transaction-times?"+seen.map(v=>"txId[]="+v.txid).join("&")).then(ts=>seen.forEach((v,i)=>{ if(ts[i]) SEENT[v.txid]=ts[i]; })).catch(()=>{})]);   // mempool.space only
+    seen.length && chainGet("/v1/transaction-times?"+seen.map(v=>"txId[]="+v.txid).join("&")).then(ts=>seen.forEach((v,i)=>{ SEENT[v.txid]=ts[i]||null; })).catch(()=>{})]);   // a miss is remembered too (null: the send time decides), so it is not asked every minute
   if(ask.length) try{ localStorage.setItem(NETKEY("bv.pos"), JSON.stringify(POS)); }catch{}
 }
 const rootBurns=()=>{ const vs=ROOTV.map(v=>({...v, name:nameOf(v.t)})).filter(v=>v.name), first=new Map();   // the sponsorships, newest first
   for(const v of vs){ const o=first.get(v.name); if(!o || regBefore(v,o)<0) first.set(v.name,v); }   // still tied: the first listed (mempool.space lists a block, and the mempool, oldest first)
   for(const v of first.values()) v.reg=true; return vs; };
-// dirTopics({onTopic, only}) -> Promise: the registered topics (only(d): a subset) through loadVotes, three at a time; burns land in cache[name], then d.stats and d.active
+// the directory and every count from IndexedDB, before any request -> the lowest block they are as of (0: nothing saved, the page keeps its placeholders).
+// Only topics with a sync record get numbers (a record that counted 0 burns counts); a topic the network already counted is never overwritten; records of topics
+// that are not in the directory (opened here, unregistered) do not lower the height. A disk read that lands after the network directory changes nothing.
+async function dirFromDisk(){
+  const g=DIRNET, [recs,rows]=await Promise.all([DB.scopes(),DB.all()]); if(!recs||!rows||g!==DIRNET) return 0;
+  const rec=new Map(recs.map(r=>[r.name,r])), root=rec.get(""); if(!root) return 0;
+  const by=new Map(), byH=(a,b)=>(b.h??Infinity)===(a.h??Infinity)?0:(b.h??Infinity)-(a.h??Infinity);
+  for(const v of rows) (by.get(v.scope)||by.set(v.scope,[]).get(v.scope)).push(v.h===null?{...v, unver:true}:v);
+  for(const vs of by.values()) vs.sort(byH);
+  if(!ROOTV.length){ ROOTV=by.get("")||[]; ROOTH=root.height||0; dirBuild(); }
+  let low=root.height||0;
+  for(const d of DIRECTORY){ const r=rec.get(d.name); if(!r||d.stats||d.name in cache) continue; dirCount(d,by.get(d.name)||[]); if(r.height) low=low?Math.min(low,r.height):r.height; }
+  return low;
+}
+// a topic's numbers from its burns: cache[name], then d.stats (it has numbers) and d.active (its latest burn)
+const dirCount=(d,vs)=>{ cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); };
+// dirTopics({onTopic, only}) -> Promise<{errors, low}>: the registered topics (only(d): a subset) through loadVotes, three at a time; burns land in cache[name], then d.stats and d.active
+// errors: topics the explorer did not answer for; low: the lowest block the counted topics are as of. A failed topic with nothing saved keeps no numbers (unknown, not 0)
 async function dirTopics({onTopic=()=>{},only=()=>true}={}){
-  const todo=DIRECTORY.filter(only);
-  const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(()=>null), vs=(r&&r.votes)||cache[d.name]||[];
-    cache[d.name]=vs; d.stats={sats:vs.reduce((a,v)=>a+v.sats,0), votes:vs.length}; d.active=vs.reduce((a,v)=>Math.max(a,v.h??TIP+1),0); onTopic(d); } };
+  const todo=DIRECTORY.filter(only); let errors=0, low=Infinity;
+  const worker=async()=>{ for(let d; (d=todo.shift()); ){ const r=await loadVotes(d.name).catch(e=>({votes:[], height:0, error:String(e)}));
+    if(r&&r.error){ errors++; if(!r.height&&!r.votes.length){ onTopic(d); continue; } }
+    dirCount(d,(r&&r.votes)||[]); if(r) low=Math.min(low,r.height||0); onTopic(d); } };
   await Promise.all([worker(),worker(),worker()]);
+  return {errors, low:low===Infinity?0:low};
 }
 // ---------- receipt page: one burn, identified by its txid (receipt.html#<txid>) ----------
 // Data: IndexedDB by txid (one row per topic of the transaction; a ballot has several), else the transaction itself from the explorer, its outputs matched against the directory.
@@ -2027,22 +2411,44 @@ async function dirTopics({onTopic=()=>{},only=()=>true}={}){
 const status=$("status");
 let R=null, ALL=[], seq=0;                                  // R: the burn shown (lowest vout), ALL: every burn of the transaction
 const stmtOf=v=>v.t||"";
+let REGD=false, STAND="";                                    // REGD: this root burn is the topic's registration (its first); STAND: the topic's standing, as of a block
+const PICK=(()=>{ try{ return new URLSearchParams(location.search).get("in"); }catch{ return null; } })();   // receipt.html?in=<topic>#<txid>: that topic's burn of a batch
+// the burn, then the question it answers in words, what the topic makes of it (counted, not counted, pending), and where its take stands now
 function paint(){
-  const v=R, abstain=!stmtOf(v), root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, p=parseScope(tn);   // a root burn sponsors (the first time: registers) the topic its statement names
-  $("rnet").textContent=NET; $("ricon").innerHTML=ICON_TAKE;
-  $("rstmt").textContent= abstain ? "abstain · a burn with no take" : stmtOf(v); $("rstmt").classList.toggle("abstain",abstain);
+  const v=R, root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, p=parseScope(tn), k=tn?kindKey(p):"open", t=stmtOf(v), none=!t&&!root;   // a root burn sponsors (the first time: registers) the topic its statement names
+  const side=(k==="duel"||k==="yes-no")&&!root&&p.opts.includes(norm(t)) ? (p.opts.indexOf(norm(t))===(k==="yes-no"?p.opts.indexOf("yes"):0)?"sa":"sb") : "";
+  $("rnet").textContent=NET; $("ricon").innerHTML=root?(REGD?ICONS.reg:ICONS.feature):ICON_TAKE; $("ricon").className="fi"+(root?(REGD?" reg":" feature"):"");
+  $("rstmt").textContent= root ? (tn?niceQ(tn):"a burn to the root topic") : none ? "No take" : k==="yes-no"&&side ? norm(t).toUpperCase() : shownT(p,t);
+  $("rstmt").className="rstmt"+(none?" abstain":"")+(side?" "+side:"");
+  $("rquest").textContent= root ? (tn?(REGD?"registered":"sponsored"):"") : none ? "this burn backs the topic, not a statement" : niceQ(tn);
   $("rsats").textContent=fmt(v.sats);
-  $("rin").textContent= root&&tn ? "to sponsor" : "in";
-  $("rtopic").textContent= root&&!tn ? "the root topic" : "#"+p.q; $("rtopic").href= root&&!tn ? "explore.html" : "topic.html#"+encodeURIComponent(tn); $("rtopic").title=tn;   // a root burn naming no topic: an ordinary burn to that address
-  if(v.h===null){ $("rblock").innerHTML=`<span class="pend"><i></i>pending</span>`; $("rconf").textContent="in the mempool · not final"; }
-  else { $("rblock").textContent=fmt(v.h); const c=TIP-v.h+1; $("rconf").textContent=`${fmt(c)} confirmation${c===1?"":"s"}`; }
+  $("rin").textContent= root&&tn ? (REGD?"to register":"to sponsor") : "in";
+  $("rtopic").textContent= root&&!tn ? "the root topic" : topicName(tn).replace(/&amp;/g,"&"); $("rtopic").href= root&&!tn ? "explore.html" : "topic.html#"+encodeURIComponent(tn); $("rtopic").title=tn;   // a root burn naming no topic: an ordinary burn to that address
+  $("rkind").textContent= tn&&!root ? " · "+kindWord(p) : "";
+  $("rstatus").textContent= root ? (tn?(REGD?"the topic's first root burn: it is listed in Explore":"a root burn naming the topic: it ranks it higher"):"") : burnStatus(p,v);
+  $("rstatus").className="rstatus"+(/not counted|not in the result/.test($("rstatus").textContent)?" off":"");
+  $("rstand").hidden=!STAND; $("rstand").textContent=STAND;
+  const again=!root&&tn&&!closedAt(p)&&/^counted|^pending/.test(burnStatus(p,v))&&t;   // backing the same take is one tap: the topic page opens its dialog on it
+  $("ragain").hidden=!again; if(again) $("ragain").href=`topic.html?burn=${encodeURIComponent(norm(t))}#${encodeURIComponent(tn)}`;
+  if(v.h===null){ $("rblock").innerHTML=`<span class="pend"><i></i>pending</span>`; $("rconf").textContent=whenOf(v)+" · not final"; }
+  else { $("rblock").textContent=fmt(v.h); const c=TIP>=v.h?TIP-v.h+1:null; $("rconf").textContent=c?`${fmt(c)} confirmation${c===1?"":"s"}`:"confirmed"; }   // a tip below the burn is an old tip: no count from it
   $("rfrom").textContent=v.from||"unknown"; $("rfrom").href=v.from?"burner.html#"+v.from:"#"; $("rfrom").title=v.from||"";
   $("rtxid").textContent=v.txid; $("rexp").href=TXURL(v.txid);
   const others=ALL.filter(x=>x!==v);
   $("ralso").hidden=!others.length;
-  $("ralso").innerHTML= others.length ? `Same transaction, ${others.length} more burn${others.length===1?"":"s"}: `+others.map(x=>`${x.scope?"":"sponsoring "}<a href="topic.html#${encodeURIComponent(x.scope||nameOf(x.t)||"")}">#${esc(parseScope(x.scope||nameOf(x.t)||"").q)}</a> · ${x.t?esc(x.t):"<i>abstain</i>"} · ${fmt(x.sats)} sats`).join(" · ") : "";
-  document.title=(abstain?"abstain":stmtOf(v))+" · receipt · Burning Take";
+  $("ralso").innerHTML= others.length ? `Same transaction, ${others.length} more burn${others.length===1?"":"s"}: `+others.map(x=>`${x.scope?"":"sponsoring "}<a href="topic.html#${encodeURIComponent(x.scope||nameOf(x.t)||"")}">#${esc(parseScope(x.scope||nameOf(x.t)||"").q)}</a> · ${x.t?esc(shownT(parseScope(x.scope||""),x.t)):"<i>no take</i>"} · ${fmt(x.sats)} sats`).join(" · ") : "";
+  document.title=(root?(tn?niceQ(tn):"root burn"):none?"no take":$("rstmt").textContent)+" · receipt · Burning Take";
   $("rcard").hidden=false; $("runknown").hidden=true; $("rpreview").hidden=true;
+}
+// where the burn's take stands now: one read of its topic (IndexedDB first; a fresh browser scans the topic once), as of the block read; nothing on a failed read
+async function standing(my){
+  const v=R; if(!v||v.scope===""||!v.scope) return; const p=parseScope(v.scope), k=kindKey(p), r=await loadVotes(v.scope).catch(()=>null); if(my!==seq||!r||r.error&&!r.votes.length) return;
+  const T=tallyOf(v.scope,r.votes), tot=T.shareSats, key=(()=>{ const x=numOf(v.t); return p.range&&Number.isFinite(x)?"n:"+x:norm(v.t); })(), i=T.answers.findIndex(a=>a.key===key), row=T.answers[i], at=` · as of block ${fmt(r.height)}`, pc=s=>Math.round(s/tot*100)+"%";
+  if(!tot||i<0&&k!=="number"){ STAND=""; return; }
+  if(k==="duel"||k==="yes-no"){ const L=o=>k==="yes-no"?o.toUpperCase():o, s=o=>(T.answers.find(a=>a.key===o)||{sats:0}).sats; STAND=`on the ${L(key)} side · ${p.opts.map(o=>`${L(o)} ${pc(s(o))}`).join(" · ")}${at}`; }
+  else if(k==="number"){ const m=weightedMedian(T.answers), x=numOf(v.t); STAND=`estimate ${numU(m,p)}${Number.isFinite(x)&&m?` · this answer is ${x===m?"right on it":`${Math.round(Math.abs(x-m)/Math.abs(m)*100)}% ${x>m?"above":"below"}`}`:""}${at}`; }
+  else STAND=`${k==="open"?`“${row.t}”`:row.t} is ${String(i+1).padStart(2,"0")} of ${T.answers.length} ${k==="open"?"takes":"options"} in ${topicName(v.scope).replace(/&amp;/g,"&")} · ${fmt(row.sats)} sats · ${pc(row.sats)}${at}`;
+  paint();
 }
 function unknown(txid, why){                               // why: "bad" (not a txid) | "missing" (no such transaction) | "other" (it burns in no topic this page can name) | "offline"
   const T={bad:["That is not a transaction id","A receipt link ends with the 64 hex characters of a transaction id: receipt.html#<txid>."],
@@ -2054,65 +2460,60 @@ function unknown(txid, why){                               // why: "bad" (not a 
   $("rfind").hidden=why!=="other"; $("rretryp").hidden=why!=="offline"; $("runkexpp").hidden=why==="bad"; if(why!=="bad") $("runkexp").href=TXURL(txid);
   document.title="Receipt · Burning Take";
 }
+async function txRows(tx){                                  // a transaction's burns in every topic this page can name
+  await dirLoad();
+  const topics=new Map([[await topicAddr(""),""]]);
+  for(const n of new Set([...DIRECTORY.map(d=>d.name), ...((await DB.scopes())||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
+  return txBurns(tx,topics).map(v=>cleanVote({...v, scope:v.name})).filter(Boolean);
+}
 async function load(){
   const txid=hashText().trim().toLowerCase(), my=++seq;
   R=null; ALL=[];
   if(!/^[0-9a-f]{64}$/.test(txid)){ status.innerHTML=""; unknown(txid,"bad"); return; }
-  status.innerHTML=`<span class="spin"></span> looking up ${txid.slice(0,10)}…`;
-  let rows=(await DB.byTx(txid))||[]; if(my!==seq) return;
+  status.innerHTML=syncLine({state:"loading"});
+  let rows=((await DB.byTx(txid))||[]).map(v=>v.h===null?{...v, unver:true}:v); if(my!==seq) return;   // unconfirmed rows from disk are not verified yet
+  let failed=false;
   if(!rows.length){                                        // not in this browser: the transaction from the explorer, its outputs matched against every topic this page can name
     let tx;
     try{ tx=await chainGet(`/tx/${txid}`); }catch(e){ if(my!==seq) return; status.innerHTML=""; unknown(txid, e&&(e.status===404||e.status===400)?"missing":"offline"); return; }
-    await dirLoad(); if(my!==seq) return;
-    const topics=new Map([[await topicAddr(""),""]]);
-    for(const n of new Set([...DIRECTORY.map(d=>d.name), ...((await DB.scopes())||[]).map(s=>s.name).filter(Boolean)])) topics.set(await topicAddr(n), n);
-    rows=txBurns(tx,topics).map(v=>cleanVote({...v, scope:v.name})).filter(Boolean);
+    rows=await txRows(tx); if(my!==seq) return;
+  } else if(rows.some(v=>v.h===null)){                     // pending on disk: shown at once, then asked again. The answer is never saved: a confirmed row written outside a full scan would hide older burns (loader.js stopTx)
+    rows.sort((a,b)=>(a.vout??0)-(b.vout??0)); ALL=rows; R=rows.find(r=>r.scope===PICK)||rows[0]; paint(); status.innerHTML=syncLine({state:"loading"});
+    try{ const fresh=await txRows(await chainGet(`/tx/${txid}`)); if(my!==seq) return; if(fresh.length) rows=fresh; }
+    catch(e){ if(my!==seq) return; failed=!(e&&e.status===404); }   // 404: the explorer does not list it (yet): the saved row stays, with its age
   }
   if(my!==seq) return;
   if(!rows.length){ status.innerHTML=""; unknown(txid,"other"); return; }
-  rows.sort((a,b)=>(a.vout??0)-(b.vout??0)); ALL=rows; R=rows[0]; paint();
-  status.innerHTML=`<span class="dot"></span> found · block ${fmt(TIP)}`;
+  rows.sort((a,b)=>(a.vout??0)-(b.vout??0)); ALL=rows; R=rows.find(r=>r.scope===PICK)||rows[0]; STAND=""; REGD=false; paint();
+  if(R.scope===""){ await dirLoad(); if(my!==seq) return; REGD=rootBurns().some(x=>x.txid===R.txid&&x.reg); }   // a root burn: the topic's registration, or a sponsorship after it
+  await tipFresh(); if(my!==seq) return; paint();                 // confirmations from the tip read on this visit
+  standing(my);
+  status.innerHTML=syncLine({state:failed||TIPERR?"failed":"fresh", height:TIP});
 }
 addEventListener("hashchange",load); load();
-$("rretry").onclick=()=>load();
+$("rretry").onclick=()=>{ chainReset(); load(); };
+status.addEventListener("click",e=>{ if(e.target.closest("[data-retry]")){ chainReset(); load(); } });   // the tip did not answer: another try
 $("rgo").onclick=()=>{ const v=$("rq").value.trim(); if(v) location.href="topic.html#"+encodeURIComponent(canonical(parseScope(v.toLowerCase()))); };
 $("rq").onkeydown=e=>{ if(e.key==="Enter") $("rgo").click(); };
 $("rcopytx").onclick=()=>copyText(R.txid,$("rcopytx"));
 $("rshare").onclick=()=>{ copyText(location.href,$("rshare")); toast("Link copied"); };
 
-// ---------- share image: the card drawn on a 1200×630 canvas (the size link previews use), ember theme ----------
-function wrapLines(x,text,max){ const out=[]; let line=""; for(const w of text.split(/\s+/)){ const t=line?line+" "+w:w; if(x.measureText(t).width>max&&line){ out.push(line); line=w; } else line=t; } if(line) out.push(line); return out; }
-function rr(x,X,Y,W,H,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+W,Y,X+W,Y+H,r); x.arcTo(X+W,Y+H,X,Y+H,r); x.arcTo(X,Y+H,X,Y,r); x.arcTo(X,Y,X+W,Y,r); x.closePath(); }
-async function drawCard(){
-  const c=document.createElement("canvas"); c.width=1200; c.height=630; const x=c.getContext("2d");
-  try{ await Promise.all(['600 56px "Unbounded"','400 26px "Instrument Sans"','400 20px "JetBrains Mono"'].map(f=>document.fonts.load(f))); }catch{}
-  const D='"Unbounded",system-ui,sans-serif', B='"Instrument Sans",system-ui,sans-serif', M='"JetBrains Mono",ui-monospace,Menlo,monospace';
-  x.fillStyle="#0b0a0e"; x.fillRect(0,0,1200,630);
-  let g=x.createRadialGradient(1040,60,0,1040,60,720); g.addColorStop(0,"rgba(255,106,26,.30)"); g.addColorStop(1,"rgba(255,106,26,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
-  g=x.createRadialGradient(120,640,0,120,640,520); g.addColorStop(0,"rgba(255,181,71,.14)"); g.addColorStop(1,"rgba(255,181,71,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
-  rr(x,40,40,1120,550,30); x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=2; x.stroke();
-  g=x.createRadialGradient(92,98,2,96,102,20); g.addColorStop(0,"#ffb547"); g.addColorStop(.6,"#ff6a1a"); g.addColorStop(1,"#7a2200"); x.fillStyle=g; x.shadowColor="rgba(255,106,26,.7)"; x.shadowBlur=26; x.beginPath(); x.arc(96,102,18,0,6.29); x.fill(); x.shadowBlur=0;
-  x.fillStyle="#f3efe9"; x.font=`600 24px ${D}`; x.textBaseline="middle"; x.fillText("Burning Take",128,102);
-  x.fillStyle="#ffb547"; x.font=`500 18px ${M}`; x.textAlign="right"; try{ x.letterSpacing="3px"; }catch{} x.fillText(`RECEIPT · ${NET.toUpperCase()}`,1104,102); try{ x.letterSpacing="0px"; }catch{} x.textAlign="left";
-  const v=R, text= stmtOf(v) ? "“"+stmtOf(v)+"”" : "abstain";
-  let size=64, lines; for(const s of [64,54,44,36,30]){ size=s; x.font=`600 ${s}px ${D}`; lines=wrapLines(x,text,1000); if(lines.length<=(s>=54?3:4)) break; }
-  x.fillStyle=stmtOf(v)?"#f3efe9":"#8a8177"; x.textBaseline="alphabetic";
-  let y=196+size; for(const l of lines.slice(0,4)){ x.fillText(l,96,y); y+=size*1.18; }
-  y+=18; x.font=`400 28px ${B}`; x.fillStyle="#a89f95"; const pre="burned "; x.fillText(pre,96,y); let dx=96+x.measureText(pre).width;
-  x.font=`600 30px ${D}`; x.fillStyle="#ffb547"; const n=fmt(v.sats)+" sats"; x.fillText(n,dx,y); dx+=x.measureText(n).width;
-  x.font=`400 28px ${B}`; x.fillStyle="#a89f95"; x.fillText(" in ",dx,y); dx+=x.measureText(" in ").width;
-  x.fillStyle="#f3efe9"; x.font=`500 28px ${B}`; x.fillText("#"+parseScope(v.scope||nameOf(v.t)||"").q,dx,y);
-  y+=46; x.font=`400 20px ${M}`; x.fillStyle="#8a8177";
-  x.fillText(v.h===null ? "pending in the mempool" : `block ${fmt(v.h)} · ${fmt(TIP-v.h+1)} confirmation${TIP-v.h===0?"":"s"} · burned for good`,96,y);
-  x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);
-  x.font=`400 18px ${M}`; x.fillStyle="#8a8177"; x.fillText(location.href.replace(/^https?:\/\//,"").slice(0,70),96,566);
-  x.textAlign="right"; x.fillText(v.txid.slice(0,12)+"…"+v.txid.slice(-8),1104,566); x.textAlign="left";
-  return c;
-}
+// ---------- share image: the receipt on a card (shared.js drawCard); "I said" only on this browser's own burn ----------
+const receiptCard=()=>drawCard("RECEIPT", x=>{
+  const v=R, root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, mine=WALLET&&v.from===WALLET.addr, head=$("rstmt").textContent, text=root?head:!stmtOf(v)?"no take":mine?`I said ${/^[A-Z]+$/.test(head)?head:"“"+head+"”"}`:(/^[A-Z]+$/.test(head)?head:"“"+head+"”");
+  let size=64, lines; for(const s of [64,54,44,36,30]){ size=s; x.font=`600 ${s}px ${CF.D}`; lines=wrapLines(x,text,1000); if(lines.length<=(s>=54?2:3)) break; }
+  x.fillStyle=stmtOf(v)||root?"#f3efe9":"#8a8177"; let y=180+size; for(const l of lines.slice(0,3)){ x.fillText(l,96,y); y+=size*1.15; }
+  y+=12; x.font=`400 28px ${CF.B}`; x.fillStyle="#a89f95"; const pre=`burned `; x.fillText(pre,96,y); let dx=96+x.measureText(pre).width;
+  x.font=`600 30px ${CF.D}`; x.fillStyle="#ffb547"; const n=fmt(v.sats)+" sats"; x.fillText(n,dx,y); dx+=x.measureText(n).width;
+  x.font=`400 28px ${CF.B}`; x.fillStyle="#a89f95"; const inw=root?(REGD?" to register ":" to sponsor "):" in "; x.fillText(inw,dx,y); dx+=x.measureText(inw).width;
+  x.fillStyle="#f3efe9"; x.font=`500 28px ${CF.B}`; x.fillText(tn?niceQ(tn):"the root topic",dx,y);
+  y+=44; x.font=`400 20px ${CF.M}`; x.fillStyle="#8a8177";
+  x.fillText((STAND||(v.h===null?"pending in the mempool":`block ${fmt(v.h)}`)).slice(0,90),96,y);
+}, R.txid.slice(0,12)+"…"+R.txid.slice(-8));
 $("rimg").onclick=async()=>{
   if(!R) return; const b=$("rimg"); b.disabled=true;
   try{
-    const c=await drawCard(), stem="burning-take-receipt-"+R.txid.slice(0,12)+".png";
+    const c=await receiptCard(), stem="burning-take-receipt-"+R.txid.slice(0,12)+".png";
     const blob=await new Promise((res,rej)=>c.toBlob(x=>x?res(x):rej(new Error("no blob")),"image/png"));
     const url=URL.createObjectURL(blob);
     $("rpng").src=c.toDataURL("image/png"); $("rpnglink").href=url; $("rpreview").hidden=false;   // the preview is the fallback: long-press / right-click to save; the link opens the same PNG in a tab

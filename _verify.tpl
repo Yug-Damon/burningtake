@@ -104,7 +104,7 @@ console.table(Object.entries(tally).sort((a, b) =&gt; b[1] - a[1]));</code></pre
   </div>
 </main>
 
-<footer><div class="wrap"><span>Burning Take · <a href="spec.html">protocol spec</a> · <a href="node.html">node</a> · <a href="index.html">app</a></span><span class="mono">everything above works with any full node</span></div></footer>
+<footer><div class="wrap"><span>Burning Take · <a href="spec.html">protocol spec</a> · <a href="node.html">node</a> · <a href="index.html">app</a> · made by Yug Damon</span><span class="mono">everything above works with any full node</span></div></footer>
 
 <script>
 const $=id=>document.getElementById(id), enc=new TextEncoder();

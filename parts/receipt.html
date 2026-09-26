@@ -9,14 +9,17 @@
   <div class="rcard" id="rcard" hidden>
     <div class="rtop"><span class="rkind"><span class="fi" id="ricon" aria-hidden="true"></span><span class="eyebrow">Receipt<span class="more"> · one burn on the bitcoin ledger</span></span></span><span class="badge" id="rnet">mainnet</span></div>
     <p class="rstmt" id="rstmt">…</p>
-    <p class="rline">burned <b id="rsats">…</b> sats <span id="rin">in</span> <a id="rtopic" href="topic.html">#…</a></p>
+    <p class="rq" id="rquest"></p>
+    <p class="rline">burned <b id="rsats">…</b> sats <span id="rin">in</span> <a id="rtopic" href="topic.html">#…</a><span id="rkind"></span></p>
+    <p class="rstatus" id="rstatus"></p>
+    <p class="rstand" id="rstand" hidden></p>
     <div class="rgrid">
       <div><span class="k">Block</span><b id="rblock">…</b><small id="rconf"></small></div>
       <div><span class="k">Burner<span class="more"> · first input</span></span><a class="mono" id="rfrom" href="burner.html">…</a><small>every burn from this address</small></div>
       <div><span class="k">Transaction</span><code id="rtxid">…</code><span class="qrow"><button type="button" class="copy" id="rcopytx">copy</button><a class="copy" id="rexp" target="_blank" rel="noopener">explorer ↗</a></span></div>
     </div>
     <p class="ralso" id="ralso" hidden></p>
-    <div class="ractions"><a class="btn sm" href="verify.html#tally">Verify this burn</a><button type="button" class="btn sm" id="rshare">Copy link</button><button type="button" class="btn sm primary" id="rimg">Save as image</button></div>
+    <div class="ractions"><a class="btn sm primary" id="ragain" hidden>Burn for it too</a><a class="btn sm" href="verify.html#tally">Verify this burn</a><button type="button" class="btn sm" id="rshare">Copy link</button><button type="button" class="btn sm" id="rimg">Save as image</button></div>
     <div class="rpreview" id="rpreview" hidden><img id="rpng" alt="The receipt as an image, 1200 by 630"><p class="note">If no download started (some hosts block them), <a id="rpnglink" target="_blank" rel="noopener" style="color:var(--ember2)">open the PNG in a new tab</a> and save it from there.</p></div>
   </div>
   <div class="empty" id="runknown" hidden>

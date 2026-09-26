@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- the link preview image (og:image): rendered to og.png with `rsvg-convert og.svg -o og.png` -->
+  <defs>
+    <radialGradient id="g1" cx="1040" cy="60" r="720" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff6a1a" stop-opacity=".30"/><stop offset="1" stop-color="#ff6a1a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="g2" cx="120" cy="640" r="520" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb547" stop-opacity=".14"/><stop offset="1" stop-color="#ffb547" stop-opacity="0"/></radialGradient>
+    <radialGradient id="dot" cx="92" cy="98" r="20" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb547"/><stop offset=".6" stop-color="#ff6a1a"/><stop offset="1" stop-color="#7a2200"/></radialGradient>
+    <linearGradient id="em" x1="96" y1="0" x2="620" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff6a1a"/></linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0b0a0e"/>
+  <rect width="1200" height="630" fill="url(#g1)"/>
+  <rect width="1200" height="630" fill="url(#g2)"/>
+  <rect x="40" y="40" width="1120" height="550" rx="30" fill="none" stroke="#ffffff" stroke-opacity=".14" stroke-width="2"/>
+  <circle cx="96" cy="102" r="18" fill="url(#dot)"/>
+  <text x="128" y="111" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="700" font-size="25" fill="#f3efe9">Burning Take</text>
+  <text x="1104" y="109" text-anchor="end" font-family="Menlo, monospace" font-size="17" letter-spacing="3" fill="#ffb547">TAKES · YES-NO · DUELS · POLLS · NUMBERS</text>
+  <text x="96" y="272" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="92" letter-spacing="-2" fill="#f3efe9">Say it like you</text>
+  <text x="96" y="372" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="92" letter-spacing="-2" fill="url(#em)">mean it.</text>
+  <text x="96" y="440" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="30" fill="#a89f95">Put your sats where your take is. Every take is a Bitcoin burn,</text>
+  <text x="96" y="482" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="30" fill="#a89f95">and anyone can count them.</text>
+  <line x1="96" y1="536" x2="1104" y2="536" stroke="#ffffff" stroke-opacity=".12" stroke-dasharray="3 6"/>
+  <text x="96" y="572" font-family="Menlo, monospace" font-size="18" fill="#8a8177">burningtake.com</text>
+  <text x="1104" y="572" text-anchor="end" font-family="Menlo, monospace" font-size="18" fill="#8a8177">burned for good on bitcoin · recount it yourself</text>
+</svg>

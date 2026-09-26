@@ -130,12 +130,14 @@ async function decryptSecret(blob,pass){                         // -> Promise<s
 const WALLET_ESPLORA={mainnet:"", signet:"signet/", testnet:"testnet/", testnet4:"testnet4/"};
 const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : (typeof LIVE_BASE==="string"&&LIVE_BASE&&typeof NET==="string"&&network===NET) ? LIVE_BASE : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
 async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure
-  try{
-    const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}});
-    if(!r.ok) return null;
-    const j=await r.json();
-    return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
-  }catch{ return null; }
+  for(let i=0;i<2;i++){                                             // 6 s each, a second try: a stale connection often answers the next time
+    try{
+      const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
+      if(!r.ok) return null;
+      const j=await r.json();
+      return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
+    }catch{ if(i) return null; }
+  }
 }
 async function broadcastTx(hex,network="mainnet"){               // -> {txid} | {error}
   try{

@@ -18,13 +18,15 @@
             <button type="button" role="menuitem" id="expcopy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>Copy JSON</button>
             <hr role="separator">
             <button type="button" role="menuitem" id="embedbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6"/></svg>Embed on a page…</button>
+            <button type="button" role="menuitem" id="shareimg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share as image<span class="more"> · the result as it stands</span></button>
           </div></span>
       </div>
     </div>
     <div class="thead-main one">
       <div class="thead-txt">
         <span class="eyebrow"><span id="hkind">open</span></span>
-        <div class="titlerow"><h2 id="boardtitle">Hottest takes on #general</h2><button type="button" class="btn sm icon" id="copylink" aria-label="Copy link to this topic" title="Copy link to this topic"><svg class="g-link" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><svg class="g-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button></div>
+        <div class="titlerow"><h2 id="boardtitle">general</h2><button type="button" class="btn sm icon" id="copylink" aria-label="Copy link to this topic" title="Copy link to this topic"><svg class="g-link" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><svg class="g-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></button></div>
+        <code class="slug" id="boardslug" title="The topic's name: its address comes from it"></code>
         <div class="tactions" id="tactions">
           <button type="button" class="btn sm" id="featurebtn" title="Sponsor this topic: burn to the root topic with its name">✦ Sponsor</button>
         </div>
@@ -35,49 +37,69 @@
           <span class="badge" id="hmin" hidden></span>
           <span class="badge" id="hreg" hidden>not registered · not in Explore</span>
         </div>
+        <div class="tleft" id="tleft" hidden title="Time left before the deadline"><i></i></div>
+        <p class="hrule" id="hrule" hidden></p>
+        <p class="twins" id="twins" hidden></p>
       </div>
     </div>
   </div>
+  <div class="hclosed" id="hclosed" hidden></div>
+  <p class="sincebar" id="sincebar" hidden></p>
   <div class="standings" id="standings">
     <div class="stand-head">
       <span class="stand-sum" id="standsum"></span>
+      <button type="button" class="standchip" id="standchip" hidden></button>
+      <span class="stand-segs">
+        <div class="seg" role="group" aria-label="Order" id="sortseg" hidden><button aria-pressed="true" data-sort="top">Top</button><button aria-pressed="false" data-sort="new">New</button></div>
+        <div class="seg" role="group" aria-label="Order the answers" id="numseg" hidden><button aria-pressed="true" data-by="sats">By sats</button><button aria-pressed="false" data-by="value">By value</button></div>
         <div class="seg" role="group" aria-label="Time window" id="tseg">
           <button aria-pressed="true" data-win="all"><span class="more">All time</span><span class="less">All</span></button>
           <button aria-pressed="false" data-win="month"><span class="more">This month</span><span class="less">Month</span></button>
           <button aria-pressed="false" data-win="week"><span class="more">This week</span><span class="less">Week</span></button>
           <button aria-pressed="false" data-win="today">Today</button>
         </div>
+      </span>
     </div>
+    <p class="standhint" id="standhint" hidden>Burn for a take to push it up, or write your own. Same words add up; sats rank takes.</p>
   </div>
-  <div class="searchrow" id="qrow"><input class="search" id="q" placeholder="Search takes on this topic…" aria-label="Search takes"><button type="button" class="btn primary" id="burnbtn">+ New take</button></div>
-  <div id="numtop" hidden></div>
+  <div class="hero" id="hero" hidden></div>
+  <div class="searchrow" id="qrow"><input class="search" id="q" placeholder="Search the takes, or write yours…" aria-label="Search the takes, or write yours"><button type="button" class="btn primary" id="burnbtn">+ New take</button></div>
   <div class="board" id="list"></div>
   <div class="burners" id="burners" hidden></div>
+  <div class="mbar" id="mbar" hidden></div>
 </div></section>
 
 <dialog id="votedlg"><div class="panel dlg" id="vote">
       <h3><span id="votehead">Burn your take</span> <button class="copy" data-close="votedlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
       <p class="note" style="margin-top:4px;color:var(--ink2)" id="votesub"></p>
+      <p class="note" id="closednote" hidden style="color:#ff8c5c">This question is closed. A burn now shows in the late bucket and does not count.</p>
 
 
       <!-- 1 · Your take -->
       <section class="wstep" id="vstep-1">
       <div class="field" id="optfield" hidden>
-        <label><span id="optlabel">Answer</span><span class="mono" id="opthint">pick one</span></label>
+        <label><span id="optlabel">Answer</span><span class="mono" id="opthint"></span></label>
         <div class="choice" id="opts" role="group" aria-labelledby="optlabel"></div>
         <p class="note" style="margin-top:8px"><button type="button" class="linkbtn" id="otherans">Answer something else…</button></p>
       </div>
       <div class="field" id="numfield" hidden>
-        <label for="num"><span>Your number</span><span class="mono" id="numhint"></span></label>
-        <div class="numpick"><output id="numbig" for="numrange num" aria-live="polite">…</output><input id="num" class="mono" type="number" step="any" aria-label="Your number" aria-describedby="numhint"></div>
-        <input id="numrange" type="range" aria-label="Your number, slider">
+        <label for="num"><span>Your answer</span><span class="mono" id="numhint"></span></label>
+        <div class="numpick"><output id="numbig" for="numrange num" aria-live="polite">—</output><input id="num" class="mono" type="number" step="any" aria-label="Your answer" aria-describedby="numhint"></div>
+        <div class="numbins" id="numbins" aria-hidden="true" hidden></div>
+        <input id="numrange" type="range" aria-label="Your answer, slider">
+        <div class="quick" id="numquick"></div>
       </div>
-      <p class="note" id="closednote" hidden style="color:#ff8c5c">This question is closed. You can still burn, it will show in the late bucket and not count.</p>
       <div class="field" id="stmtfield">
-        <label for="stmt"><span><span id="stmtlabel">Your take</span><button type="button" class="linkbtn" id="unlock" hidden>change</button></span><span id="byteshint"><span id="bytes" class="bytes mono">0</span> / 80 bytes</span></label>
-        <input id="stmt" value="Pizza is better than pasta" maxlength="120" autocomplete="off" placeholder="Say it in 80 bytes" aria-describedby="byteshint">
+        <label for="stmt"><span><span id="stmtlabel">Your take</span><button type="button" class="linkbtn" id="unlock" hidden>change</button></span><span class="mono" id="byteshint">80 bytes left</span></label>
+        <textarea id="stmt" rows="2" autocomplete="off" placeholder="Say it in 80 bytes" aria-describedby="byteshint"></textarea>
+        <span class="meter" id="bmeter" aria-hidden="true"><i></i></span>
+        <p class="note" id="permnote" hidden>Public and permanent: anyone can read this take, and the address that paid for it, forever.</p>
       </div>
+      <p class="note" id="othernote" hidden></p>
       </section>
+      <div class="veffect" id="veffect" aria-live="polite"></div>
+      <label class="check" id="vregf" hidden><input type="checkbox" id="vreg"> <span>Also register it so it shows in Explore · +330 sats, same transaction</span></label>
+      <p class="note" id="vregnote" hidden>This take and the topic's name don't fit one 80-byte OP_RETURN together: register it separately.</p>
 
       <!-- 2 · Amount -->
       <section class="wstep" id="vstep-2" hidden>
@@ -91,12 +113,14 @@
             <button type="button" data-sats="custom" aria-pressed="false">Custom</button>
           </div>
           <input id="amt" class="mono" type="number" min="330" step="1" value="330" aria-label="Burn amount in sats" hidden>
+          <p class="note" id="leadnote" hidden></p>
         </div>
         <div class="field" id="vtipf">
           <label for="tip"><span>Tip the project</span><span class="mono" id="tipusd"></span></label>
           <div class="seg amtseg" role="group" aria-label="Tip presets" id="vtipseg"><button type="button" data-sats="0" aria-pressed="true">No tip</button><button type="button" data-sats="330" aria-pressed="false">330</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
           <input id="tip" class="mono" type="number" min="0" step="1" value="0" aria-label="Tip in sats" hidden>
         </div>
+        <p class="note" id="minnote" hidden></p>
         <details class="tech" id="vfeeadv"><summary id="vfeesum">Advanced · mining fee</summary><div id="vfeehost"></div></details>
       </section>
 
@@ -116,8 +140,10 @@
           <p class="note" id="vpay-tipnote" hidden>Tip left out: the project tip address is not set yet.</p>
         </div>
       </div>
+      <div class="vafter" id="vafter" hidden></div>
       </section>
 
+      <div class="note batchnote" id="vbatchnote" hidden></div>
       <div class="dlgfoot" id="vfoot">
         <span class="dlgprice" id="vprice"></span>
         <span style="flex:1"></span>
@@ -129,7 +155,8 @@
 <dialog id="embeddlg" aria-labelledby="em-title"><div class="panel dlg">
   <h3><span id="em-title">Embed this topic</span> <button class="copy" data-close="embeddlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
   <p class="note wintro">A live card of this board for any page: the leader, the totals and a link back here. It reads the chain the way this page does, nothing is served from us.</p>
-  <div class="pay" style="margin-top:12px"><div class="tabbox"><div class="body" style="border-top:0;padding-top:0"><span class="k">Snippet</span><pre id="em-code">…</pre><button type="button" class="copy" id="em-copy">copy</button></div></div></div>
+  <div class="pay" style="margin-top:12px"><div class="tabbox"><div class="body" style="border-top:0;padding-top:0"><span class="k">Snippet</span><pre id="em-code">…</pre><button type="button" class="copy" id="em-copy">copy</button></div>
+    <div class="body"><span class="k">With automatic height · where the page allows a script</span><pre id="em-code2">…</pre><button type="button" class="copy" id="em-copy3">copy</button></div></div></div>
   <div class="dlgfoot"><button type="button" class="btn" data-close="embeddlg">Close</button><span style="flex:1"></span><button type="button" class="btn primary" id="em-copy2">Copy snippet</button></div>
 </div></dialog>
 

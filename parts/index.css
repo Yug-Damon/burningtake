@@ -38,3 +38,12 @@
 #chips .btn{gap:8px;padding-left:6px}   /* hero chips: a small icon badge (a flame most burned, ✦ sponsored, a clock the latest burn), then the name */
 .hero .sub{text-wrap:balance}   /* "Put your sats where your take is." never leaves one word alone */
 .chipghost{pointer-events:none}.chipghost .fi{background:rgba(255,255,255,.06)}   /* a chip's place while the directory loads */
+/* five ways to ask: one card per kind, its most-burned topic and where it stands */
+#kinds{padding-block:0 64px}   /* after How it works, before Don't trust, verify */
+.kcards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.kcard{display:grid;gap:6px;align-content:start;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel);transition:.15s;min-width:0}
+.kcard:hover{border-color:rgba(255,181,71,.35)}.kcard b{font-family:var(--font-d);font-weight:600;font-size:15px;line-height:1.25}
+.kcard .kn{font-family:var(--font-m);font-size:12px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kcard .kc{font-size:13px;color:var(--ember2)}.kcard .viz{width:100%;margin-top:4px}
+.kcard.empty{border-style:dashed}.kcard.ghost{pointer-events:none;min-height:120px}
+@media (max-width:860px){.kcards{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.kcards{grid-template-columns:1fr}}

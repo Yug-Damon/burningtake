@@ -24,7 +24,7 @@
 .fcard .lead .row3.num i{display:none}.fcard .lead .row3.num{grid-template-columns:1fr auto}
 .fcard .nt{font-family:var(--font-m);font-size:11px;color:var(--ink3);letter-spacing:.04em}
 .fcard .ktype{font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
-.fcard .lead .row3.lt{grid-template-columns:minmax(0,1fr) auto}.fcard.ghost{pointer-events:none}
+.fcard.ghost{pointer-events:none}
 .fcard .fhead{display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-areas:"i k" "i n";column-gap:10px;row-gap:1px;align-items:center;min-width:0}.fcard .fhead>.fi{grid-area:i}.fcard .ktype{grid-area:k}
 .fcard .name{grid-area:n;display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.25}   /* the badge, then the eyebrow over the name, both on its right */
 /* a name nobody registered: a one-line offer under the matches, or a panel when nothing matches */
@@ -46,19 +46,34 @@
 .cols2 .col>div>.divider:first-child,.cols2 .col>div>.burnercol>.divider:first-child{margin-top:0}
 @media (max-width:860px){
   .cols2{grid-template-columns:minmax(0,1fr);gap:24px}.cols2>.col{display:contents}
-  #hotcol{order:1}#featcol{order:2}#scoperows{order:3}#recentcol{order:4}#topburners{order:5}
+  #hotcol{order:1}#scoperows{order:2}#closingcol{order:3}#recentcol{order:4}#featcol{order:5}#topburners{order:6}   /* phones: the organic lists first, paid placement after */
 }
 /* HOTTEST TAKES: one row per topic, led by the take badge; a small bar says where the take stands, drawn for the topic's kind:
    its share (open), the split (duel), every option (poll), its place in the range (number) */
 .hk .lbt .vs{color:var(--ink3)}
 .hk .hv{display:flex;align-items:center;gap:8px;justify-self:end;font-size:11px;color:var(--ink3);white-space:nowrap;font-variant-numeric:tabular-nums}
-.viz{position:relative;display:flex;gap:2px;width:96px;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.07)}
-.viz i{min-width:3px;background:linear-gradient(90deg,var(--ember),var(--ember2))}
-.viz i.b{background:#3b4a60}   /* the other sides, in the duel card's second color */
-.viz.num{height:2px;margin-block:2px;overflow:visible;background:rgba(255,255,255,.2)}
-.viz.num::before,.viz.num::after{content:"";position:absolute;top:-3px;width:1px;height:8px;background:rgba(255,255,255,.3)}.viz.num::before{left:0}.viz.num::after{right:0}
-.viz.num i{position:absolute;top:50%;width:9px;height:9px;min-width:0;border-radius:50%;transform:translate(-50%,-50%);background:var(--ember2);box-shadow:0 0 6px var(--ember)}
 @media (max-width:480px){.viz{width:64px}}
 .burnercol>.striphead{margin-bottom:4px;flex-wrap:wrap;row-gap:0}.burnercol>.striphead .divider{white-space:nowrap}@media (min-width:481px){.burnercol>.striphead .hint{padding:0}}   /* a list heading with its link, as tall as a plain heading; the link drops under it when the line is too short */
 @media (min-width:861px) and (max-width:1100px){.fcard{padding:14px}.fcard .name{font-size:15px}.fcard .big{font-size:18px}}   /* three narrow cards: a smaller number, just "sats" under it */
 .fcard .big small{display:inline;margin:0 0 0 5px}.fcard .big .per{display:block;margin-top:4px;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);letter-spacing:.06em;text-transform:uppercase}   /* the amount and its unit on one line, the window under them */
+
+/* browse by kind, the lists' extra lines, the hide link */
+.kindchips{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 14px}.kindchips button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 12px;font:500 12px var(--font-b);color:var(--ink2);cursor:pointer}
+.kindchips button[aria-pressed="true"]{color:var(--ember2);border-color:rgba(255,181,71,.45);background:var(--ember-dim)}.kindchips button:hover{color:var(--ink)}
+@media (max-width:480px){.kindchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.kindchips button{flex:none;min-height:40px}}
+.fcard .lead .row3.duo{grid-template-columns:auto 1fr auto;gap:8px}.fcard .row3.duo b.a{color:var(--ember2)}.fcard .row3.duo b.b{color:var(--side-b2)}.fcard .row3.duo .viz{width:100%}
+.fcard .lead>.viz.race{width:100%;margin-bottom:4px}
+.hid{color:var(--ink3);font-style:italic}
+.hidex{margin-left:8px;border:0;background:none;padding:0;font:inherit;font-size:11px;color:var(--ink3);text-decoration:underline dotted;cursor:pointer}.hidex:hover{color:var(--ink)}
+.tl2{color:var(--ink3);font-weight:400}
+#closingcol{display:grid;gap:28px}#closingcol:empty{display:none}#closingcol .go{color:var(--ember2)}
+/* New topic: five kind chips, each with its Hottest takes glyph; the kind's own fields under them */
+.kchips{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.kchips button{display:grid;justify-items:center;gap:6px;padding:10px 6px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink2);font:500 12.5px var(--font-b);cursor:pointer;min-height:44px}
+.kchips button .viz{width:44px}.kchips button[aria-pressed="true"]{color:var(--ink);border-color:rgba(255,181,71,.55);background:var(--ember-dim)}.kchips button:hover{color:var(--ink)}
+@media (max-width:480px){.kchips{grid-template-columns:repeat(6,1fr)}.kchips button{grid-column:span 2}.kchips button:nth-child(n+4){grid-column:span 3}}   /* phones: 3 + 2 */
+.pollopts{display:grid;gap:6px}.pollopts input{width:100%}
+#sqnumf .seg{flex-wrap:wrap}
+.twinnote{color:var(--ember2)}.twinnote .linkbtn{font-size:12px}
+.sqdone{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}.sqdone p{margin:0;font-size:13px;color:var(--ink2)}.sqdone .acts{display:flex;gap:8px;flex-wrap:wrap}
+.tipx{margin-left:4px;padding:0 4px;font-size:11px}

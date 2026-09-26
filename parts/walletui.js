@@ -3,7 +3,7 @@
 // ponytail: one BIP84 key, stored in localStorage (encrypted when a passphrase is set). Coins here are meant to be burned.
 // Or a Ledger (ledger.js): {kind:"ledger", net, addr, xpub, fp} — the first receive address of account 0, keys on the device, every burn signed there.
 let WALLET=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.wallet"))||"null"); }catch{ return null; } })();   // {net, enc, data, addr} | {kind:"ledger", net, addr, xpub, fp}, one per network (bv.wallet.mainnet / bv.wallet.signet)
-let wKey=null, walletUtxos=null;                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
+let wKey=null, walletUtxos=null, WFUND=0, FUNDING=null;   // WFUND: sats a dialog needs, for the receive QR; FUNDING: the dialog waiting on the wallet (its pay panel's prefix)                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
 const walletIsLedger=()=>!!(WALLET&&WALLET.kind==="ledger");
 const walletState=()=> !WALLET ? "none" : walletIsLedger() ? "ready" : wKey ? "ready" : WALLET.enc ? "locked" : "sealed";   // sealed: stored in clear, derive on demand. A Ledger is always "ready": viewing needs nothing, signing asks the device
 const walletSave=()=>{ try{ LS(NETKEY("bv.wallet"),JSON.stringify(WALLET)); }catch{} };
@@ -13,10 +13,11 @@ async function walletLoadKey(pass=""){                    // derive the key from
   wKey = await walletDerive(words, WALLET.enc?pass:"", NET);
   wKey.words=words; return wKey;
 }
+let WREADING=false;                                        // a balance read is running: "checking", not "unknown"
 async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page
   if(!WALLET) return null;
   if(walletUtxos && !force) return walletUtxos;
-  walletUtxos = await fetchUtxos(WALLET.addr, NET);
+  WREADING=true; try{ walletUtxos = await fetchUtxos(WALLET.addr, NET); } finally{ WREADING=false; }
   return walletUtxos;
 }
 const walletSats=()=>(walletUtxos||[]).reduce((a,u)=>a+u.value,0);
@@ -35,14 +36,16 @@ async function walletPaint(){
   $("w-title").textContent= st==="none"?"Connect a wallet" : st==="locked"?"Unlock wallet" : ledger?"Your Ledger" : "Your wallet";
   if(st==="ready"||st==="sealed"){
     const a=WALLET.addr; $("w-addr").textContent=a.slice(0,10)+"…"+a.slice(-6); $("w-addr").title=a; $("w-netlabel").textContent=NET;   // condensed; copy and the QR carry the full address
+    $("w-explorer").href="https://mempool.space/"+(NET==="mainnet"?"":"signet/")+"address/"+a; $("w-burns").href="burner.html#"+a;
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
     $("w-fundnote").textContent= ledger ? "Burns spend from this address only (the account's first receive address). Send sats here from Ledger Live or anywhere." : "Fund it by sending sats to this address.";
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
-    try{ const q=qrcode(0,"M"); q.addData("bitcoin:"+a,"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); }catch{}
+    try{ const q=qrcode(0,"M"); q.addData("bitcoin:"+a+(WFUND?`?amount=${(WFUND/1e8).toFixed(8)}`:""),"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); }catch{}   // a dialog waiting on funds: the amount rides in the QR
+    if(WFUND) $("w-fundnote").textContent=`Send about ${fmt(WFUND)} sats to this address · your take is waiting`;
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
     await walletBalance();
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
-    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`explorer unreachable · <button type="button" class="linkbtn" data-wretry>retry</button>`;
+    $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer`;
   }
   walletPill();
 }
@@ -98,8 +101,24 @@ addEventListener("resize",walletPill);
 walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
 if(WALLET) walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });
+priceReady(); feeReady().then(()=>PAY.forEach(p=>p.paint()));      // the BTC price and the fee estimates, once per page: only the pages that pay load this file (not the embed)
 
-document.addEventListener("click",e=>{ if(e.target.closest("[data-wretry]")) walletBalance(true).then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); if($("walletdlg")?.open) walletPaint(); }); });   // the wallet's balance: another try, when the reader asks
+// ---------- once sent: the panel says what went out, the footer offers the transaction on the explorer ----------
+const ICON_OK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+const ICON_EXT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+const sentHtml=(s,rcpt)=>{ const sum=re=>(s.outs||[]).filter(o=>re.test(o.label)).reduce((a,o)=>a+o.sats,0), burned=sum(/^(burn|register|sponsor)/), tip=sum(/^tip$/);
+  const tiles=[burned&&[burned,"burned"], tip&&[tip,burned?"tip":"sent"], Number.isFinite(s.fee)&&[s.fee,"mining fee"], Number.isFinite(s.after)&&[s.after,"balance after"]].filter(Boolean);
+  return `<div class="wdone"><div class="wdonehead"><span class="fi okfi" aria-hidden="true">${ICON_OK}</span><div><b>${burned?"Burned":"Sent"}</b><span class="mono">in the mempool · waiting for its first block</span></div></div>
+    <div class="wdonesum">${tiles.map(([v,k])=>`<div><b>${fmt(v)} sats</b><span>${k}</span></div>`).join("")}</div>
+    <div class="kv"><span class="k">Transaction</span><code title="${esc(s.txid)}">${esc(s.txid.slice(0,12))}…${esc(s.txid.slice(-8))}</code><button type="button" class="copy" data-copytx="${esc(s.txid)}">copy</button></div>
+    ${rcpt?`<a class="wrcpt" href="receipt.html#${esc(s.txid)}">View receipt →</a>`:""}</div>`; };
+function txLink(btn,s){ const foot=btn.closest(".dlgfoot"); if(!foot) return; let a=foot.querySelector("[data-txlink]");
+  if(!a){ a=document.createElement("a"); a.className="btn"; a.dataset.txlink=""; a.target="_blank"; a.rel="noopener"; a.innerHTML=ICON_EXT+"<span>Explorer</span>"; (btn.closest(".signwrap")||btn).before(a); }
+  const sent=!!(s&&s.kind==="sent"); a.hidden=!sent; if(sent) a.href=TXURL(s.txid); }
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-copytx]"); if(b) copyText(b.dataset.copytx,b); });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-fund]"); if(!b) return; const [pre,n]=b.dataset.fund.split(":"); FUNDING=pre; WFUND=+n; walletOpen(); });   // short of funds: the wallet opens with the amount in its QR
+document.addEventListener("click",e=>{ if(!e.target.closest("[data-wretry]")) return; chainReset(); const p=walletBalance(true); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) $("w-balhint").textContent="checking…";   // the wallet's balance: another try, when the reader asks
+  p.then(()=>{ walletPill(); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) walletPaint(); }); });
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
 const feeSegHtml=id=>`<div class="seg feeseg" role="group" aria-label="Mining fee speed" id="${id}">${FEE_SPEEDS.map(([k,l])=>`<button type="button" data-fee="${k}" aria-pressed="false">${l}<span class="mono"></span></button>`).join("")}</div>`;
 function feeSegPaint(seg, off=false, sum=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=` · ${r[b.dataset.fee]}`; b.disabled=off; });
@@ -115,7 +134,7 @@ function walletTab(prefix, root, {speed=true}={}){
       <div class="wsum"><div><b id="${id("total")}">…</b><span>to send</span></div><div><b id="${id("fee")}">…</b><span>mining fee<span class="more" id="${id("rate")}"></span></span></div><div><b id="${id("after")}">…</b><span>balance after</span></div></div>
       ${speed?feeSegHtml(id("speed")):""}
       <p class="note mono" id="${id("msg")}" style="margin:8px 0 0" aria-live="polite"></p>
-      <p class="note mono" id="${id("result")}" style="margin:6px 0 0" aria-live="polite" hidden></p>
+      <div id="${id("result")}" aria-live="polite" hidden></div>
     </div></div>`;
   const $$=k=>$(id(k)); let last=null, status=null;   // status: null | {kind:"busy"} | {kind:"sent", txid} | {kind:"err", msg}
   const api={ update(p){ last=p; if(!status||status.kind!=="busy") status=null; }, onsent:null };   // onsent({txid, outputs, hex}): the page records what went out (pending burns for the receipt page); status.msg: the Ledger stage
@@ -126,8 +145,8 @@ function walletTab(prefix, root, {speed=true}={}){
     root.closest(".pay")?.classList.toggle("sent",sent);   // sent: the txid and the receipt link stay, the rest goes (base.css)
     $$("none").hidden=st!=="none"; $$("locked").hidden=!(st==="locked"||st==="sealed"); $$("ready").hidden=st!=="ready";
     $$("result").hidden=!status||status.kind==="busy";
-    if(status&&status.kind==="sent") $$("result").innerHTML=`broadcast · <a href="${TXURL(status.txid)}" target="_blank" rel="noopener" style="color:var(--ember2)">${status.txid.slice(0,10)}…${status.txid.slice(-6)}</a>${api.onsent?` · <a class="receipt" href="receipt.html#${status.txid}">View receipt →</a>`:""}`;   // a receipt only where the page recorded a burn (not for a plain tip)
-    else if(status&&status.kind==="err") $$("result").textContent=status.msg;
+    if(status&&status.kind==="sent") $$("result").innerHTML=sentHtml(status, !!api.onsent);   // a receipt only where the page recorded a burn (not for a plain tip)
+    else if(status&&status.kind==="err") $$("result").innerHTML=`<p class="note mono" style="margin:6px 0 0">${esc(status.msg)}</p>`;
     if(st!=="ready") return;
     const r=feeRates(), sp=feeSpeed(); $$("rate").textContent=` · ${r[sp]} sat/vB`;
     if(speed) feeSegPaint($$("speed"), !!(status&&status.kind!=="err"));
@@ -136,9 +155,10 @@ function walletTab(prefix, root, {speed=true}={}){
     const {total,fee,bal,mismatch}=calc();
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
-    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML=`balance unknown: the explorer at ${esc(esploraBase(NET))} is unreachable from this page · <button type="button" class="linkbtn" data-wretry>retry</button>`; return; }
-    $$("msg").textContent = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
-      : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. Fund it from the wallet chip in the top bar.`
+    if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML= WREADING ? "checking the balance…" : `<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer · balance unknown`; return; }
+    if(FUNDING===prefix&&!mismatch&&bal>=total+fee){ FUNDING=null; WFUND=0; toast("Funds arrived · your burn is ready to sign"); }   // the wallet caught up with the dialog waiting on it
+    $$("msg").innerHTML = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
+      : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. <button type="button" class="linkbtn" data-fund="${prefix}:${total+fee-bal+500}">Add funds</button>`
       : "";                                                   // all is well: nothing to say
   };
   const send=async()=>{
@@ -153,39 +173,41 @@ function walletTab(prefix, root, {speed=true}={}){
         : await signP2wpkh({utxos:walletUtxos, outputs, changeAddr:WALLET.addr, feeRate:feeRate(), key:wKey});
       const b=await broadcastTx(r.hex, NET);
       if(b.error) throw new Error(b.error);                // the explorer's rejection, verbatim
-      status={kind:"sent", txid:b.txid||r.txid};
+      const outSum=last.outputs.reduce((a,o)=>a+o.sats,0);
+      status={kind:"sent", txid:b.txid||r.txid, fee:r.fee, outs:last.outputs, after:Number.isFinite(r.fee)?walletSats()-outSum-r.fee:null};   // what went out, for the success panel
       try{ api.onsent?.({txid:status.txid, outputs:last.outputs, hex:r.hex}); }catch{}
       walletUtxos=null; walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });   // coins spent: the change shows once the explorer sees it
     }catch(e){ status={kind:"err", msg:walletIsLedger()?ledgerError(e).message:e.message}; }
     PAY.forEach(p=>p.paint());
   };
   if(speed) feeSegWire($$("speed"));
-  const fee=()=>walletState()==="ready"&&last&&walletUtxos ? calc().fee : null;
-  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, status:()=>status });
+  const fee=()=>last ? calc().fee : null;                     // coins unknown (no wallet yet, or the explorer has not answered): priced for one coin, exact once they load
+  const need=()=>last ? calc().total+calc().fee+500 : 0;       // what to send the wallet for this burn: its outputs, the fee, a little margin
+  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, need, prefix, status:()=>status });
 }
 // the dialogs' primary from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch (batch null: no batch item).
 // Broadcast walks the wallet (connect, unlock), brings up the Transaction step (show), where progress and errors show, then signs and sends; once sent the button is Done.
 const CARET='<svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 function signMenu(btn, menu, wt, {label, ok=true, show=()=>{}, batch=null, tx=null, done}){   // tx: bring up the transaction details (null: already there)
   if(!btn._close){ btn._close=dropMenu(btn,menu); btn._toggle=btn.onclick; }       // the menu's toggle, outside click and Escape: wired once
-  const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]');
+  const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]'); txLink(btn,s);
   if(s&&s.kind==="sent"){ btn._close(); btn.textContent="Done"; btn.disabled=false; btn.removeAttribute("aria-haspopup"); btn.onclick=done; return; }
   btn.setAttribute("aria-haspopup","menu"); btn.onclick=btn._toggle;
   if(s&&s.kind==="busy"){ btn._close(); btn.textContent=walletIsLedger()?"On the Ledger…":"Signing…"; btn.disabled=true; return; }
   btn.innerHTML=label+CARET; btn.disabled=!ok;
-  bc.textContent= st==="none" ? "Broadcast · connect a wallet first" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
-  bc.onclick=()=>{ btn._close(); if(st!=="ready") return walletOpen(); show(); if(wt.canSend()) wt.send(); };
+  bc.textContent= st==="none" ? "Broadcast · set up a wallet (your take is kept)" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
+  bc.onclick=()=>{ btn._close(); if(st!=="ready"){ if(st==="none"){ FUNDING=wt.prefix; WFUND=wt.need(); } return walletOpen(); } show(); if(wt.canSend()) wt.send(); };   // no wallet yet: the dialog stays open under the wallet's, the take kept
   ba.hidden=!batch; ba.onclick=()=>{ btn._close(); if(batch) batch(); };
   tt.hidden=!tx; tt.onclick=()=>{ btn._close(); if(tx) tx(); };
 }
-// the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the wallet can build it)
+// the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the dialog has a transaction to price)
 function dlgPrice(host, sats, word, fee, extra=[]){
   const h=`<span><b>${fmt(sats)} sats</b><span class="w">${word}</span></span>${[...extra, fee!=null?`+${fmt(fee)} sats mining fees`:"+ mining fees"].map(x=>`<small>${x}</small>`).join("")}`;
   if(host._h!==h){ host._h=h; host.innerHTML=h; }             // unchanged: left alone, a focused link keeps its focus
 }
 // the dialog footer's primary button, from the wallet state: none → Connect a wallet, locked → Unlock wallet, ready → Sign & broadcast (Sign on Ledger), sent → Done
 function walletPrimary(btn, wt, done, ok=true){
-  const st=walletState(), s=wt.status();
+  const st=walletState(), s=wt.status(); txLink(btn,s);
   let label, act, off=false;
   if(s&&s.kind==="sent"){ label="Done"; act=done; }
   else if(st==="none"){ label="Connect a wallet"; act=walletOpen; }
