@@ -295,13 +295,15 @@ function watchNews(w, votes, T){
 }
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
-const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} };
+const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length) ballotTipSet(null); };   // emptied (cleared, sent, last burn removed): the batch's own tip goes with it
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
 const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
 const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
 const ballotClear=()=>ballotSave([]);
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
+const ballotTip=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? tipPref() : Math.max(0,Math.round(+v)||0); };   // the batch's one tip output: set by the tip dialog's Add to batch (0: removed), else every dialog's tip (tipPref); a dust one never comes back
+const ballotTipSet=v=>{ try{ v==null||v==="" ? localStorage.removeItem(NETKEY("bv.ballot.tip")) : LS(NETKEY("bv.ballot.tip"),String(Math.max(0,Math.round(+v)||0))); }catch{} };   // null: the batch follows tipPref again
 const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
 
 // ---------- closed questions: "question?a|b|c" in the scope name ----------
@@ -360,10 +362,10 @@ function closeState(p, live=TIPLIVE){
   if(!(live>=p.deadline+6)){ const n=Math.max(1,p.deadline+6-tipEst()); return {k:"closed", text:`Closed at block ${D} · final in ≈ ${untilText(n)} (${n} block${n===1?"":"s"})`, short:"closed"}; }
   return {k:"final", text:`Final · block ${D}`, short:"final"};
 }
-const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?`${d}d ${h}h`:h?`${h}h ${m%60}m`:`${m}m`; };   // blocks at ~10 min
+const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60), n=m%60; return d?`${d}d${h?` ${h}h`:""}`:h?`${h}h${n?` ${n}m`:""}`:`${m}m`; };   // blocks at ~10 min: "2d 5h", "2d", "1h 10m", "1h", "40m"
 const ICON_TAKE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';   // a take: a megaphone, said out loud
 // ---------- icon badges (.fi, base.css), one visual language on every page: the shape says what (ICON_TAKE, a megaphone, for any burn's take or answer,
-// ✦ a sponsorship, a flame most burned, a clock the latest, a person a burner, # a registration), the tint which kind of burn (ember a take, red most burned, gold a sponsorship, slate a burner, grey a registration) ----------
+// ✦ a sponsorship, a flame most burned, a clock the latest, a person a burner, # a registration, a heart a tip), the tint which kind of burn (ember a take, red most burned, gold a sponsorship, slate a burner, grey a registration; green a tip: it arrives, nothing burns) ----------
 const svgIcon = (d,fill) => `<svg width="16" height="16" viewBox="0 0 24 24" ${fill?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"'} aria-hidden="true">${d}</svg>`;
 const ICONS = {
   top: svgIcon('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),   // most burned: a flame
@@ -372,6 +374,8 @@ const ICONS = {
   burner: svgIcon('<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>'),
   join: svgIcon('<circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),   // a new burner
   reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
+  wallet: svgIcon('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>'),   // a wallet: short of funds (fundsHtml)
+  tip: svgIcon('<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>'),   // a tip to the project: a heart
 };
 const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
 // ---------- RECENT, the timeline on Explore (every topic) and on a topic page (that topic alone): the latest events whatever the window, four kinds, each with its icon and its word:
@@ -475,8 +479,9 @@ const BECH32M=0x2bc830a3;
 const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
-const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network)
-const tipPrefSave = v => { if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),String(v)); };
+const tipDust = v => { const n=Math.round(+v||0); return n>0&&n<330 ? "A tip under 330 sats cannot relay: No tip, or 330 and up." : ""; };   // a tip output under 330 sats is dust: nodes refuse the transaction once signed. -> why (the note under the tip), "" when it relays (0 is No tip)
+const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""||tipDust(v)?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network); a dust one saved before counts as none
+const tipPrefSave = v => { if(tipEnabled()&&!tipDust(v)) LS(NETKEY("bv.vote.tipsats"),String(v)); };   // a dust tip being typed ("1" on the way to "1000") is never every dialog's next one
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
 function bech32Decode(addr){                                     // -> {hrp, version, program}; v0 = bech32, v1+ = bech32m (BIP-173 / BIP-350)
   if(typeof addr!=="string") throw new Error("not a string");
@@ -589,19 +594,33 @@ function payPanel(prefix, opts){
 const PAY=[];                                          // every panel on the page, repainted together when the wallet changes
 
 // ---------- amount chips: a .seg of presets over a number input; Custom reveals the input, an off-preset value keeps it visible ----------
-function amountChips(seg, input, onchange){
+// wallet (optional): the pay panel's walletTab. Once its balance is known, presets it cannot pay go off (the chosen one and the lowest stay, marked: a way down is never off)
+// and a note under the chips says what fits; noun: this amount's word in the transaction ("burn", "tip", "registration"; a function when the dialog's word changes), left out of the note's "with the …" (capNoteHtml)
+// check (optional): v -> why this amount cannot go ("": it can), said in that note instead, with aria-invalid on the input (a dust tip: tipDust)
+function amountChips(seg, input, onchange, {wallet=null, noun="", check=null}={}){
   let custom=false, last=null;                              // last: the preset to come back to
-  const chips=[...seg.querySelectorAll("[data-sats]")];
+  const chips=[...seg.querySelectorAll("[data-sats]")], note=document.createElement("p");
   const wrap=document.createElement("span"), x=document.createElement("button");   // Custom: the input with a ✕ stands in for the chips
   wrap.className="amtcustom"; input.before(wrap); wrap.append(input); input.hidden=false; input.style.marginTop="";
   x.type="button"; x.className="amtx"; x.setAttribute("aria-label","Back to the presets"); x.textContent="✕"; wrap.append(x);
+  note.className="note capnote"; note.id=input.id+"-cap"; note.hidden=true;
+  if(wallet||check){ wrap.after(note); seg.setAttribute("aria-describedby",note.id); input.setAttribute("aria-describedby",note.id); }
   const sync=()=>{
-    const v=Number(input.value||0), min=+input.min||0; let hit=null;
-    for(const b of chips){ if(b.dataset.sats==="custom") continue; b.disabled=+b.dataset.sats<min; if(!b.disabled&&+b.dataset.sats===v) hit=b; }   // below the minimum: greyed out
+    const v=Number(input.value||0), min=+input.min||0, f=wallet&&wallet.funds(), cap=f?v+f.room:Infinity; let hit=null;   // cap: the most this amount can be with the rest paid (balance unknown: none)
+    const floor=Math.min(...chips.map(b=>+b.dataset.sats).filter(s=>s>=min));   // the lowest preset ("custom" is NaN: never)
+    for(const b of chips){ if(b.dataset.sats==="custom") continue; const s=+b.dataset.sats, over=s>=min&&s>cap;
+      b.disabled=s<min||over&&s!==v&&s!==floor; b.classList.toggle("over",over); b.title=over?`Your wallet would be ${fmt(s-cap)} sats short`:"";   // below the minimum, or more than the wallet holds: greyed out
+      if(s>=min&&s===v) hit=b; }
     for(const b of chips) b.setAttribute("aria-pressed",String(b===hit || (!hit&&b.dataset.sats==="custom")));
     if(hit) last=hit.dataset.sats;
     const own=custom||!hit; seg.hidden=own; wrap.hidden=!own;
+    const bad=check?check(v):"";                                                  // an amount that cannot go: said in place of what fits
+    input.classList.toggle("over",v>cap||!!bad); if(check) input.setAttribute("aria-invalid",String(!!bad));   // Custom stays typeable: past the balance, it warns
+    sync.on=!bad&&!!f&&(v>cap||chips.some(b=>b.classList.contains("over")));    // the note: once a preset or the chosen amount is past what the wallet can pay
+    const h=bad ? esc(bad) : sync.on ? capNoteHtml(wallet,f,typeof noun==="function"?noun():noun,v,cap,min,!wallet.chips.slice(0,wallet.chips.indexOf(sync)).some(o=>o.on)) : "";   // lead: no note above it (the amount's, over the tip's) says what the wallet holds yet
+    if(note._h!==h){ note._h=h; note.innerHTML=h; } note.hidden=!h; note.classList.toggle("err",!!bad);
   };
+  if(wallet){ sync.seg=seg; wallet.chips.push(sync); wallet.chips.sort((a,b)=>a.seg.compareDocumentPosition(b.seg)&2?1:-1); }   // synced on every paint of the pay panel (balance in, fee speed, the other amount), in page order
   seg.onclick=e=>{ const b=e.target.closest("[data-sats]"); if(!b||b.disabled) return;
     if(b.dataset.sats==="custom"){ custom=true; sync(); input.focus(); input.select(); return; }
     custom=false; input.value=b.dataset.sats; sync(); onchange(); };
@@ -700,7 +719,7 @@ function netSwitch(to){
   menu.querySelectorAll("[data-net]").forEach(b=>{ const on=b.dataset.net===NET; b.setAttribute("aria-checked",String(on)); b.onclick=()=>{ close(); if(!on) netSwitch(b.dataset.net); }; });
   pill.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; pill.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector('[aria-checked="true"]').focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); pill.focus(); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ e.preventDefault(); close(); pill.focus(); } });
 })();
 
 // ---------- a small menu under a button (aria-expanded + hidden): closes on outside click and Escape. -> close() ----------
@@ -711,9 +730,9 @@ function dropMenu(btn,menu){
   btn.closest("dialog")?.querySelector(".dlg")?.addEventListener("scroll",()=>{ if(!menu.hidden) close(); },{passive:true});   // fixed: it would stay put while the dialog scrolls
   btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; if(open) place(); menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); btn.focus(); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ e.preventDefault(); close(); btn.focus(); } });   // the menu only: not the dialog under it
   menu.addEventListener("keydown",e=>{                                     // arrow keys walk the items, like a native menu
-    const items=[...menu.querySelectorAll('[role="menuitem"]:not([disabled])')], i=items.indexOf(document.activeElement); if(!items.length) return;
+    const items=[...menu.querySelectorAll('[role="menuitem"]:not([disabled]):not([hidden])')], i=items.indexOf(document.activeElement); if(!items.length) return;   // an aria-disabled item stays in the walk: its reason is read out
     const to = e.key==="ArrowDown"?(i+1)%items.length : e.key==="ArrowUp"?(i-1+items.length)%items.length : e.key==="Home"?0 : e.key==="End"?items.length-1 : -1;
     if(to>=0){ e.preventDefault(); items[to].focus(); }
   });

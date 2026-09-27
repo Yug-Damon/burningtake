@@ -10,8 +10,9 @@ const names=["toHex","enc","bech32","bech32Decode","scriptPubKey","opReturnScrip
   "walletLibs","walletGenerate","walletValidate","walletDerive","ripemd160","hash160","signP2wpkh","encryptSecret","decryptSecret","esploraBase","fetchUtxos","broadcastTx","nfc"];
 const doc={querySelectorAll:()=>[], getElementById:()=>null, createElement:()=>({style:{}}), body:{appendChild(){}}, documentElement:{style:{}}, fonts:null};
 let fetchImpl=()=>{ throw new Error("fetch not stubbed"); };
-const api=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch",
-  src+"\nreturn {"+names.join(",")+"};")(doc, {}, {getItem:()=>null, setItem(){}}, ()=>({matches:false}), {}, ()=>{}, (...a)=>fetchImpl(...a));
+const WAITS=[];                                                  // every pause the code asks for (sleep: esploraGet's backoff), logged and run at once
+const api=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch","setTimeout",
+  src+"\nreturn {"+names.join(",")+"};")(doc, {}, {getItem:()=>null, setItem(){}}, ()=>({matches:false}), {}, ()=>{}, (...a)=>fetchImpl(...a), (f,ms,...a)=>{ WAITS.push(ms); return setTimeout(f,0,...a); });
 const {toHex,enc,bech32,bech32Decode,scriptPubKey,opReturnScript,txidOf,estimateVsize,
   walletLibs,walletGenerate,walletValidate,walletDerive,ripemd160,hash160,signP2wpkh,encryptSecret,decryptSecret,esploraBase,fetchUtxos,broadcastTx,nfc}=api;
 
@@ -266,6 +267,27 @@ async function t(name,fn){ try{ await fn(); n++; console.log(`ok ${n} - ${name}`
     fetchImpl=async()=>({ok:true, json:async()=>({oops:1})}); assert.strictEqual(await fetchUtxos(key.address),null,"non-array");
     fetchImpl=async()=>({ok:true, json:async()=>{ throw new SyntaxError("bad json"); }}); assert.strictEqual(await fetchUtxos(key.address),null,"bad json");
   });
+  await t("fetchUtxos: an answer that is not a list of distinct coins is null after one request, never a throw ([null], a string value, a negative vout, a short txid, a fraction of a sat, one coin twice)",async()=>{
+    const c=(o={})=>({txid:"ab".repeat(32), vout:1, status:{confirmed:true}, value:12345, ...o});
+    for(const [name,body] of [["[null]",[null]],["a number",[7]],["a string value",[c({value:"12345"})]],["a negative vout",[c({vout:-1})]],["a short txid",[c({txid:"ab"})]],["a fraction of a sat",[c({value:0.5})]],["one coin twice",[c(),c({status:{confirmed:false}})]]]){
+      let calls=0; fetchImpl=async()=>{ calls++; return {ok:true, status:200, json:async()=>body}; };
+      assert.strictEqual(await fetchUtxos(key.address,"signet"),null,name); assert.strictEqual(calls,1,name+": the explorer's answer, not asked again");
+    }
+    fetchImpl=async()=>({ok:true, status:200, json:async()=>[c(),c({vout:2, value:0})]}); assert.deepStrictEqual((await fetchUtxos(key.address,"signet")).map(u=>u.vout),[1,2],"the same txid, another output: two coins");
+  });
+  await t("fetchUtxos: a busy explorer (429, 5xx) is asked again after 0.8 s, then 1.6 s; a network error at once; a 4xx is the answer; an error status never counts as data, whatever its body",async()=>{
+    const ok=[{txid:"ab".repeat(32), vout:1, status:{confirmed:true}, value:12345}];
+    for(const [status,tries,waits] of [[429,3,[800,1600]],[500,3,[800,1600]],[503,3,[800,1600]],[404,1,[]],[400,1,[]]]){
+      let calls=0; WAITS.length=0; fetchImpl=async()=>{ calls++; return {ok:false, status, json:async()=>ok}; };   // a well-formed body under an error status
+      assert.strictEqual(await fetchUtxos(key.address,"signet"),null,String(status)); assert.strictEqual(calls,tries,status+" tries"); assert.deepStrictEqual(WAITS,waits,status+" pauses");
+    }
+    let calls=0; WAITS.length=0; fetchImpl=async()=>{ calls++; throw new TypeError("Failed to fetch"); };
+    assert.strictEqual(await fetchUtxos(key.address,"signet"),null); assert.strictEqual(calls,3); assert.deepStrictEqual(WAITS,[]);
+    for(const [first,waits] of [[{ok:false, status:429, json:async()=>({})},[800]],[{ok:false, status:502, json:async()=>({})},[800]],[null,[]]]){   // once, then the answer
+      let k=0; WAITS.length=0; fetchImpl=async()=>{ if(!k++){ if(!first) throw new TypeError("Failed to fetch"); return first; } return {ok:true, status:200, json:async()=>ok}; };
+      assert.strictEqual((await fetchUtxos(key.address,"signet")).length,1); assert.strictEqual(k,2); assert.deepStrictEqual(WAITS,waits);
+    }
+  });
   await t("broadcastTx: POST text/plain hex, {txid} on success, {error} on rejection / throw",async()=>{
     let seen=null; const hex="0200000000010100", txid="ef".repeat(32);
     fetchImpl=async(url,opts)=>{ seen={url,opts}; return {ok:true, status:200, text:async()=>txid+"\n"}; };
@@ -276,6 +298,21 @@ async function t(name,fn){ try{ await fn(); n++; console.log(`ok ${n} - ${name}`
     fetchImpl=async()=>({ok:false, status:502, text:async()=>""}); assert.deepStrictEqual(await broadcastTx(hex),{error:"HTTP 502"});
     fetchImpl=async()=>{ throw new TypeError("Failed to fetch"); }; assert.deepStrictEqual(await broadcastTx(hex),{error:"Failed to fetch"});
     fetchImpl=async()=>({ok:true, status:200, text:async()=>"<html>proxy page</html>"}); assert.ok((await broadcastTx(hex)).error,"non-txid body on 200 is an error");
+  });
+
+  await t("tipDust: a tip of 1–329 sats is dust (the note's reason), 0 is No tip, 330 and up relays; a dust tip is never saved as every dialog's tip, and one saved before is never read back",()=>{
+    const store={"bv.net":"signet"}, ls={getItem:k=>store[k]??null, setItem(k,v){ store[k]=String(v); }, removeItem(k){ delete store[k]; }};   // a page on signet (a tip address there)
+    const p=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch","setTimeout",
+      src+"\nreturn {tipDust,tipPref,tipPrefSave,ballotTip,ballotTipSet};")(doc, {}, ls, ()=>({matches:false}), {}, ()=>{}, ()=>{ throw new Error("no fetch"); }, setTimeout);
+    const WHY="A tip under 330 sats cannot relay: No tip, or 330 and up.";
+    for(const v of [1,100,329,"329","329.4",329.4]) assert.strictEqual(p.tipDust(v),WHY,"dust: "+v);
+    for(const v of [0,"",null,undefined,"0",-5,329.5,330,"330",1000,21000,"abc"]) assert.strictEqual(p.tipDust(v),"","relays or no tip: "+v);   // rounded like the dialogs read it
+    assert.strictEqual(p.tipPref(),1000,"1,000 until one is chosen");
+    for(const v of ["1","10","100"]) p.tipPrefSave(v); assert.strictEqual(store["bv.vote.tipsats.signet"],undefined,"typing 1, 10, 100 on the way to 1000 saves nothing"); assert.strictEqual(p.tipPref(),1000);
+    p.tipPrefSave("5000"); assert.strictEqual(p.tipPref(),5000); p.tipPrefSave("100"); assert.strictEqual(p.tipPref(),5000,"the last tip that relays stays"); p.tipPrefSave("0"); assert.strictEqual(p.tipPref(),0,"No tip is a choice");
+    store["bv.vote.tipsats.signet"]="100"; assert.strictEqual(p.tipPref(),1000,"a dust tip saved by an older build counts as none");
+    assert.strictEqual(p.ballotTip(),1000,"the batch follows every dialog's tip"); p.ballotTipSet(21000); assert.strictEqual(p.ballotTip(),21000);
+    store["bv.ballot.tip.signet"]="100"; assert.strictEqual(p.ballotTip(),1000,"a dust batch tip is never read back"); p.ballotTipSet(0); assert.strictEqual(p.ballotTip(),0,"removed: none");
   });
 
   console.log(`\n1..${n}\n# ${failed?`FAILED ${failed}/${n}`:`all ${n} passed`}`);

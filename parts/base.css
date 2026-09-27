@@ -140,7 +140,6 @@ details.tech .out{margin-top:6px}
   dialog .dlg>h3{font-size:16px;overflow-wrap:anywhere}
   .dlgfoot .btn.ghost{margin-top:4px;min-height:40px}
   .wpay .qrow>.note{flex-basis:100%;margin-top:2px}
-  .wledger>.btn{flex:1 1 100%;justify-content:center;min-height:44px}.wledger>.note{flex-basis:100%;margin-top:2px}
   dialog .copy{min-height:40px;padding:0 12px} dialog h3 .copy{min-width:40px;min-height:40px} #walletdlg .seg button{min-height:40px} dialog .btn.sm{min-height:40px}
   dialog .ef{padding:12px}dialog .efgo{min-height:40px}.efnotes span>.linkbtn:first-child{margin-left:-6px}.ef .efgo,.efnotes .linkbtn,#leadnote button{scroll-margin-bottom:200px}   /* phone: the linkbtn's 6px touch padding would push a note's first link off the icon column; a focused action scrolls clear of the sticky footer */
 }
@@ -241,7 +240,7 @@ section{padding-block:64px}
 .hist div{height:100%;display:flex;align-items:end;background:rgba(255,255,255,.03);border-radius:6px}
 .hist i{display:block;width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--ember2),var(--ember));min-height:2px;position:relative}
 .hist i b{position:absolute;bottom:100%;left:50%;transform:translate(-50%,-2px);font:500 10px var(--font-m);color:var(--ink2);white-space:nowrap}
-.histempty{grid-column:1/-1;align-self:center;text-align:center;margin:0;color:var(--ink3);font-size:13px}
+.histempty{grid-column:1/-1;align-self:center;text-align:center;margin:0;color:var(--ink3);font-size:13px}.histempty:empty{display:none}   /* closed with nothing to say: the axis alone */
 .hist-ticks{position:relative;height:16px}.hist-ticks i{position:absolute;top:0;transform:translateX(-50%);font:normal 10px/1 var(--font-m);color:var(--ember2);white-space:nowrap;padding-top:6px}
 .hist-ticks i::before{content:"";position:absolute;top:0;left:50%;width:1px;height:5px;background:var(--ember2)}
 .hist-axis{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:11px;color:var(--ink3)}
@@ -356,11 +355,34 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .wsum div,.wdonesum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .wsum b,.wdonesum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
 .wsum span,.wdonesum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
-.wledger{margin-top:8px}.wledger>.note{margin:0;font-size:11px;color:var(--ink3);line-height:1.4}#w-none .divider{margin-top:16px}
 .wbox{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,140,92,.35);border-radius:12px;background:rgba(255,106,26,.06)}
 #w-forgetok{min-height:40px;padding-inline:16px}
 #w-forgetok:not(:disabled){background:#ff5c5c;color:#1a0000;border:0}
-#w-none:has(#w-restorebox:not([hidden])) #w-create{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+/* Connect a wallet (#w-none): the three ways as radio cards; the picked one opens its form; the footer's one primary follows the pick */
+.wwait{display:flex;align-items:center;gap:12px;margin-top:10px}   /* a dialog waits on this wallet: what it keeps, what the wallet will need (context, not a choice: no box) */
+.wwait p{margin:0;display:grid;gap:1px;font-size:13px;line-height:1.4;color:var(--ink2);text-wrap:pretty}.wwait b{color:var(--ink);font-weight:600}
+.wopts{display:grid;gap:8px;margin:14px 0 0;padding:0;border:0;min-width:0}
+.wopt{border:1px solid var(--line);border-radius:14px;background:var(--bg);transition:border-color .15s,background-color .15s}
+.wopt:not(.off):not(:has(:checked)):hover{border-color:rgba(255,255,255,.2)}
+.wopt:has(:checked){border-color:rgba(255,181,71,.5);background:color-mix(in srgb,var(--ember) 6%,var(--bg))}
+.wopt:has(>.wopth>input:focus-visible){outline:2px solid var(--ember2);outline-offset:2px}   /* the radio's keyboard ring goes round its whole card */
+.wopth{display:grid;grid-template-columns:28px minmax(0,1fr) 20px;grid-template-areas:"i t r" "i d r";gap:2px 12px;align-items:center;padding:12px 14px;cursor:pointer}
+.wopth .fi{grid-area:i;align-self:start;background:color-mix(in srgb,var(--ink) 10%,var(--bg));color:var(--ink2);transition:.15s}
+.wopt:has(:checked) .fi{background:color-mix(in srgb,var(--ember) 24%,var(--bg));color:var(--ember2)}   /* the picked way takes the ember */
+.wot{grid-area:t;display:flex;align-items:baseline;flex-wrap:wrap;gap:0 10px}.wot b{font-size:15px;font-weight:600;color:var(--ink)}
+.wot em{font-style:normal;font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ember2)}
+.wod{grid-area:d;font-size:13px;line-height:1.45;color:var(--ink2);text-wrap:pretty}
+.wopth input{grid-area:r;appearance:none;-webkit-appearance:none;margin:0;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink3);display:grid;place-items:center;cursor:pointer;outline:0}
+.wopth input::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--ember2);box-shadow:0 0 8px var(--ember2);transform:scale(0);transition:transform .15s}
+.wopth input:checked{border-color:var(--ember2)}.wopth input:checked::before{transform:scale(1)}
+.wopt.off .wopth{cursor:default}.wopt.off .wot,.wopt.off .fi{opacity:.5}.wopt.off .wod{color:var(--ink3)}.wopt.off input{visibility:hidden}   /* not in this browser: said, not pickable; the reason stays readable */
+.wob{padding:0 14px 14px 54px}.wob>.note{margin:0}.wob>.note+.note,.wob>details+.note{margin-top:8px}.wob .note{text-wrap:pretty}   /* the picked way's form, under its words */
+.wob textarea{display:block;font-size:14px;resize:vertical}.wob textarea+.note{margin-top:8px}   /* rejected words: the reason under the box */
+.wob details.tech{display:block}.wob>details.tech:first-child{margin-top:-6px}.wob textarea~details.tech{margin-top:4px}.wob details.tech:not([open]){margin-bottom:-6px}   /* a closed fold: the card's bottom matches its top */
+.wob details.tech .field{margin:2px 0 0}.wob details.tech .note{margin-top:6px}
+#w-newnet{margin:0}   /* the network, at the footer's left where the other dialogs put the price */
+@media (max-width:480px){.wopth{grid-template-areas:"i t r" "i d d"}.wob{padding-left:14px}#w-newnet{order:9;text-align:center}}   /* phones: the radio stays on the title's row so the line under it gets the width; the forms take the card's width; the network sits over the stacked primary */
+@media (prefers-reduced-motion:reduce){.wopt,.wopth .fi,.wopth input::before{transition:none}}
 /* the wallet, ready: a balance card, then a receive card */
 .wlabel{font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
 .wbalcard{display:grid;gap:4px;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
@@ -394,14 +416,61 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .netmenu button:hover,.netmenu button:focus-visible{background:rgba(255,255,255,.06);color:var(--ink)}
 .netmenu button[aria-checked="true"]{color:var(--ink)}
 .netmenu button[aria-checked="true"]::before{background:var(--ember2);border-color:var(--ember2);box-shadow:0 0 8px var(--ember2)}
+.netmenu button:disabled{opacity:.6;cursor:default}.netmenu button:disabled:hover{background:none;color:var(--ink2)}   /* an item that cannot run yet, its reason still readable ("Add to batch · add a burn first") */
+.netmenu button[aria-disabled="true"]{opacity:.8;cursor:default}.netmenu button[aria-disabled="true"]:hover:not(:focus-visible){background:none;color:var(--ink2)}   /* the same, still focusable (signMenu's Add to batch): about 5:1, and the arrow keys reach it */
 nav .pill,.logo{white-space:nowrap}
 @media (max-width:480px){nav .wrap{gap:10px}.logo{font-size:14px}.logo i{width:22px;height:22px}nav .pill{padding:3px 8px;font-size:11px}.pill.net{padding:3px 7px}nav .pill{min-height:40px}.navchips{min-width:0;gap:6px}.pill.wallet{min-width:0}.pill.wallet::after{display:none}.pill.wallet .mono{min-width:0;overflow:hidden;text-overflow:ellipsis}.netmenu button{min-height:44px}}
 
-/* ===== topic header: kind, title, badges, live countdown, actions ===== */
+/* ===== topic header: kind, title, badges, actions; under it the deadline card (.dcard) and the result banner ===== */
 .thead{position:relative;padding:0;margin-bottom:18px;display:grid;gap:14px}   /* a header, not a card: no border, no fill */
 .hclosed{margin:0 0 18px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}   /* a closed topic's result, said once at the top */
 .hclosed .verdict{margin:0;font:600 clamp(18px,2.6vw,24px)/1.25 var(--font-d);letter-spacing:-.01em;overflow-wrap:anywhere}.hclosed .vnote{margin:0;font-size:12.5px;color:var(--ink3)}
 .hclosed .vacts{display:flex;gap:8px;flex-wrap:wrap}
+/* the deadline: its own card under the header. Calm while open, amber when closing soon, ember and live in the last blocks, then a neutral strip joined to the result banner under it (slim once final) */
+.dcard{--dc:var(--ink2);display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"main side" "rule rule";gap:12px 48px;align-items:end;margin:0 0 18px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);scroll-margin-top:76px}
+.dcard p{margin:0}
+.dc-main{grid-area:main;display:grid;gap:6px;min-width:0}.dc-side{grid-area:side;display:grid;gap:8px;min-width:0}
+.dc-lbl{display:flex;align-items:center;gap:8px;min-height:20px;font:500 11px/1.4 var(--font-m);letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
+.dc-lbl .fi{background:color-mix(in srgb,var(--ink) 10%,var(--bg));color:var(--ink2)}
+.dc-count{display:flex;align-items:baseline;flex-wrap:wrap;font:600 40px/1.05 var(--font-d);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dc-count i{font:500 12px/1 var(--font-m);font-style:normal;letter-spacing:.02em;color:var(--ink3);margin:0 14px 0 5px}.dc-count i:last-child{margin-right:0}
+.dc-count .ap{font:400 22px/1 var(--font-d);color:var(--ink3);margin-right:6px}
+.dcard.s-open .dc-count{font-size:32px}   /* calm while open: the count grows as the close nears */
+.dc-when{font:600 15px/1.3 var(--font-d);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dc-bar{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.07)}
+.dc-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:rgba(243,239,233,.26)}   /* open: neutral; amber when soon, ember in the last blocks */
+.dc-bar>em{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--bg2)}   /* now */
+.dc-scale{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 10px;font:11px/1.4 var(--font-m);color:var(--ink3);font-variant-numeric:tabular-nums}
+.dc-rule{grid-area:rule;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink2)}
+.dc-chk{display:flex;align-items:center;gap:8px;font:13px var(--font-m);color:var(--ink3)}.dc-chk .spin{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:pulse .8s ease-in-out infinite alternate}
+.dcard.s-checking{border-style:dashed}
+.dcard.s-soon{--dc:var(--ember2);border-color:rgba(255,181,71,.35);background:linear-gradient(135deg,rgba(255,181,71,.08),rgba(255,181,71,.02))}
+.dcard.s-soon .dc-lbl .fi{background:color-mix(in srgb,var(--ember2) 22%,var(--bg));color:var(--ember2)}
+.dcard.s-soon .dc-count{color:var(--ember2)}.dcard.s-soon .dc-bar>i{background:var(--ember2)}
+.dcard.s-soon .dc-bar>em{background:var(--ember2);box-shadow:0 0 0 3px var(--bg2),0 0 12px var(--ember2)}
+.dcard.s-last{--dc:#ff8c5c;border-color:rgba(255,106,26,.6);background:linear-gradient(135deg,rgba(255,106,26,.18),rgba(255,106,26,.05));box-shadow:0 16px 44px -30px rgba(255,106,26,.75)}
+.dcard.s-last .dc-count{color:var(--ember)}.dcard.s-last .dc-bar>i{background:linear-gradient(90deg,var(--ember2),var(--ember))}
+.dcard.s-last .dc-bar>em{background:var(--ember);animation:ping 2s cubic-bezier(.2,.6,.3,1) infinite}
+.dcard.s-last .dc-rule{color:var(--ink);border-top-color:rgba(255,106,26,.3)}
+/* closing, closed, final: a neutral strip, joined to the result banner under it */
+.dcard.band{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main fin";align-items:center;gap:8px 24px}
+.dc-sub{font-size:13px;color:var(--ink2)}
+.dc-fin{grid-area:fin;display:flex;align-items:center;gap:10px;font:12px var(--font-m);color:var(--ink2);white-space:nowrap}
+.dc-pips{display:inline-flex;gap:5px}.dc-pips i{width:8px;height:8px;border-radius:50%;border:1px solid var(--ink3)}.dc-pips i.on{background:var(--ink2);border-color:var(--ink2)}
+.dcard.band:has(+.hclosed:not([hidden])){margin-bottom:0;border-radius:16px 16px 0 0;border-bottom-style:dashed}
+.dcard.band:not([hidden])+.hclosed{border-top:0;border-radius:0 0 16px 16px}
+.dcard.band.s-final{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:12px;padding-bottom:12px}   /* final: one slim line, the block and the six pips (the pips under it when a phone is too narrow) */
+.hclosed{scroll-margin-top:76px}   /* "See the result": clear of the sticky nav */
+@media (prefers-reduced-motion:reduce){.dcard .dc-bar>em,.dc-chk .spin{animation:none}}
+@media (max-width:860px){   /* one column: the label with the close at its right, the count, the bar, its scale, the rule */
+  .dcard.ticking{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lbl when" "count count" "bar bar" "scale scale" "rule rule";row-gap:0;align-items:center}
+  .dcard.ticking :is(.dc-main,.dc-side){display:contents}
+  .dcard.ticking .dc-lbl{grid-area:lbl}.dcard.ticking .dc-when{grid-area:when;justify-self:end;text-align:right}.dcard.ticking .dc-count{grid-area:count;margin-top:6px}
+  .dcard.ticking .dc-bar{grid-area:bar;margin-top:12px}.dcard.ticking .dc-scale{grid-area:scale;margin-top:6px}.dcard.ticking .dc-scale span:only-child:not(.st0){margin-left:auto}.dcard.ticking .dc-rule{margin-top:12px}
+  .dcard.band{grid-template-columns:minmax(0,1fr);grid-template-areas:"main" "fin";gap:10px}
+}
+@media (max-width:480px){.dcard{padding:14px 16px}.dc-lbl{letter-spacing:.1em;white-space:nowrap}.dc-count{font-size:30px}.dcard.s-open .dc-count{font-size:28px}.dc-count .ap{font-size:18px}.dc-count i{margin-right:10px}.dc-when{font-size:13px}}
+@media (max-width:360px){.dcard.ticking{grid-template-areas:"lbl lbl" "when when" "count count" "bar bar" "scale scale" "rule rule"}.dcard.ticking .dc-when{justify-self:start;text-align:left;margin-top:4px}}   /* the narrowest phones: the close on its own row, under the label ("CLOSING SOON" and "≈ Mon 12:00 AM" do not fit one) */
 .thead-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .hactions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .btn.act{gap:6px;color:var(--ink2);min-height:36px;padding:6px 11px}
@@ -416,8 +485,6 @@ nav .pill,.logo{white-space:nowrap}
 .hmeta{display:flex;flex-wrap:wrap;gap:6px}
 .hmeta:empty,.hmeta:not(:has(.badge:not([hidden]))){display:none}
 .badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:3px 10px;font-family:var(--font-m);font-size:11px;letter-spacing:.04em;border:1px solid var(--line);background:var(--panel);color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
-.badge.live{color:var(--ember2);border-color:rgba(255,181,71,.35);background:rgba(255,106,26,.08)}
-.badge.live.done{color:var(--ink2);border-color:var(--line);background:var(--panel)}
 .badge.feat{color:#ffd88a;border-color:rgba(255,216,138,.4);background:linear-gradient(135deg,rgba(255,181,71,.16),rgba(255,106,26,.06))}
 /* top burners under the board */
 .burners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 40px;margin-top:18px;align-items:start}   /* topic page: [biggest burns] | [latest burns, top burners], stacked up to tablet */
@@ -433,10 +500,11 @@ nav .pill,.logo{white-space:nowrap}
 .pill.ballot:hover{color:var(--ink);border-color:rgba(255,181,71,.7)}
 .blist{display:grid;gap:8px;margin-top:8px}
 .bent{display:grid;grid-template-columns:28px auto minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:14px}
-.bent .topic{font-family:var(--font-m);font-size:11px;color:var(--ember2);white-space:nowrap}
+.bent .topic{font-family:var(--font-m);font-size:11px;color:var(--ember2);white-space:normal;overflow-wrap:anywhere;min-width:0}   /* a long topic label wraps in its row, never runs past the dialog */
 .bent .stmt{min-width:0;overflow-wrap:anywhere}.bent .stmt i{color:var(--ink3)}
 .bent b{font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap}.bent b small{font-family:var(--font-m);font-weight:400;font-size:10px;color:var(--ink3)}
 .bent.sent{border-style:dashed;opacity:.75}
+.bent.tipr{grid-template-columns:28px minmax(0,1fr) auto auto}   /* the batch's tip: no topic cell */
 #b-outs .kv{grid-template-columns:100px 1fr auto}
 /* toast */
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:40;pointer-events:none;background:var(--bg2);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:9px 16px;font-family:var(--font-m);font-size:12px;color:var(--ink);box-shadow:0 18px 40px -12px rgba(255,106,26,.45),0 10px 30px rgba(0,0,0,.5);transition:transform .25s ease,opacity .25s ease;max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -459,7 +527,6 @@ nav .pill,.logo{white-space:nowrap}
   #tipcard .source>div:last-child{justify-content:stretch}#tipbtn{width:100%;justify-content:center;min-height:48px}
   details.tech summary{max-width:100%}
   .wbal b{font-size:20px}.wbal .mono{font-size:12px}#w-refresh{margin-left:auto}
-  #w-create{order:1}
   #w-backupbox,#w-forgetbox{scroll-margin-bottom:200px}   /* scrollIntoView(nearest) clears the sticky footer */
   dialog .dlg{padding-bottom:0}dialog .dlgfoot{margin-bottom:0}   /* every dialog: the sticky footer ends at the real bottom edge, so it never rides up over the last content (it did by 8px on the batch Review tiles) */
   .seg button{min-height:40px}.btn.sm{min-height:40px}.btn.icon,.sec-head .btn.icon{width:40px;min-height:40px}.field label.ck{min-height:40px;padding:6px 0}.field label input[type=checkbox]{width:22px;height:22px}details.tech summary{min-height:40px;align-items:center;padding:8px 6px}.linkbtn{padding:10px 6px;margin-block:-8px}.stepper button{min-height:40px;padding:6px 8px}.field input[type=range]{height:44px;-webkit-appearance:none;appearance:none}.field input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}.field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:var(--ember);box-shadow:0 0 10px rgba(255,106,26,.6)}.field input[type=range]::-moz-range-thumb{width:26px;height:26px;border:0;border-radius:50%;background:var(--ember)}
@@ -471,7 +538,8 @@ nav .pill,.logo{white-space:nowrap}
   .hactions{gap:4px;margin-left:auto}.btn.act{width:40px;padding:0;justify-content:center;min-height:40px}.btn.act .lbl{display:none}
   .thead .titlerow h2{font-size:20px}
   .badge{font-size:12px;padding:5px 10px}
-  .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent>span.mono{grid-area:r;justify-self:end}
+  .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent [data-btip],.bent>span.mono{grid-area:r;justify-self:end}.bent.tipr{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i s s" "i b r"}
+  .bent .topic{white-space:normal;overflow-wrap:anywhere;min-width:0}.bent .tl2{display:block}   /* a topic's rules (closes ≈ …) on their own line: the row never runs past the dialog */
   #b-outs .kv{grid-template-columns:1fr auto}
   nav .pill.ballot{padding:3px 8px}
 }
@@ -539,13 +607,14 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .stepper li[hidden]+li::before{display:none}   /* a skipped first step (featuring) leaves no dangling connector */
 .thead-txt .status{margin-top:0}
 /* topic header: kind, title and the actions at its right on desktop; on phones the actions take their own row under the badges */
-#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "slug slug" "status status" "meta meta" "tleft tleft" "rule rule" "twins twins";column-gap:20px}
-#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}#board .thead-txt>.slug{grid-area:slug}#board .thead-txt>.tleft{grid-area:tleft}#board .thead-txt>.hrule{grid-area:rule}#board .thead-txt>.twins{grid-area:twins}
+#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "slug slug" "status status" "meta meta" "rule rule" "twins twins";column-gap:20px;row-gap:0}   /* no row gap: a hidden row (badges, rule, twins) would still add one; the items' margins space the rows */
+#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}#board .thead-txt>.slug{grid-area:slug}#board .thead-txt>.hrule{grid-area:rule}#board .thead-txt>.twins{grid-area:twins}
+#board .thead-txt>:not(.eyebrow){margin-top:10px}#board .thead-txt>.slug{margin-top:6px}
 .slug{font-family:var(--font-m);font-size:12px;color:var(--ink3);overflow-wrap:anywhere;margin-top:-4px}   /* the topic's name, exactly: the heading above only reads it out */
 .titlerow .folder{color:var(--ink2);border-bottom:1px dashed var(--ink3)}.titlerow .folder:hover{color:var(--ember2)}
-.tleft{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;max-width:420px}.tleft i{display:block;height:100%;background:var(--ember2)}
 .hrule{margin:0;font-size:13px;color:var(--ink2)}
 .tactions{grid-area:actions;align-self:end;display:flex;gap:8px;align-items:center;justify-content:flex-end}
+#board .tactions:not(:has(>:not([hidden]))){display:none}   /* phones: Sponsor moved to the top row, no empty row left under the status */
 /* standings head: what the board totals, the window at its right, then the search */
 .standings{display:grid;gap:10px;margin-bottom:14px}
 .stand-head{display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
@@ -553,7 +622,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 .quietbox{padding:18px}
 @media (max-width:860px){
-  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "slug" "status" "meta" "tleft" "rule" "twins" "actions"}
+  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "slug" "status" "meta" "rule" "twins" "actions"}
   .tactions{justify-content:flex-start}.tactions .btn{min-height:44px}
 }
 @media (max-width:480px){ #board{padding-top:14px} .stand-head .seg button{padding:6px 9px} }   /* phones: the window stays a compact pill on the standings line */
@@ -565,6 +634,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .fi.feature,.fr.feature .fi{background:color-mix(in srgb,#ffd88a 20%,var(--bg));color:#ffd88a}
 .fi.burner,.fr.burner .fi{background:color-mix(in srgb,#7a91b0 26%,var(--bg));color:#c3d1e2}
 .fi.reg,.fr.reg .fi{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
+.fi.tip{background:color-mix(in srgb,var(--ok) 20%,var(--bg));color:var(--ok)}   /* a tip: it arrives, nothing burns */
 .fi.top{background:color-mix(in srgb,#ff3b30 24%,var(--bg));color:#ff8f7a}   /* most burned: hotter than a take */
 .fi.sm{width:20px;height:20px;font-size:11px}.fi.sm svg{width:12px;height:12px}
 .fr .fi{grid-area:i;align-self:start;position:relative;z-index:1;box-shadow:0 0 0 4px var(--bg)}
@@ -584,7 +654,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 /* the dialogs' primary action from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch, upward from the footer */
 .signwrap .netmenu{top:auto;bottom:calc(100% + 6px);min-width:100%}
 .signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
-@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
+@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}.signwrap .netmenu button{white-space:normal}}   /* a phone: the menu is the footer's width, a long item wraps instead of running past it */
 .wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
 #vpay .wsum,#spay .wsum,#tpay .wsum,#bpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
 .eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
@@ -711,6 +781,16 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .efwarn{margin:0;display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid rgba(255,140,92,.32);border-radius:12px;background:rgba(255,140,92,.07);font-size:13px;line-height:1.45;color:#ff8c5c}   /* late, off the list, under the minimum: said as a callout */
 .efwarn svg{flex:none;width:15px;height:15px;margin-top:2px}
 #leadnote{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}#leadnote[hidden]{display:none}   /* the amount view: the card's action under the chips */
+/* short of funds (fundsHtml, walletui.js): what the transaction needs, what the wallet holds, what is missing, one way to add it; the bar: held (light) against missing (the callout's tint) */
+.funds{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px 12px;padding:12px 14px;border:1px solid rgba(255,140,92,.32);border-radius:14px;background:rgba(255,140,92,.07)}
+.funds>.fi{align-self:start;background:color-mix(in srgb,#ff8c5c 20%,var(--bg));color:#ff8c5c}
+.funds>p{margin:0;min-width:0;display:grid;gap:2px}.funds>p>b{font:600 15px/1.3 var(--font-d);letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums;text-wrap:balance}.funds>p>span{font-size:13px;line-height:1.45;color:var(--ink2);text-wrap:pretty;font-variant-numeric:tabular-nums}
+.funds>.efgo{grid-column:3;grid-row:1}.fundsbar{grid-column:2/-1;display:flex;height:4px;border-radius:2px;overflow:hidden;background:rgba(255,140,92,.3)}.fundsbar>i{background:var(--ink2)}
+.wpay .funds{margin-top:8px}.fundshost{margin-top:14px}
+@media (max-width:480px){.funds{grid-template-columns:28px minmax(0,1fr)}.funds>.efgo{grid-column:2;grid-row:auto;justify-self:start}}   /* phone: the action under the bar */
+/* amount chips the wallet cannot pay (amountChips): off; the chosen one and the lowest stay, in the callout's tint; the note under them says what fits */
+.seg button.over:not(:disabled){color:#ff8c5c}.seg:has(>button.over[aria-pressed="true"])>.thumb{background:rgba(255,140,92,.14)}.amtcustom input.over{border-color:rgba(255,140,92,.55)}
+.note.capnote{margin:-2px 0 0;font-variant-numeric:tabular-nums}.amtcustom:not([hidden])+.capnote{margin-top:8px}.capnote .linkbtn{font-size:12px}
 .mini{position:relative;display:flex;height:16px;border-radius:5px;overflow:hidden;background:linear-gradient(90deg,var(--side-b2),var(--side-b))}.mini i.a{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2))}.mini i.b{flex:1}
 .mini .proj{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
 .choice .btn small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);margin-top:2px}.choice .btn{flex-direction:column;gap:0}

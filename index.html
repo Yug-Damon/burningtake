@@ -153,7 +153,6 @@ details.tech .out{margin-top:6px}
   dialog .dlg>h3{font-size:16px;overflow-wrap:anywhere}
   .dlgfoot .btn.ghost{margin-top:4px;min-height:40px}
   .wpay .qrow>.note{flex-basis:100%;margin-top:2px}
-  .wledger>.btn{flex:1 1 100%;justify-content:center;min-height:44px}.wledger>.note{flex-basis:100%;margin-top:2px}
   dialog .copy{min-height:40px;padding:0 12px} dialog h3 .copy{min-width:40px;min-height:40px} #walletdlg .seg button{min-height:40px} dialog .btn.sm{min-height:40px}
   dialog .ef{padding:12px}dialog .efgo{min-height:40px}.efnotes span>.linkbtn:first-child{margin-left:-6px}.ef .efgo,.efnotes .linkbtn,#leadnote button{scroll-margin-bottom:200px}   /* phone: the linkbtn's 6px touch padding would push a note's first link off the icon column; a focused action scrolls clear of the sticky footer */
 }
@@ -254,7 +253,7 @@ section{padding-block:64px}
 .hist div{height:100%;display:flex;align-items:end;background:rgba(255,255,255,.03);border-radius:6px}
 .hist i{display:block;width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--ember2),var(--ember));min-height:2px;position:relative}
 .hist i b{position:absolute;bottom:100%;left:50%;transform:translate(-50%,-2px);font:500 10px var(--font-m);color:var(--ink2);white-space:nowrap}
-.histempty{grid-column:1/-1;align-self:center;text-align:center;margin:0;color:var(--ink3);font-size:13px}
+.histempty{grid-column:1/-1;align-self:center;text-align:center;margin:0;color:var(--ink3);font-size:13px}.histempty:empty{display:none}   /* closed with nothing to say: the axis alone */
 .hist-ticks{position:relative;height:16px}.hist-ticks i{position:absolute;top:0;transform:translateX(-50%);font:normal 10px/1 var(--font-m);color:var(--ember2);white-space:nowrap;padding-top:6px}
 .hist-ticks i::before{content:"";position:absolute;top:0;left:50%;width:1px;height:5px;background:var(--ember2)}
 .hist-axis{display:flex;justify-content:space-between;font-family:var(--font-m);font-size:11px;color:var(--ink3)}
@@ -369,11 +368,34 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .wsum div,.wdonesum div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .wsum b,.wdonesum b{display:block;font-family:var(--font-d);font-weight:600;font-size:16px;color:var(--ember2);font-variant-numeric:tabular-nums}
 .wsum span,.wdonesum span{font-family:var(--font-m);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
-.wledger{margin-top:8px}.wledger>.note{margin:0;font-size:11px;color:var(--ink3);line-height:1.4}#w-none .divider{margin-top:16px}
 .wbox{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,140,92,.35);border-radius:12px;background:rgba(255,106,26,.06)}
 #w-forgetok{min-height:40px;padding-inline:16px}
 #w-forgetok:not(:disabled){background:#ff5c5c;color:#1a0000;border:0}
-#w-none:has(#w-restorebox:not([hidden])) #w-create{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+/* Connect a wallet (#w-none): the three ways as radio cards; the picked one opens its form; the footer's one primary follows the pick */
+.wwait{display:flex;align-items:center;gap:12px;margin-top:10px}   /* a dialog waits on this wallet: what it keeps, what the wallet will need (context, not a choice: no box) */
+.wwait p{margin:0;display:grid;gap:1px;font-size:13px;line-height:1.4;color:var(--ink2);text-wrap:pretty}.wwait b{color:var(--ink);font-weight:600}
+.wopts{display:grid;gap:8px;margin:14px 0 0;padding:0;border:0;min-width:0}
+.wopt{border:1px solid var(--line);border-radius:14px;background:var(--bg);transition:border-color .15s,background-color .15s}
+.wopt:not(.off):not(:has(:checked)):hover{border-color:rgba(255,255,255,.2)}
+.wopt:has(:checked){border-color:rgba(255,181,71,.5);background:color-mix(in srgb,var(--ember) 6%,var(--bg))}
+.wopt:has(>.wopth>input:focus-visible){outline:2px solid var(--ember2);outline-offset:2px}   /* the radio's keyboard ring goes round its whole card */
+.wopth{display:grid;grid-template-columns:28px minmax(0,1fr) 20px;grid-template-areas:"i t r" "i d r";gap:2px 12px;align-items:center;padding:12px 14px;cursor:pointer}
+.wopth .fi{grid-area:i;align-self:start;background:color-mix(in srgb,var(--ink) 10%,var(--bg));color:var(--ink2);transition:.15s}
+.wopt:has(:checked) .fi{background:color-mix(in srgb,var(--ember) 24%,var(--bg));color:var(--ember2)}   /* the picked way takes the ember */
+.wot{grid-area:t;display:flex;align-items:baseline;flex-wrap:wrap;gap:0 10px}.wot b{font-size:15px;font-weight:600;color:var(--ink)}
+.wot em{font-style:normal;font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ember2)}
+.wod{grid-area:d;font-size:13px;line-height:1.45;color:var(--ink2);text-wrap:pretty}
+.wopth input{grid-area:r;appearance:none;-webkit-appearance:none;margin:0;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--ink3);display:grid;place-items:center;cursor:pointer;outline:0}
+.wopth input::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--ember2);box-shadow:0 0 8px var(--ember2);transform:scale(0);transition:transform .15s}
+.wopth input:checked{border-color:var(--ember2)}.wopth input:checked::before{transform:scale(1)}
+.wopt.off .wopth{cursor:default}.wopt.off .wot,.wopt.off .fi{opacity:.5}.wopt.off .wod{color:var(--ink3)}.wopt.off input{visibility:hidden}   /* not in this browser: said, not pickable; the reason stays readable */
+.wob{padding:0 14px 14px 54px}.wob>.note{margin:0}.wob>.note+.note,.wob>details+.note{margin-top:8px}.wob .note{text-wrap:pretty}   /* the picked way's form, under its words */
+.wob textarea{display:block;font-size:14px;resize:vertical}.wob textarea+.note{margin-top:8px}   /* rejected words: the reason under the box */
+.wob details.tech{display:block}.wob>details.tech:first-child{margin-top:-6px}.wob textarea~details.tech{margin-top:4px}.wob details.tech:not([open]){margin-bottom:-6px}   /* a closed fold: the card's bottom matches its top */
+.wob details.tech .field{margin:2px 0 0}.wob details.tech .note{margin-top:6px}
+#w-newnet{margin:0}   /* the network, at the footer's left where the other dialogs put the price */
+@media (max-width:480px){.wopth{grid-template-areas:"i t r" "i d d"}.wob{padding-left:14px}#w-newnet{order:9;text-align:center}}   /* phones: the radio stays on the title's row so the line under it gets the width; the forms take the card's width; the network sits over the stacked primary */
+@media (prefers-reduced-motion:reduce){.wopt,.wopth .fi,.wopth input::before{transition:none}}
 /* the wallet, ready: a balance card, then a receive card */
 .wlabel{font-family:var(--font-m);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
 .wbalcard{display:grid;gap:4px;margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
@@ -407,14 +429,61 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .netmenu button:hover,.netmenu button:focus-visible{background:rgba(255,255,255,.06);color:var(--ink)}
 .netmenu button[aria-checked="true"]{color:var(--ink)}
 .netmenu button[aria-checked="true"]::before{background:var(--ember2);border-color:var(--ember2);box-shadow:0 0 8px var(--ember2)}
+.netmenu button:disabled{opacity:.6;cursor:default}.netmenu button:disabled:hover{background:none;color:var(--ink2)}   /* an item that cannot run yet, its reason still readable ("Add to batch · add a burn first") */
+.netmenu button[aria-disabled="true"]{opacity:.8;cursor:default}.netmenu button[aria-disabled="true"]:hover:not(:focus-visible){background:none;color:var(--ink2)}   /* the same, still focusable (signMenu's Add to batch): about 5:1, and the arrow keys reach it */
 nav .pill,.logo{white-space:nowrap}
 @media (max-width:480px){nav .wrap{gap:10px}.logo{font-size:14px}.logo i{width:22px;height:22px}nav .pill{padding:3px 8px;font-size:11px}.pill.net{padding:3px 7px}nav .pill{min-height:40px}.navchips{min-width:0;gap:6px}.pill.wallet{min-width:0}.pill.wallet::after{display:none}.pill.wallet .mono{min-width:0;overflow:hidden;text-overflow:ellipsis}.netmenu button{min-height:44px}}
 
-/* ===== topic header: kind, title, badges, live countdown, actions ===== */
+/* ===== topic header: kind, title, badges, actions; under it the deadline card (.dcard) and the result banner ===== */
 .thead{position:relative;padding:0;margin-bottom:18px;display:grid;gap:14px}   /* a header, not a card: no border, no fill */
 .hclosed{margin:0 0 18px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}   /* a closed topic's result, said once at the top */
 .hclosed .verdict{margin:0;font:600 clamp(18px,2.6vw,24px)/1.25 var(--font-d);letter-spacing:-.01em;overflow-wrap:anywhere}.hclosed .vnote{margin:0;font-size:12.5px;color:var(--ink3)}
 .hclosed .vacts{display:flex;gap:8px;flex-wrap:wrap}
+/* the deadline: its own card under the header. Calm while open, amber when closing soon, ember and live in the last blocks, then a neutral strip joined to the result banner under it (slim once final) */
+.dcard{--dc:var(--ink2);display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"main side" "rule rule";gap:12px 48px;align-items:end;margin:0 0 18px;padding:16px 20px;border:1px solid var(--line);border-radius:16px;background:var(--panel);scroll-margin-top:76px}
+.dcard p{margin:0}
+.dc-main{grid-area:main;display:grid;gap:6px;min-width:0}.dc-side{grid-area:side;display:grid;gap:8px;min-width:0}
+.dc-lbl{display:flex;align-items:center;gap:8px;min-height:20px;font:500 11px/1.4 var(--font-m);letter-spacing:.12em;text-transform:uppercase;color:var(--dc)}
+.dc-lbl .fi{background:color-mix(in srgb,var(--ink) 10%,var(--bg));color:var(--ink2)}
+.dc-count{display:flex;align-items:baseline;flex-wrap:wrap;font:600 40px/1.05 var(--font-d);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dc-count i{font:500 12px/1 var(--font-m);font-style:normal;letter-spacing:.02em;color:var(--ink3);margin:0 14px 0 5px}.dc-count i:last-child{margin-right:0}
+.dc-count .ap{font:400 22px/1 var(--font-d);color:var(--ink3);margin-right:6px}
+.dcard.s-open .dc-count{font-size:32px}   /* calm while open: the count grows as the close nears */
+.dc-when{font:600 15px/1.3 var(--font-d);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dc-bar{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.07)}
+.dc-bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:rgba(243,239,233,.26)}   /* open: neutral; amber when soon, ember in the last blocks */
+.dc-bar>em{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px var(--bg2)}   /* now */
+.dc-scale{display:flex;justify-content:space-between;flex-wrap:wrap;gap:2px 10px;font:11px/1.4 var(--font-m);color:var(--ink3);font-variant-numeric:tabular-nums}
+.dc-rule{grid-area:rule;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--ink2)}
+.dc-chk{display:flex;align-items:center;gap:8px;font:13px var(--font-m);color:var(--ink3)}.dc-chk .spin{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:pulse .8s ease-in-out infinite alternate}
+.dcard.s-checking{border-style:dashed}
+.dcard.s-soon{--dc:var(--ember2);border-color:rgba(255,181,71,.35);background:linear-gradient(135deg,rgba(255,181,71,.08),rgba(255,181,71,.02))}
+.dcard.s-soon .dc-lbl .fi{background:color-mix(in srgb,var(--ember2) 22%,var(--bg));color:var(--ember2)}
+.dcard.s-soon .dc-count{color:var(--ember2)}.dcard.s-soon .dc-bar>i{background:var(--ember2)}
+.dcard.s-soon .dc-bar>em{background:var(--ember2);box-shadow:0 0 0 3px var(--bg2),0 0 12px var(--ember2)}
+.dcard.s-last{--dc:#ff8c5c;border-color:rgba(255,106,26,.6);background:linear-gradient(135deg,rgba(255,106,26,.18),rgba(255,106,26,.05));box-shadow:0 16px 44px -30px rgba(255,106,26,.75)}
+.dcard.s-last .dc-count{color:var(--ember)}.dcard.s-last .dc-bar>i{background:linear-gradient(90deg,var(--ember2),var(--ember))}
+.dcard.s-last .dc-bar>em{background:var(--ember);animation:ping 2s cubic-bezier(.2,.6,.3,1) infinite}
+.dcard.s-last .dc-rule{color:var(--ink);border-top-color:rgba(255,106,26,.3)}
+/* closing, closed, final: a neutral strip, joined to the result banner under it */
+.dcard.band{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main fin";align-items:center;gap:8px 24px}
+.dc-sub{font-size:13px;color:var(--ink2)}
+.dc-fin{grid-area:fin;display:flex;align-items:center;gap:10px;font:12px var(--font-m);color:var(--ink2);white-space:nowrap}
+.dc-pips{display:inline-flex;gap:5px}.dc-pips i{width:8px;height:8px;border-radius:50%;border:1px solid var(--ink3)}.dc-pips i.on{background:var(--ink2);border-color:var(--ink2)}
+.dcard.band:has(+.hclosed:not([hidden])){margin-bottom:0;border-radius:16px 16px 0 0;border-bottom-style:dashed}
+.dcard.band:not([hidden])+.hclosed{border-top:0;border-radius:0 0 16px 16px}
+.dcard.band.s-final{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:12px;padding-bottom:12px}   /* final: one slim line, the block and the six pips (the pips under it when a phone is too narrow) */
+.hclosed{scroll-margin-top:76px}   /* "See the result": clear of the sticky nav */
+@media (prefers-reduced-motion:reduce){.dcard .dc-bar>em,.dc-chk .spin{animation:none}}
+@media (max-width:860px){   /* one column: the label with the close at its right, the count, the bar, its scale, the rule */
+  .dcard.ticking{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"lbl when" "count count" "bar bar" "scale scale" "rule rule";row-gap:0;align-items:center}
+  .dcard.ticking :is(.dc-main,.dc-side){display:contents}
+  .dcard.ticking .dc-lbl{grid-area:lbl}.dcard.ticking .dc-when{grid-area:when;justify-self:end;text-align:right}.dcard.ticking .dc-count{grid-area:count;margin-top:6px}
+  .dcard.ticking .dc-bar{grid-area:bar;margin-top:12px}.dcard.ticking .dc-scale{grid-area:scale;margin-top:6px}.dcard.ticking .dc-scale span:only-child:not(.st0){margin-left:auto}.dcard.ticking .dc-rule{margin-top:12px}
+  .dcard.band{grid-template-columns:minmax(0,1fr);grid-template-areas:"main" "fin";gap:10px}
+}
+@media (max-width:480px){.dcard{padding:14px 16px}.dc-lbl{letter-spacing:.1em;white-space:nowrap}.dc-count{font-size:30px}.dcard.s-open .dc-count{font-size:28px}.dc-count .ap{font-size:18px}.dc-count i{margin-right:10px}.dc-when{font-size:13px}}
+@media (max-width:360px){.dcard.ticking{grid-template-areas:"lbl lbl" "when when" "count count" "bar bar" "scale scale" "rule rule"}.dcard.ticking .dc-when{justify-self:start;text-align:left;margin-top:4px}}   /* the narrowest phones: the close on its own row, under the label ("CLOSING SOON" and "≈ Mon 12:00 AM" do not fit one) */
 .thead-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .hactions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .btn.act{gap:6px;color:var(--ink2);min-height:36px;padding:6px 11px}
@@ -429,8 +498,6 @@ nav .pill,.logo{white-space:nowrap}
 .hmeta{display:flex;flex-wrap:wrap;gap:6px}
 .hmeta:empty,.hmeta:not(:has(.badge:not([hidden]))){display:none}
 .badge{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:3px 10px;font-family:var(--font-m);font-size:11px;letter-spacing:.04em;border:1px solid var(--line);background:var(--panel);color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
-.badge.live{color:var(--ember2);border-color:rgba(255,181,71,.35);background:rgba(255,106,26,.08)}
-.badge.live.done{color:var(--ink2);border-color:var(--line);background:var(--panel)}
 .badge.feat{color:#ffd88a;border-color:rgba(255,216,138,.4);background:linear-gradient(135deg,rgba(255,181,71,.16),rgba(255,106,26,.06))}
 /* top burners under the board */
 .burners{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px 40px;margin-top:18px;align-items:start}   /* topic page: [biggest burns] | [latest burns, top burners], stacked up to tablet */
@@ -446,10 +513,11 @@ nav .pill,.logo{white-space:nowrap}
 .pill.ballot:hover{color:var(--ink);border-color:rgba(255,181,71,.7)}
 .blist{display:grid;gap:8px;margin-top:8px}
 .bent{display:grid;grid-template-columns:28px auto minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:14px}
-.bent .topic{font-family:var(--font-m);font-size:11px;color:var(--ember2);white-space:nowrap}
+.bent .topic{font-family:var(--font-m);font-size:11px;color:var(--ember2);white-space:normal;overflow-wrap:anywhere;min-width:0}   /* a long topic label wraps in its row, never runs past the dialog */
 .bent .stmt{min-width:0;overflow-wrap:anywhere}.bent .stmt i{color:var(--ink3)}
 .bent b{font-family:var(--font-d);font-weight:600;font-size:13px;color:var(--ink);white-space:nowrap}.bent b small{font-family:var(--font-m);font-weight:400;font-size:10px;color:var(--ink3)}
 .bent.sent{border-style:dashed;opacity:.75}
+.bent.tipr{grid-template-columns:28px minmax(0,1fr) auto auto}   /* the batch's tip: no topic cell */
 #b-outs .kv{grid-template-columns:100px 1fr auto}
 /* toast */
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translate(-50%,16px);opacity:0;z-index:40;pointer-events:none;background:var(--bg2);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:9px 16px;font-family:var(--font-m);font-size:12px;color:var(--ink);box-shadow:0 18px 40px -12px rgba(255,106,26,.45),0 10px 30px rgba(0,0,0,.5);transition:transform .25s ease,opacity .25s ease;max-width:calc(100% - 32px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -472,7 +540,6 @@ nav .pill,.logo{white-space:nowrap}
   #tipcard .source>div:last-child{justify-content:stretch}#tipbtn{width:100%;justify-content:center;min-height:48px}
   details.tech summary{max-width:100%}
   .wbal b{font-size:20px}.wbal .mono{font-size:12px}#w-refresh{margin-left:auto}
-  #w-create{order:1}
   #w-backupbox,#w-forgetbox{scroll-margin-bottom:200px}   /* scrollIntoView(nearest) clears the sticky footer */
   dialog .dlg{padding-bottom:0}dialog .dlgfoot{margin-bottom:0}   /* every dialog: the sticky footer ends at the real bottom edge, so it never rides up over the last content (it did by 8px on the batch Review tiles) */
   .seg button{min-height:40px}.btn.sm{min-height:40px}.btn.icon,.sec-head .btn.icon{width:40px;min-height:40px}.field label.ck{min-height:40px;padding:6px 0}.field label input[type=checkbox]{width:22px;height:22px}details.tech summary{min-height:40px;align-items:center;padding:8px 6px}.linkbtn{padding:10px 6px;margin-block:-8px}.stepper button{min-height:40px;padding:6px 8px}.field input[type=range]{height:44px;-webkit-appearance:none;appearance:none}.field input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}.field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-10px;border-radius:50%;background:var(--ember);box-shadow:0 0 10px rgba(255,106,26,.6)}.field input[type=range]::-moz-range-thumb{width:26px;height:26px;border:0;border-radius:50%;background:var(--ember)}
@@ -484,7 +551,8 @@ nav .pill,.logo{white-space:nowrap}
   .hactions{gap:4px;margin-left:auto}.btn.act{width:40px;padding:0;justify-content:center;min-height:40px}.btn.act .lbl{display:none}
   .thead .titlerow h2{font-size:20px}
   .badge{font-size:12px;padding:5px 10px}
-  .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent>span.mono{grid-area:r;justify-self:end}
+  .bent{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i t t" "i s s" "i b r"}.bent .fi{grid-area:i;align-self:start}.bent .topic{grid-area:t}.bent .stmt{grid-area:s}.bent b{grid-area:b}.bent [data-brm],.bent [data-btip],.bent>span.mono{grid-area:r;justify-self:end}.bent.tipr{grid-template-columns:28px minmax(0,1fr) auto;grid-template-areas:"i s s" "i b r"}
+  .bent .topic{white-space:normal;overflow-wrap:anywhere;min-width:0}.bent .tl2{display:block}   /* a topic's rules (closes ≈ …) on their own line: the row never runs past the dialog */
   #b-outs .kv{grid-template-columns:1fr auto}
   nav .pill.ballot{padding:3px 8px}
 }
@@ -552,13 +620,14 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .stepper li[hidden]+li::before{display:none}   /* a skipped first step (featuring) leaves no dangling connector */
 .thead-txt .status{margin-top:0}
 /* topic header: kind, title and the actions at its right on desktop; on phones the actions take their own row under the badges */
-#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "slug slug" "status status" "meta meta" "tleft tleft" "rule rule" "twins twins";column-gap:20px}
-#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}#board .thead-txt>.slug{grid-area:slug}#board .thead-txt>.tleft{grid-area:tleft}#board .thead-txt>.hrule{grid-area:rule}#board .thead-txt>.twins{grid-area:twins}
+#board .thead-txt{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"eyebrow eyebrow" "title actions" "slug slug" "status status" "meta meta" "rule rule" "twins twins";column-gap:20px;row-gap:0}   /* no row gap: a hidden row (badges, rule, twins) would still add one; the items' margins space the rows */
+#board .thead-txt>.eyebrow{grid-area:eyebrow}#board .thead-txt>.titlerow{grid-area:title}#board .thead-txt>.status{grid-area:status}#board .thead-txt>.hmeta{grid-area:meta}#board .thead-txt>.slug{grid-area:slug}#board .thead-txt>.hrule{grid-area:rule}#board .thead-txt>.twins{grid-area:twins}
+#board .thead-txt>:not(.eyebrow){margin-top:10px}#board .thead-txt>.slug{margin-top:6px}
 .slug{font-family:var(--font-m);font-size:12px;color:var(--ink3);overflow-wrap:anywhere;margin-top:-4px}   /* the topic's name, exactly: the heading above only reads it out */
 .titlerow .folder{color:var(--ink2);border-bottom:1px dashed var(--ink3)}.titlerow .folder:hover{color:var(--ember2)}
-.tleft{height:3px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;max-width:420px}.tleft i{display:block;height:100%;background:var(--ember2)}
 .hrule{margin:0;font-size:13px;color:var(--ink2)}
 .tactions{grid-area:actions;align-self:end;display:flex;gap:8px;align-items:center;justify-content:flex-end}
+#board .tactions:not(:has(>:not([hidden]))){display:none}   /* phones: Sponsor moved to the top row, no empty row left under the status */
 /* standings head: what the board totals, the window at its right, then the search */
 .standings{display:grid;gap:10px;margin-bottom:14px}
 .stand-head{display:flex;align-items:center;justify-content:space-between;gap:10px 20px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
@@ -566,7 +635,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 
 .quietbox{padding:18px}
 @media (max-width:860px){
-  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "slug" "status" "meta" "tleft" "rule" "twins" "actions"}
+  #board .thead-txt{grid-template-columns:minmax(0,1fr);grid-template-areas:"eyebrow" "title" "slug" "status" "meta" "rule" "twins" "actions"}
   .tactions{justify-content:flex-start}.tactions .btn{min-height:44px}
 }
 @media (max-width:480px){ #board{padding-top:14px} .stand-head .seg button{padding:6px 9px} }   /* phones: the window stays a compact pill on the standings line */
@@ -578,6 +647,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .fi.feature,.fr.feature .fi{background:color-mix(in srgb,#ffd88a 20%,var(--bg));color:#ffd88a}
 .fi.burner,.fr.burner .fi{background:color-mix(in srgb,#7a91b0 26%,var(--bg));color:#c3d1e2}
 .fi.reg,.fr.reg .fi{background:color-mix(in srgb,var(--ink) 12%,var(--bg));color:var(--ink2)}
+.fi.tip{background:color-mix(in srgb,var(--ok) 20%,var(--bg));color:var(--ok)}   /* a tip: it arrives, nothing burns */
 .fi.top{background:color-mix(in srgb,#ff3b30 24%,var(--bg));color:#ff8f7a}   /* most burned: hotter than a take */
 .fi.sm{width:20px;height:20px;font-size:11px}.fi.sm svg{width:12px;height:12px}
 .fr .fi{grid-area:i;align-self:start;position:relative;z-index:1;box-shadow:0 0 0 4px var(--bg)}
@@ -597,7 +667,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 /* the dialogs' primary action from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch, upward from the footer */
 .signwrap .netmenu{top:auto;bottom:calc(100% + 6px);min-width:100%}
 .signwrap .netmenu button{white-space:nowrap}.signwrap .netmenu button::before{display:none}
-@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}}
+@media (max-width:480px){.dlgfoot .signwrap{display:flex}.dlgfoot .signwrap>.btn{flex:1}.signwrap .netmenu{left:0;right:0}.signwrap .netmenu button{white-space:normal}}   /* a phone: the menu is the footer's width, a long item wraps instead of running past it */
 .wpay .note:empty{display:none}   /* the wallet line only when it has something to say */
 #vpay .wsum,#spay .wsum,#tpay .wsum,#bpay .wsum,.pay.sent .adv,.pay.sent .wsum,.pay.sent .feeseg,.dlg:has(.pay.sent)>p.note,.dlg:has(.pay.sent)>.field,.wstep:has(.pay.sent)>p.note{display:none}   /* sent: the txid and View receipt, then Done */
 .eyerow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}   /* the burner page's eyebrow and its "This is your wallet" chip */
@@ -724,6 +794,16 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .efwarn{margin:0;display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid rgba(255,140,92,.32);border-radius:12px;background:rgba(255,140,92,.07);font-size:13px;line-height:1.45;color:#ff8c5c}   /* late, off the list, under the minimum: said as a callout */
 .efwarn svg{flex:none;width:15px;height:15px;margin-top:2px}
 #leadnote{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}#leadnote[hidden]{display:none}   /* the amount view: the card's action under the chips */
+/* short of funds (fundsHtml, walletui.js): what the transaction needs, what the wallet holds, what is missing, one way to add it; the bar: held (light) against missing (the callout's tint) */
+.funds{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px 12px;padding:12px 14px;border:1px solid rgba(255,140,92,.32);border-radius:14px;background:rgba(255,140,92,.07)}
+.funds>.fi{align-self:start;background:color-mix(in srgb,#ff8c5c 20%,var(--bg));color:#ff8c5c}
+.funds>p{margin:0;min-width:0;display:grid;gap:2px}.funds>p>b{font:600 15px/1.3 var(--font-d);letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums;text-wrap:balance}.funds>p>span{font-size:13px;line-height:1.45;color:var(--ink2);text-wrap:pretty;font-variant-numeric:tabular-nums}
+.funds>.efgo{grid-column:3;grid-row:1}.fundsbar{grid-column:2/-1;display:flex;height:4px;border-radius:2px;overflow:hidden;background:rgba(255,140,92,.3)}.fundsbar>i{background:var(--ink2)}
+.wpay .funds{margin-top:8px}.fundshost{margin-top:14px}
+@media (max-width:480px){.funds{grid-template-columns:28px minmax(0,1fr)}.funds>.efgo{grid-column:2;grid-row:auto;justify-self:start}}   /* phone: the action under the bar */
+/* amount chips the wallet cannot pay (amountChips): off; the chosen one and the lowest stay, in the callout's tint; the note under them says what fits */
+.seg button.over:not(:disabled){color:#ff8c5c}.seg:has(>button.over[aria-pressed="true"])>.thumb{background:rgba(255,140,92,.14)}.amtcustom input.over{border-color:rgba(255,140,92,.55)}
+.note.capnote{margin:-2px 0 0;font-variant-numeric:tabular-nums}.amtcustom:not([hidden])+.capnote{margin-top:8px}.capnote .linkbtn{font-size:12px}
 .mini{position:relative;display:flex;height:16px;border-radius:5px;overflow:hidden;background:linear-gradient(90deg,var(--side-b2),var(--side-b))}.mini i.a{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ember2))}.mini i.b{flex:1}
 .mini .proj{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 6px)}
 .choice .btn small{display:block;font-family:var(--font-m);font-weight:400;font-size:11px;color:var(--ink3);margin-top:2px}.choice .btn{flex-direction:column;gap:0}
@@ -936,6 +1016,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 <dialog id="tipdlg" hidden><div class="panel dlg">
   <h3>Send a tip <button class="copy" data-close="tipdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
   <p class="note" style="margin-top:4px;color:var(--ink2)">A normal payment to the project address. Nothing is burned.</p>
+  <div class="fundshost" id="tfunds" aria-live="polite" hidden></div>
   <section class="wstep" id="tstep-2" hidden>
     <div class="field">
       <label><span>Amount</span><span class="mono" id="tipdusd">≈ $5.00</span></label>
@@ -972,23 +1053,27 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   <h3><span id="w-title">Your wallet</span> <button class="copy" data-close="walletdlg" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h3>
 
   <section id="w-none">
-    <p class="note wintro">A small wallet that lives in this browser, for burning. The keys stay on this device, so fund it only with sats you plan to burn.</p>
-    <div class="field">
-      <label for="w-pass1"><span>Passphrase</span><span class="mono">optional</span></label>
-      <input id="w-pass1" type="password" autocomplete="new-password" placeholder="Leave empty for no passphrase" autofocus>
-      <p class="note" style="margin-top:6px">Encrypts the words in this browser (BIP39) and changes the address: you need it again to restore.</p>
-    </div>
-    <p class="note mono" id="w-newnet" style="margin:-4px 0 12px"></p>
-    <div class="field" id="w-restorebox" hidden>
-      <label for="w-restore"><span>12 or 24 words</span><span class="mono">any BIP39 wallet</span></label>
-      <textarea id="w-restore" rows="3" class="mono" autocomplete="off" spellcheck="false"></textarea>
-      <div class="qrow" style="margin-top:10px"><button type="button" class="btn primary" id="w-restoreok">Restore</button></div>
-    </div>
-    <div class="divider">or a hardware wallet</div>
-    <div class="qrow wledger"><button type="button" class="btn" id="w-ledger" aria-describedby="w-ledgerhint">Connect a Ledger</button><span class="note mono" id="w-ledgerhint"></span></div>
-    <p class="note err" id="w-ledgermsg" hidden role="alert"></p>
-    <p class="note err" id="w-createmsg" hidden></p>
-    <div class="dlgfoot" style="margin-top:14px"><button type="button" class="btn primary" id="w-create">Create wallet</button><button type="button" class="btn" id="w-restorebtn" aria-expanded="false" aria-controls="w-restorebox">I already have 12 words</button></div>
+    <div class="wwait" id="w-wait" hidden><span class="fi" id="w-waiticon" aria-hidden="true"></span><p><b id="w-waithead"></b><span id="w-waitnote"></span></p></div>
+    <fieldset class="wopts" id="w-opts"><legend class="vh">Choose a wallet</legend>
+      <div class="wopt">
+        <label class="wopth"><span class="fi" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V5a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2"/><path d="M3 6v12a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-3"/></svg></span><span class="wot" id="w-t-new"><b>New wallet in this browser</b><em>recommended</em></span><span class="wod" id="w-d-new">Keys stay on this device: fund it only with sats you plan to burn.</span><input type="radio" name="wopt" value="new" checked autofocus aria-labelledby="w-t-new" aria-describedby="w-d-new"></label>
+        <div class="wob" id="w-newbox">
+          <details class="tech" id="w-passadv"><summary id="w-passsum">Passphrase&nbsp;· optional</summary>
+            <div class="field"><input id="w-pass1" type="password" autocomplete="new-password" placeholder="Leave empty for no passphrase" aria-label="Passphrase" aria-describedby="w-passnote"><p class="note" id="w-passnote">Encrypts the words in this browser (BIP39) and changes the address: you need it again to restore.</p></div>
+          </details>
+          <p class="note err" id="w-createmsg" hidden role="alert"></p>
+        </div>
+      </div>
+      <div class="wopt">
+        <label class="wopth"><span class="fi" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg></span><span class="wot" id="w-t-words"><b>Restore from 12 or 24 words</b></span><span class="wod" id="w-d-words">Your burner from another browser, or any BIP39 wallet meant for burning.</span><input type="radio" name="wopt" value="words" aria-labelledby="w-t-words" aria-describedby="w-d-words"></label>
+        <div class="wob" id="w-restorebox" hidden><textarea id="w-restore" rows="3" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="12 or 24 words" aria-describedby="w-restoremsg" placeholder="The words, in order, separated by spaces"></textarea><p class="note err" id="w-restoremsg" hidden role="alert"></p></div>
+      </div>
+      <div class="wopt" id="w-optledger">
+        <label class="wopth"><span class="fi" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="9" width="10" height="13" rx="2"/><path d="M9 9V3h6v6M11 6h.01M13 6h.01"/></svg></span><span class="wot" id="w-t-ledger"><b>Ledger hardware wallet</b></span><span class="wod" id="w-ledgerhint"></span><input type="radio" name="wopt" value="ledger" aria-labelledby="w-t-ledger" aria-describedby="w-ledgerhint"></label>
+        <div class="wob" id="w-ledgerbox" hidden><p class="note">Plug it in, unlock it and open the <b id="w-ledgerapp">Bitcoin</b> app, then pick it in the browser's prompt.</p><p class="note err" id="w-ledgermsg" hidden role="alert"></p></div>
+      </div>
+    </fieldset>
+    <div class="dlgfoot"><p class="note mono" id="w-newnet"></p><span style="flex:1"></span><button type="button" class="btn primary" id="w-create">Create wallet</button><button type="button" class="btn primary" id="w-restoreok" hidden>Restore wallet</button><button type="button" class="btn primary" id="w-ledger" aria-describedby="w-ledgerhint" hidden>Connect a Ledger</button></div>
   </section>
 
   <section id="w-locked" hidden>
@@ -1037,6 +1122,7 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
     <p class="note" id="b-empty" hidden>Nothing here yet. On any topic, open a burn and pick <b>Add to batch</b> from the <b>Validate ▾</b> menu.</p>
     <div id="b-body">
       <div class="blist" id="b-list" aria-live="polite"></div>
+      <div class="fundshost" id="bfunds" aria-live="polite" hidden></div>
       <p class="note" id="b-shared" hidden style="color:#ff8c5c">The takes do not fit one 80-byte OP_RETURN, so each burn gets its own. Several OP_RETURN outputs need post-Core-30 relay policy and may not propagate everywhere.</p>
     </div>
   </section>
@@ -1284,13 +1370,15 @@ function watchNews(w, votes, T){
 }
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
-const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} };
+const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length) ballotTipSet(null); };   // emptied (cleared, sent, last burn removed): the batch's own tip goes with it
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
 const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
 const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
 const ballotClear=()=>ballotSave([]);
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
+const ballotTip=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? tipPref() : Math.max(0,Math.round(+v)||0); };   // the batch's one tip output: set by the tip dialog's Add to batch (0: removed), else every dialog's tip (tipPref); a dust one never comes back
+const ballotTipSet=v=>{ try{ v==null||v==="" ? localStorage.removeItem(NETKEY("bv.ballot.tip")) : LS(NETKEY("bv.ballot.tip"),String(Math.max(0,Math.round(+v)||0))); }catch{} };   // null: the batch follows tipPref again
 const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
 
 // ---------- closed questions: "question?a|b|c" in the scope name ----------
@@ -1349,10 +1437,10 @@ function closeState(p, live=TIPLIVE){
   if(!(live>=p.deadline+6)){ const n=Math.max(1,p.deadline+6-tipEst()); return {k:"closed", text:`Closed at block ${D} · final in ≈ ${untilText(n)} (${n} block${n===1?"":"s"})`, short:"closed"}; }
   return {k:"final", text:`Final · block ${D}`, short:"final"};
 }
-const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60); return d?`${d}d ${h}h`:h?`${h}h ${m%60}m`:`${m}m`; };   // blocks at ~10 min
+const untilText = blocks => { const m=Math.max(0,Math.round(blocks*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60), n=m%60; return d?`${d}d${h?` ${h}h`:""}`:h?`${h}h${n?` ${n}m`:""}`:`${m}m`; };   // blocks at ~10 min: "2d 5h", "2d", "1h 10m", "1h", "40m"
 const ICON_TAKE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>';   // a take: a megaphone, said out loud
 // ---------- icon badges (.fi, base.css), one visual language on every page: the shape says what (ICON_TAKE, a megaphone, for any burn's take or answer,
-// ✦ a sponsorship, a flame most burned, a clock the latest, a person a burner, # a registration), the tint which kind of burn (ember a take, red most burned, gold a sponsorship, slate a burner, grey a registration) ----------
+// ✦ a sponsorship, a flame most burned, a clock the latest, a person a burner, # a registration, a heart a tip), the tint which kind of burn (ember a take, red most burned, gold a sponsorship, slate a burner, grey a registration; green a tip: it arrives, nothing burns) ----------
 const svgIcon = (d,fill) => `<svg width="16" height="16" viewBox="0 0 24 24" ${fill?'fill="currentColor"':'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"'} aria-hidden="true">${d}</svg>`;
 const ICONS = {
   top: svgIcon('<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>'),   // most burned: a flame
@@ -1361,6 +1449,8 @@ const ICONS = {
   burner: svgIcon('<circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/>'),
   join: svgIcon('<circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/>'),   // a new burner
   reg: svgIcon('<path d="M10 4 8 20M16 4l-2 16M5 9h15M4 15h15"/>'),                               // a name gets registered
+  wallet: svgIcon('<rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M16 15h2"/>'),   // a wallet: short of funds (fundsHtml)
+  tip: svgIcon('<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>'),   // a tip to the project: a heart
 };
 const iconBadge = (cls,icon) => `<span class="fi${cls?" "+cls:""}" aria-hidden="true">${icon}</span>`;
 // ---------- RECENT, the timeline on Explore (every topic) and on a topic page (that topic alone): the latest events whatever the window, four kinds, each with its icon and its word:
@@ -1464,8 +1554,9 @@ const BECH32M=0x2bc830a3;
 const TIP_ADDRESSES={ mainnet:"bc1qh8a49dff2sjvlqjdtfau8ha6lr84u2pz5jtpmc", signet:"tb1q87kk22qg4jluges4y4mcu5hg2mqvwdntq04u9n" };   // project tip addresses per network; null hides every tip control on that network
 const TIP_EFFECTIVE = TIP_ADDRESSES[NET] || null;                // the address for the current network, or null
 const tipEnabled = () => !!TIP_EFFECTIVE;
-const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network)
-const tipPrefSave = v => { if(tipEnabled()) LS(NETKEY("bv.vote.tipsats"),String(v)); };
+const tipDust = v => { const n=Math.round(+v||0); return n>0&&n<330 ? "A tip under 330 sats cannot relay: No tip, or 330 and up." : ""; };   // a tip output under 330 sats is dust: nodes refuse the transaction once signed. -> why (the note under the tip), "" when it relays (0 is No tip)
+const tipPref = () => { const v=LS(NETKEY("bv.vote.tipsats")); return v==null||v===""||tipDust(v)?1000:Math.max(0,Math.round(+v)||0); };   // every amount dialog's tip: 1,000 until one is chosen, then that one (this browser, this network); a dust one saved before counts as none
+const tipPrefSave = v => { if(tipEnabled()&&!tipDust(v)) LS(NETKEY("bv.vote.tipsats"),String(v)); };   // a dust tip being typed ("1" on the way to "1000") is never every dialog's next one
 function fromWords(words){let acc=0,bits=0,out=[];for(const w of words){acc=((acc<<5)|w)&0xfff;bits+=5;while(bits>=8){bits-=8;out.push((acc>>bits)&255)}}if(bits>=5||((acc<<(8-bits))&255))throw new Error("bad padding");return new Uint8Array(out)}
 function bech32Decode(addr){                                     // -> {hrp, version, program}; v0 = bech32, v1+ = bech32m (BIP-173 / BIP-350)
   if(typeof addr!=="string") throw new Error("not a string");
@@ -1578,19 +1669,33 @@ function payPanel(prefix, opts){
 const PAY=[];                                          // every panel on the page, repainted together when the wallet changes
 
 // ---------- amount chips: a .seg of presets over a number input; Custom reveals the input, an off-preset value keeps it visible ----------
-function amountChips(seg, input, onchange){
+// wallet (optional): the pay panel's walletTab. Once its balance is known, presets it cannot pay go off (the chosen one and the lowest stay, marked: a way down is never off)
+// and a note under the chips says what fits; noun: this amount's word in the transaction ("burn", "tip", "registration"; a function when the dialog's word changes), left out of the note's "with the …" (capNoteHtml)
+// check (optional): v -> why this amount cannot go ("": it can), said in that note instead, with aria-invalid on the input (a dust tip: tipDust)
+function amountChips(seg, input, onchange, {wallet=null, noun="", check=null}={}){
   let custom=false, last=null;                              // last: the preset to come back to
-  const chips=[...seg.querySelectorAll("[data-sats]")];
+  const chips=[...seg.querySelectorAll("[data-sats]")], note=document.createElement("p");
   const wrap=document.createElement("span"), x=document.createElement("button");   // Custom: the input with a ✕ stands in for the chips
   wrap.className="amtcustom"; input.before(wrap); wrap.append(input); input.hidden=false; input.style.marginTop="";
   x.type="button"; x.className="amtx"; x.setAttribute("aria-label","Back to the presets"); x.textContent="✕"; wrap.append(x);
+  note.className="note capnote"; note.id=input.id+"-cap"; note.hidden=true;
+  if(wallet||check){ wrap.after(note); seg.setAttribute("aria-describedby",note.id); input.setAttribute("aria-describedby",note.id); }
   const sync=()=>{
-    const v=Number(input.value||0), min=+input.min||0; let hit=null;
-    for(const b of chips){ if(b.dataset.sats==="custom") continue; b.disabled=+b.dataset.sats<min; if(!b.disabled&&+b.dataset.sats===v) hit=b; }   // below the minimum: greyed out
+    const v=Number(input.value||0), min=+input.min||0, f=wallet&&wallet.funds(), cap=f?v+f.room:Infinity; let hit=null;   // cap: the most this amount can be with the rest paid (balance unknown: none)
+    const floor=Math.min(...chips.map(b=>+b.dataset.sats).filter(s=>s>=min));   // the lowest preset ("custom" is NaN: never)
+    for(const b of chips){ if(b.dataset.sats==="custom") continue; const s=+b.dataset.sats, over=s>=min&&s>cap;
+      b.disabled=s<min||over&&s!==v&&s!==floor; b.classList.toggle("over",over); b.title=over?`Your wallet would be ${fmt(s-cap)} sats short`:"";   // below the minimum, or more than the wallet holds: greyed out
+      if(s>=min&&s===v) hit=b; }
     for(const b of chips) b.setAttribute("aria-pressed",String(b===hit || (!hit&&b.dataset.sats==="custom")));
     if(hit) last=hit.dataset.sats;
     const own=custom||!hit; seg.hidden=own; wrap.hidden=!own;
+    const bad=check?check(v):"";                                                  // an amount that cannot go: said in place of what fits
+    input.classList.toggle("over",v>cap||!!bad); if(check) input.setAttribute("aria-invalid",String(!!bad));   // Custom stays typeable: past the balance, it warns
+    sync.on=!bad&&!!f&&(v>cap||chips.some(b=>b.classList.contains("over")));    // the note: once a preset or the chosen amount is past what the wallet can pay
+    const h=bad ? esc(bad) : sync.on ? capNoteHtml(wallet,f,typeof noun==="function"?noun():noun,v,cap,min,!wallet.chips.slice(0,wallet.chips.indexOf(sync)).some(o=>o.on)) : "";   // lead: no note above it (the amount's, over the tip's) says what the wallet holds yet
+    if(note._h!==h){ note._h=h; note.innerHTML=h; } note.hidden=!h; note.classList.toggle("err",!!bad);
   };
+  if(wallet){ sync.seg=seg; wallet.chips.push(sync); wallet.chips.sort((a,b)=>a.seg.compareDocumentPosition(b.seg)&2?1:-1); }   // synced on every paint of the pay panel (balance in, fee speed, the other amount), in page order
   seg.onclick=e=>{ const b=e.target.closest("[data-sats]"); if(!b||b.disabled) return;
     if(b.dataset.sats==="custom"){ custom=true; sync(); input.focus(); input.select(); return; }
     custom=false; input.value=b.dataset.sats; sync(); onchange(); };
@@ -1689,7 +1794,7 @@ function netSwitch(to){
   menu.querySelectorAll("[data-net]").forEach(b=>{ const on=b.dataset.net===NET; b.setAttribute("aria-checked",String(on)); b.onclick=()=>{ close(); if(!on) netSwitch(b.dataset.net); }; });
   pill.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; menu.hidden=!open; pill.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector('[aria-checked="true"]').focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); pill.focus(); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ e.preventDefault(); close(); pill.focus(); } });
 })();
 
 // ---------- a small menu under a button (aria-expanded + hidden): closes on outside click and Escape. -> close() ----------
@@ -1700,9 +1805,9 @@ function dropMenu(btn,menu){
   btn.closest("dialog")?.querySelector(".dlg")?.addEventListener("scroll",()=>{ if(!menu.hidden) close(); },{passive:true});   // fixed: it would stay put while the dialog scrolls
   btn.onclick=e=>{ e.stopPropagation(); const open=menu.hidden; if(open) place(); menu.hidden=!open; btn.setAttribute("aria-expanded",String(open)); if(open) menu.querySelector("button")?.focus(); };
   document.addEventListener("click",e=>{ if(!menu.hidden&&!menu.contains(e.target)) close(); });
-  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ close(); btn.focus(); } });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!menu.hidden){ e.preventDefault(); close(); btn.focus(); } });   // the menu only: not the dialog under it
   menu.addEventListener("keydown",e=>{                                     // arrow keys walk the items, like a native menu
-    const items=[...menu.querySelectorAll('[role="menuitem"]:not([disabled])')], i=items.indexOf(document.activeElement); if(!items.length) return;
+    const items=[...menu.querySelectorAll('[role="menuitem"]:not([disabled]):not([hidden])')], i=items.indexOf(document.activeElement); if(!items.length) return;   // an aria-disabled item stays in the walk: its reason is read out
     const to = e.key==="ArrowDown"?(i+1)%items.length : e.key==="ArrowUp"?(i-1+items.length)%items.length : e.key==="Home"?0 : e.key==="End"?items.length-1 : -1;
     if(to>=0){ e.preventDefault(); items[to].focus(); }
   });
@@ -1876,7 +1981,7 @@ function buildFundedPsbt({utxos=[], outputs=[], changeAddr, feeRate=1}){
   return {psbt, base64:psbtBase64(psbt), unsignedTxHex, fee, change, inputs, outputs:outs};
 }
 // ---------- wallet.js: burner wallet — BIP-39 words, BIP-84 key, P2WPKH signing (BIP-143/144), encrypted backup, mempool.space I/O. Pure, no DOM ----------
-// Uses from shared.js / qr.js: toHex, fromHex, enc, varint, le64, bech32, scriptPubKey, concatBytes, sha256d, txidOf, estimateVsize, serializeUnsignedTxWithInputs. Defines nothing twice.
+// Uses from shared.js / qr.js: toHex, fromHex, enc, sleep, varint, le64, bech32, scriptPubKey, concatBytes, sha256d, txidOf, estimateVsize, serializeUnsignedTxWithInputs. Defines nothing twice.
 // The libraries (@scure/bip39, @scure/bip32, @noble/curves) are ESM, loaded lazily from jsdelivr on the first call that needs them; the node test injects them instead.
 
 // ---------- libraries ----------
@@ -2006,15 +2111,22 @@ async function decryptSecret(blob,pass){                         // -> Promise<s
 // ---------- explorer I/O (mempool.space, Esplora API; CORS open, text/plain POST needs no preflight) ----------
 const WALLET_ESPLORA={mainnet:"", signet:"signet/", testnet:"testnet/", testnet4:"testnet4/"};
 const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : (typeof LIVE_BASE==="string"&&LIVE_BASE&&typeof NET==="string"&&network===NET) ? LIVE_BASE : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
-async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure
-  for(let i=0;i<2;i++){                                             // 6 s each, a second try: a stale connection often answers the next time
+async function esploraGet(path,network="mainnet"){               // GET esploraBase(network)+path -> JSON | null once 3 tries failed (the wallet's reads: fetchUtxos, ledger.js ledgerUtxos)
+  for(let i=0;i<3;i++){                                             // 6 s each. A network error or a cut answer is asked again at once (a stale connection often answers the next time), a busy explorer (429, 5xx) after 0.8 s, then 1.6 s, like chainGet
     try{
-      const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
-      if(!r.ok) return null;
-      const j=await r.json();
-      return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
-    }catch{ if(i) return null; }
+      const r=await fetch(esploraBase(network)+path,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
+      if(r.ok) return await r.json();
+      if(r.status!==429&&r.status<500) return null;                  // a 4xx is the answer
+      if(i<2) await sleep(800<<i);
+    }catch{}
   }
+  return null;
+}
+const utxoOk=u=>!!u&&/^[0-9a-f]{64}$/i.test(u.txid)&&Number.isInteger(u.vout)&&u.vout>=0&&Number.isSafeInteger(u.value)&&u.value>=0;   // an Esplora /utxo entry the signers can spend: a txid, an output index, whole sats
+async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure, or an answer that is not a list of distinct coins
+  const j=await esploraGet(`/address/${address}/utxo`,network);
+  if(!Array.isArray(j)||!j.every(utxoOk)||new Set(j.map(u=>u.txid+":"+u.vout)).size<j.length) return null;
+  return j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)}));
 }
 async function broadcastTx(hex,network="mainnet"){               // -> {txid} | {error}
   try{
@@ -2025,9 +2137,9 @@ async function broadcastTx(hex,network="mainnet"){               // -> {txid} | 
 }
 // ---------- ledger.js: a Ledger over WebHID — BIP-84 account xpub read once, every burn signed on the device (PSBT). No DOM ----------
 // Uses from shared.js / qr.js / wallet.js: toHex, fromHex, varint, le64, bech32, scriptPubKey, concatBytes, psbtKV, psbtBase64, txidOf,
-// serializeUnsignedTxWithInputs, walletLibs (HDKey), walletNet, walletVsize, hash160. Defines nothing twice.
+// serializeUnsignedTxWithInputs, walletLibs (HDKey), walletNet, walletVsize, hash160, esploraGet, fetchUtxos. Defines nothing twice.
 // The Ledger libraries are ESM, loaded lazily from jsdelivr on the first call that needs them; the node test injects fakes instead.
-// Wallet record (walletui.js, NETKEY("bv.wallet")): {kind:"ledger", net, addr, xpub, fp} — no words, nothing secret, nothing to encrypt.
+// Wallet record (walletui.js, NETKEY("bv.wallet")): {kind:"ledger", net, addr, xpub, fp, used} — no words, nothing secret, nothing to encrypt; used: the addresses the last balance read found used.
 // hw-app-btc 11.x API (README, lib-es/BtcNew.js): getWalletXpub({path, xpubVersion}) and signPsbtBuffer(Buffer, {finalizePsbt, accountPath,
 // addressFormat, knownAddressDerivations}) -> {psbt, tx}. The device needs the Bitcoin app 2.1+ (Bitcoin Test on signet); the Legacy apps cannot sign a PSBT.
 
@@ -2097,12 +2209,39 @@ async function ledgerFingerprint(transport){                     // app-bitcoin-
   if(!r||r.length<6) throw ledgerError(new Error("no fingerprint from the device"));
   return toHex(r.subarray(0,4));
 }
-async function ledgerAddress(xpub, network="mainnet", change=0, index=0){   // local derivation from the account xpub -> {address, pubkey(33), path:number[], pathString}
+async function ledgerAccount(xpub, network="mainnet"){          // the account xpub, parsed once -> (change, index) => Promise<{address, pubkey(33), path:number[], pathString}>; throws on another network's key or one that is not account-level
   const {HDKey}=await walletLibs();
   const hd=HDKey.fromExtendedKey(String(xpub).trim(), LEDGER_XPUBVER[network]||LEDGER_XPUBVER.signet);
   if(hd.depth!==3) throw new Error("not an account-level xpub (depth "+hd.depth+")");
-  const k=hd.deriveChild(change).deriveChild(index);
-  return {address:bech32(walletNet(network).hrp,0,await hash160(k.publicKey)), pubkey:k.publicKey, path:ledgerPathElements(network,change,index), pathString:ledgerPathString(network,change,index)};
+  const chains=[hd.deriveChild(0), hd.deriveChild(1)], hrp=walletNet(network).hrp;   // receive, change: each derived once, then one child per address
+  return async(change=0, index=0)=>{ const k=chains[change].deriveChild(index);
+    return {address:bech32(hrp,0,await hash160(k.publicKey)), pubkey:k.publicKey, path:ledgerPathElements(network,change,index), pathString:ledgerPathString(network,change,index)}; };
+}
+async function ledgerAddress(xpub, network="mainnet", change=0, index=0){ return (await ledgerAccount(xpub, network))(change, index); }   // one address, local derivation from the account xpub
+const LEDGER_GAP=20;                                             // BIP-44 gap limit: a chain ends after 20 unused addresses in a row (used = any history, so an emptied address keeps the scan going)
+const LEDGER_CAP=2000;                                           // ponytail: 2,000 addresses per chain at most (0/0..0/1999, 1/0..1/1999). A chain still inside its gap there (an explorer that calls every address used) is a balance this page cannot read: null, never a partial one
+async function ledgerUtxos(xpub, network="mainnet"){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
+  try{                                                           // null, never a rejection: an xpub that does not parse or the libraries not loading (jsdelivr blocked) are a balance this page cannot read either
+    const acct=await ledgerAccount(xpub, network);
+    const stat=async a=>{ const j=await esploraGet(`/address/${a}`,network), s=[j&&j.chain_stats, j&&j.mempool_stats];   // Esplora /address: confirmed + mempool -> {used, sats} | null
+      const n=k=>s.every(x=>x&&Number.isFinite(x[k])) ? s[0][k]+s[1][k] : NaN, tx=n("tx_count"), sats=n("funded_txo_sum")-n("spent_txo_sum");
+      return Number.isNaN(tx+sats) ? null : {used:tx>0, sats}; };
+    const used=[], funded=[];                                    // funded: used addresses still holding sats, the only ones whose coins are asked for
+    for(const chain of [0,1]) for(let next=0, last=-1; next<=last+LEDGER_GAP; ){   // receive, then change; last: the highest used index read
+      if(next>=LEDGER_CAP) return null;
+      const idx=[]; while(idx.length<5&&next<=last+LEDGER_GAP&&next<LEDGER_CAP) idx.push(next++);   // 5 in flight (the explorers rate-limit bursts), only indexes the scan reads whatever these answer
+      const as=await Promise.all(idx.map(i=>acct(chain,i))), st=await Promise.all(as.map(a=>stat(a.address)));
+      if(st.some(s=>!s)) return null;
+      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0) funded.push({chain, index:idx[k], address:as[k].address}); });
+    }
+    const coins=[];
+    for(let i=0;i<funded.length;i+=5){ const rs=await Promise.all(funded.slice(i,i+5).map(a=>fetchUtxos(a.address,network))); if(rs.some(r=>!r)) return null;
+      rs.forEach((r,k)=>{ const {chain,index,address}=funded[i+k]; coins.push(...r.map(u=>({...u, chain, index, address}))); }); }
+    if(new Set(coins.map(u=>u.txid+":"+u.vout)).size<coins.length) return null;   // one coin listed twice, under one address or two: answers that do not add up
+    const own=u=>u.chain===0&&u.index===0 ? 0 : 1;
+    coins.sort((a,b)=>own(a)-own(b) || b.confirmed-a.confirmed || b.value-a.value);   // the signers spend in this order: 0/0's coins first (a burn's burner is its first input's address, so the shown address stays it while it holds a coin), confirmed before unconfirmed, the largest first (fewest inputs, fewest addresses tied to one burn); ties keep the scan's order
+    return {coins, used};
+  }catch{ return null; }
 }
 async function ledgerConnect(network="mainnet"){                 // MUST run from a click (the browser's device prompt). -> {addr, xpub, fp, path, app}
   if(!ledgerSupported()) throw ledgerError(Object.assign(new Error("navigator.hid is not supported"),{id:"HIDNotSupported"}));
@@ -2148,39 +2287,45 @@ function ledgerPsbt({unsignedTxHex, inputs=[], outputs=[], changeIndex=-1, chang
   outputs.forEach((o,i)=>{ if(i===changeIndex&&changeBip32) parts.push(psbtKV(0x02,changeBip32.pubkey,der(changeBip32))); parts.push([0x00]); });
   return concatBytes(parts);
 }
-async function ledgerSign({utxos=[], outputs=[], changeAddr, feeRate=1, wallet, network="mainnet", onstage=()=>{}}){   // -> {hex, txid, fee, change, vsize, inputs, outputs, psbtBase64}
+async function ledgerSign({utxos=[], outputs=[], changeAddr, feeRate=1, wallet, network="mainnet", onstage=()=>{}}){   // -> {hex, txid, fee, change, vsize, inputs, outputs, psbtBase64, from: the first input's address, the burn's burner}
   const stage=s=>{ try{ onstage(s); }catch{} };
   if(!wallet||wallet.kind!=="ledger"||!wallet.xpub||!/^[0-9a-f]{8}$/i.test(wallet.fp||"")) throw ledgerError(Object.assign(new Error("No Ledger wallet in this browser."),{ledger:true, code:"nowallet"}));
   stage("preparing the transaction…");
   let libs; try{ libs=await ledgerLibs(); }catch(e){ throw ledgerError(Object.assign(new Error("Could not load the Ledger libraries (offline? cdn.jsdelivr.net blocked?)."),{ledger:true, code:"libs", cause:e})); }
-  const key=await ledgerAddress(wallet.xpub, network, 0, 0);
+  const acct=await ledgerAccount(wallet.xpub, network), key=await acct(0,0);
   if(key.address!==wallet.addr) throw ledgerError(Object.assign(new Error("The stored address does not match this Ledger account. Forget the wallet and connect it again."),{ledger:true, code:"mismatch"}));
   let f; try{ f=ledgerFund({utxos, outputs, changeAddr, feeRate}); }catch(e){ throw ledgerError(e); }
-  const bip32={pubkey:key.pubkey, fingerprint:fromHex(wallet.fp), path:key.path}, inScript=scriptPubKey(wallet.addr);
-  const inputs=f.inputs.map(u=>({txid:u.txid, vout:u.vout, value:u.value, script:inScript, bip32}));
+  const at=u=>u.chain+"/"+u.index, keys=new Map([["0/0",key]]);   // "chain/index" -> derived key
+  for(const u of f.inputs){                                      // every coin comes from ledgerUtxos with its chain and index: one without is a stale or foreign list, refused, never given a guessed key
+    if(!(u.chain===0||u.chain===1)||!Number.isInteger(u.index)||u.index<0||u.index>=LEDGER_CAP) throw ledgerError(Object.assign(new Error("A coin has no Ledger derivation. Refresh the balance."),{ledger:true, code:"coin"}));
+    if(!keys.has(at(u))) keys.set(at(u), await acct(u.chain, u.index));
+  }
+  const bip32=k=>({pubkey:k.pubkey, fingerprint:fromHex(wallet.fp), path:k.path});
+  const inputs=f.inputs.map(u=>{ const k=keys.get(at(u)); return {txid:u.txid, vout:u.vout, value:u.value, script:scriptPubKey(k.address), bip32:bip32(k)}; });
   const unsignedTxHex=serializeUnsignedTxWithInputs(inputs, f.outputs);
-  const psbt=ledgerPsbt({unsignedTxHex, inputs, outputs:f.outputs, changeIndex:f.changeIndex, changeBip32: changeAddr===wallet.addr ? bip32 : null});
+  const psbt=ledgerPsbt({unsignedTxHex, inputs, outputs:f.outputs, changeIndex:f.changeIndex, changeBip32: changeAddr===wallet.addr ? bip32(key) : null});
   let transport=null;
   try{
     stage("connecting to the Ledger…");
     transport=await libs.TransportWebHID.create();
     await ledgerCheckApp(transport, network);
     const btc=new libs.AppBtc({transport, currency:"bitcoin"});
-    const known=new Map([[toHex(await hash160(key.pubkey)), {pubkey:libs.Buffer.from(key.pubkey), path:key.path}]]);   // belt and braces: the PSBT already carries the derivations
+    const known=new Map(); for(const k of keys.values()) known.set(toHex(await hash160(k.pubkey)), {pubkey:libs.Buffer.from(k.pubkey), path:k.path});   // belt and braces: the PSBT already carries the derivations
     stage("confirm on the Ledger…");
     const r=await btc.signPsbtBuffer(libs.Buffer.from(psbt), {finalizePsbt:true, accountPath:ledgerAccountPath(network), addressFormat:"bech32", knownAddressDerivations:known, onDeviceSignatureGranted:()=>stage("signing…")});
     const hex=String((r&&r.tx)||"").toLowerCase();
     if(!/^[0-9a-f]{20,}$/.test(hex)) throw Object.assign(new Error("The Ledger returned no transaction."),{ledger:true, code:"notx"});
-    return {hex, txid:await txidOf(hex), fee:f.fee, change:f.change, vsize:f.vsize, inputs:f.inputs, outputs:f.outputs, psbtBase64:psbtBase64(psbt)};
+    return {hex, txid:await txidOf(hex), fee:f.fee, change:f.change, vsize:f.vsize, inputs:f.inputs, outputs:f.outputs, psbtBase64:psbtBase64(psbt), from:keys.get(at(f.inputs[0])).address};
   }catch(e){ throw ledgerError(e); }
   finally{ if(transport) try{ await transport.close(); }catch{} }
 }
 
 // ---------- burner wallet: state, dialog, nav pill ----------
 // ponytail: one BIP84 key, stored in localStorage (encrypted when a passphrase is set). Coins here are meant to be burned.
-// Or a Ledger (ledger.js): {kind:"ledger", net, addr, xpub, fp} — the first receive address of account 0, keys on the device, every burn signed there.
-let WALLET=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.wallet"))||"null"); }catch{ return null; } })();   // {net, enc, data, addr} | {kind:"ledger", net, addr, xpub, fp}, one per network (bv.wallet.mainnet / bv.wallet.signet)
-let wKey=null, walletUtxos=null, WFUND=0, FUNDING=null;   // WFUND: sats a dialog needs, for the receive QR; FUNDING: the dialog waiting on the wallet (its pay panel's prefix)                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
+// Or a Ledger (ledger.js): {kind:"ledger", net, addr, xpub, fp, used} — addr is the first receive address of account 0 (the one shown and used for change); coins are read from every used address of the account (receive 0/* and change 1/*, each until 20 unused in a row), keys on the device, every burn signed there.
+// A burn's burner is its first input's address: 0/0 while it holds a coin (ledgerUtxos spends its coins first), else another address of the account. used (the last read's addresses with history) lets walletOwns know them all.
+let WALLET=(()=>{ try{ return JSON.parse(LS(NETKEY("bv.wallet"))||"null"); }catch{ return null; } })();   // {net, enc, data, addr} | {kind:"ledger", net, addr, xpub, fp, used}, one per network (bv.wallet.mainnet / bv.wallet.signet)
+let wKey=null, walletUtxos=null, WFUND=0, FUNDING=null, WFUNDAT=null;   // WFUNDAT: the coins WFUND was worked out with (null: none known)   // WFUND: sats a dialog needs, for the receive QR; FUNDING: the dialog waiting on the wallet (its pay panel's prefix)                          // walletUtxos: explorer result, or null while unknown (never fetched, or the explorer is unreachable)
 const walletIsLedger=()=>!!(WALLET&&WALLET.kind==="ledger");
 const walletState=()=> !WALLET ? "none" : walletIsLedger() ? "ready" : wKey ? "ready" : WALLET.enc ? "locked" : "sealed";   // sealed: stored in clear, derive on demand. A Ledger is always "ready": viewing needs nothing, signing asks the device
 const walletSave=()=>{ try{ LS(NETKEY("bv.wallet"),JSON.stringify(WALLET)); }catch{} };
@@ -2190,14 +2335,24 @@ async function walletLoadKey(pass=""){                    // derive the key from
   wKey = await walletDerive(words, WALLET.enc?pass:"", NET);
   wKey.words=words; return wKey;
 }
-let WREADING=false;                                        // a balance read is running: "checking", not "unknown"
-async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page
-  if(!WALLET) return null;
+let WREADING=false, WREAD=null;                            // a balance read is running: "checking", not "unknown"; WREAD {w, p}: the latest read, shared by every caller that does not force a fresh one
+async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page. Never rejects
+  const w=WALLET; if(!w) return null;
   if(walletUtxos && !force) return walletUtxos;
-  WREADING=true; try{ walletUtxos = await fetchUtxos(WALLET.addr, NET); } finally{ WREADING=false; }
-  return walletUtxos;
+  if(WREAD && WREAD.w===w && !force) return WREAD.p;       // page load, then the dialog opening: one read of the account, not two
+  const me={w}; WREAD=me; WREADING=true;
+  me.p=(async()=>{
+    let r=null; try{ r= w.kind==="ledger" ? await ledgerUtxos(w.xpub, NET) : await fetchUtxos(w.addr, NET); }catch{}
+    if(WREAD!==me) return WREAD&&WREAD.w===w ? WREAD.p : WALLET===w ? walletUtxos : null;   // a newer read took over (forced, or another wallet's): its answer, never this older one
+    WREAD=null; WREADING=false;
+    if(WALLET!==w) return null;                            // forgotten or replaced while this read ran: these coins are not the new wallet's
+    if(r&&r.coins){ w.used=r.used; try{ if(JSON.parse(LS(NETKEY("bv.wallet"))).xpub===w.xpub) walletSave(); }catch{} r=r.coins; }   // a Ledger: its coins, and the account's addresses with history, kept with its record for walletOwns on every page (unless another tab forgot or replaced it meanwhile)
+    return walletUtxos=r;
+  })();
+  return me.p;
 }
 const walletSats=()=>(walletUtxos||[]).reduce((a,u)=>a+u.value,0);
+const walletOwns=a=>!!a&&!!WALLET&&(a===WALLET.addr||Array.isArray(WALLET.used)&&WALLET.used.includes(a));   // a burn's burner (first input's address) is this wallet's: the address it shows, or for a Ledger any address of the account the last balance read found used
 function walletPill(){
   const st=walletState(), txt=$("wallettxt"), dot=$("walletdot");
   if(st==="none"){ txt.textContent=NARROW.matches?"Connect":"Connect wallet"; dot.style.background="var(--ink3)"; dot.style.boxShadow="none"; $("walletbtn").setAttribute("aria-label","Wallet"); return; }
@@ -2206,8 +2361,10 @@ function walletPill(){
   dot.style.background=st==="locked"?"var(--ember2)":"var(--ok)"; dot.style.boxShadow="0 0 8px currentColor";
   $("walletbtn").setAttribute("aria-label", `${ledger?"Ledger wallet":"Wallet"}, ${st==="locked"?"locked":"ready"}, ${a.slice(0,6)}…${a.slice(-4)}`);
 }
-async function walletPaint(){
+async function walletPaint(connected=false){               // connected: the first paint of a wallet just created, restored or plugged in
+  if(FUNDING&&!$(FUNDING+"-wallet")?.closest("dialog")?.open){ FUNDING=null; WFUND=0; }   // an ask whose dialog is gone: no amount to send, none in the QR
   const st=walletState();
+  if(st==="none") wChoicePaint(); else $("w-opts").querySelector("input[value=new]").checked=true;   // no wallet: the picked way's form; a wallet in: the next Connect starts on New
   $("w-none").hidden=st!=="none"; $("w-locked").hidden=st!=="locked"; $("w-ready").hidden=!(st==="ready"||st==="sealed");
   const ledger=walletIsLedger();
   $("w-title").textContent= st==="none"?"Connect a wallet" : st==="locked"?"Unlock wallet" : ledger?"Your Ledger" : "Your wallet";
@@ -2215,34 +2372,82 @@ async function walletPaint(){
     const a=WALLET.addr; $("w-addr").textContent=a.slice(0,10)+"…"+a.slice(-6); $("w-addr").title=a; $("w-netlabel").textContent=NET;   // condensed; copy and the QR carry the full address
     $("w-explorer").href="https://mempool.space/"+(NET==="mainnet"?"":"signet/")+"address/"+a; $("w-burns").href="burner.html#"+a;
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
-    $("w-fundnote").textContent= ledger ? "Burns spend from this address only (the account's first receive address). Send sats here from Ledger Live or anywhere." : "Fund it by sending sats to this address.";
+    wFundNote();                                              // how much to send (the note and the QR), when a dialog asked for funds
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
-    try{ const q=qrcode(0,"M"); q.addData("bitcoin:"+a+(WFUND?`?amount=${(WFUND/1e8).toFixed(8)}`:""),"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); }catch{}   // a dialog waiting on funds: the amount rides in the QR
-    if(WFUND) $("w-fundnote").textContent=`Send about ${fmt(WFUND)} sats to this address · your take is waiting`;
     $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
-    await walletBalance();
+    await walletBalance(); if(!WALLET) return;                // forgotten during the read: Forget has painted the Connect view
+    const wt=walletUtxos&&walletUtxos!==WFUNDAT&&wWaiting(), f=wt&&wt.funds();   // coins the ask was not worked out with (just connected, refreshed, retried): what the waiting dialog still needs from them
+    if(f){ WFUNDAT=walletUtxos; if(f.short) WFUND=f.topup; else if(connected){ FUNDING=null; WFUND=0; toast(`Wallet connected · your ${wt.noun||"burn"} is ready to sign`); } }   // enough already: said now, never as Funds arrived (a refresh leaves that to the dialog's panel)
+    wFundNote();                                              // the balance known: what is missing
     $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
     $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer`;
   }
   walletPill();
 }
-function walletOpen(){ walletPaint(); $("walletdlg").showModal(); }
+function walletOpen(){ ["w-ledgermsg","w-createmsg","w-lockmsg"].forEach(i=>$(i).hidden=true); wRestoreErr(); $("w-backupbox").hidden=true; $("w-words").innerHTML=""; $("w-forgetbox").hidden=true; walletPaint(); $("walletdlg").showModal(); $("walletdlg").querySelector(".dlg").scrollTop=0; }   // an error belongs to its attempt; every open starts at the top (the title and the balance in view)
 $("walletbtn").onclick=walletOpen;
 $("w-newnet").textContent=NET==="mainnet"?"mainnet · real sats":"signet · test sats, free from a faucet";   // the network comes from the chip in the top bar
-$("w-restorebtn").onclick=()=>{ const open=$("w-restorebox").hidden; $("w-restorebox").hidden=!open; $("w-restorebtn").setAttribute("aria-expanded",String(open)); if(open) $("w-restore").focus(); };
 // ---- Ledger (ledger.js): the browser's device prompt needs a click, so the libraries are fetched on hover/focus and the click only awaits them ----
-function ledgerOption(){                                   // the option's availability: WebHID or not (Safari, Firefox, phones)
-  const ok=ledgerSupported(); $("w-ledger").disabled=!ok; $("w-ledger").title=ok?"":"WebHID is not available in this browser";
-  $("w-ledgerhint").textContent= ok ? "Bitcoin app open on the device · keys never leave it" : "Needs WebHID: Chrome, Edge or Brave on a desktop";
+function ledgerOption(){                                   // the option's availability: WebHID or not (Safari, Firefox, phones); without it the card says why and cannot be picked
+  const ok=ledgerSupported(), r=$("w-optledger").querySelector("input"); $("w-ledger").disabled=!ok; $("w-ledger").title=ok?"":"WebHID is not available in this browser";
+  $("w-ledgerhint").textContent= ok ? "Keys never leave the device: you confirm every burn on its screen." : "Needs WebHID: Chrome, Edge or Brave on a desktop.";
+  r.disabled=!ok; $("w-optledger").classList.toggle("off",!ok); if(!ok&&r.checked) $("w-opts").querySelector("input[value=new]").checked=true;
 }
 ledgerOption();
+// ---- Connect a wallet (#w-none): three ways as radio cards; the picked one opens its form, the footer shows its one primary (#w-create / #w-restoreok / #w-ledger, their handlers below as before) ----
+$("w-ledgerapp").textContent=LEDGER_APP[NET]||"Bitcoin";      // the app the device must have open on this network
+function wPick(){ return $("w-opts").querySelector("input:checked")?.value||"new"; }   // new | words | ledger
+function wPassSum(){ $("w-passsum").textContent= $("w-pass1").value ? "Passphrase\u00a0· set" : wPick()==="words" ? "Passphrase\u00a0· if it had one" : "Passphrase\u00a0· optional"; }   // a folded passphrase still says it is there
+function wWaiting(){ return FUNDING&&WFUND&&$(FUNDING+"-wallet")?.closest("dialog")?.open ? PAY.find(p=>p.wallet?.prefix===FUNDING)?.wallet||null : null; }   // the pay panel of a dialog still open under this one, waiting on the wallet (its close drops the ask; this checks it anyway)
+// what a transaction's outputs are, in the words the dialogs use: [word, sats, outputs] in output order. A registration above 330 is a registration and a sponsorship (Explore's New topic);
+// next to a registration (noun), a burn is its first answer. Read by funds() (the callout, the cap notes) and by the Connect dialog's waiting line
+const outParts=(outs,noun)=>{ const parts=[], add=(w,s)=>{ const x=parts.find(p=>p[0]===w); if(x){ x[1]+=s; x[2]++; } else parts.push([w,s,1]); };
+  for(const o of outs){ if(!o.sats) continue; const w=o.label==="tip"?"tip":/^register/.test(o.label)?"registration":/^sponsor/.test(o.label)?"sponsorship":noun==="registration"?"first answer":"burn";
+    if(w==="registration"&&o.sats>REG_SATS){ add(w,REG_SATS); add("sponsorship",o.sats-REG_SATS); } else add(w,o.sats); }
+  return parts; };
+function wWaitPaint(){                                      // #w-none: what the waiting dialog keeps (its noun, from signMenu or the batch), and what the wallet will need for it
+  const wt=wWaiting(); $("w-wait").hidden=!wt; if(!wt) return;
+  const outs=wt.outs(), n=wt.noun, parts=outParts(outs,n), burns=outs.filter(o=>/^(burn|register|sponsor)/.test(o.label)).length, tip=parts.some(p=>p[0]==="tip");   // the labels sentHtml reads
+  const word= n==="registration"||n==="sponsorship"||n==="tip" ? n : "burn", own=parts.find(p=>p[0]===word);   // a take or an answer: its amount is a burn; the headline counts the noun's own outputs, never what rides along (a registration, a first answer)
+  const [cls,icon]= !burns&&tip ? ["tip",ICONS.tip] : n==="registration" ? ["reg",ICONS.reg] : n==="sponsorship" ? ["feature",ICONS.feature] : ["",ICON_TAKE];   // the badges of the batch list
+  $("w-waiticon").className="fi"+(cls&&" "+cls); $("w-waiticon").innerHTML=icon;
+  $("w-waithead").textContent= n==="batch" ? `Your batch of ${burns} burn${burns===1?"":"s"} is kept` : own ? `Your ${fmt(own[1])}-sat ${word} is kept` : `Your ${word} is kept`;   // the amounts from the outputs the dialog pinned
+  const lead=parts.map(([w,,c])=>c>1?w+"s":w).join(", ");   // what the amount covers, part by part (the footer's words), the mining fee last
+  $("w-waitnote").textContent=`Once connected, the wallet needs about ${fmt(WFUND)}\u00a0sats: ${lead?lead+" and ":""}mining fee.`;   // the amount never leaves its unit on a wrap
+}
+function wChoicePaint(){                                    // the picked way's form and primary; the one passphrase field (walletInstall reads it) rides with New or Restore
+  const p=wPick(), adv=$("w-passadv");
+  $("w-newbox").hidden=p!=="new"; $("w-restorebox").hidden=p!=="words"; $("w-ledgerbox").hidden=p!=="ledger";
+  $("w-create").hidden=p!=="new"; $("w-restoreok").hidden=p!=="words"; $("w-ledger").hidden=p!=="ledger";
+  if(p==="new"&&adv.parentNode!==$("w-newbox")) $("w-createmsg").before(adv); else if(p==="words"&&adv.parentNode!==$("w-restorebox")) $("w-restorebox").append(adv);   // typed once, kept across a switch
+  $("w-passnote").textContent= p==="words" ? "Type the one it was made with: any other passphrase opens a different, empty wallet." : "Encrypts the words in this browser (BIP39) and changes the address: you need it again to restore.";
+  $("w-pass1").placeholder= p==="words" ? "Leave empty if it had none" : "Leave empty for no passphrase";
+  $("w-pass1").autocomplete= p==="words" ? "off" : "new-password";   // Restore: no generated password offered (it would open a different, empty wallet)
+  wPassSum(); wWaitPaint();
+  $("w-opts").querySelectorAll("input").forEach(r=>r.autofocus=r.checked);   // the dialog opens on the pick, not on a field: no phone keyboard
+}
+$("w-opts").onchange=e=>{ if(e.target.name!=="wopt") return; $("w-ledgermsg").hidden=$("w-createmsg").hidden=true; if(wPick()==="ledger"&&ledgerSupported()) ledgerLibs().catch(()=>{}); wChoicePaint(); };   // an error belongs to its attempt; Ledger picked: its libraries load before the click that needs them
+$("w-opts").onclick=e=>{ if(e.detail&&e.target.closest(".wopth")) setTimeout(()=>{ if(wPick()==="words") $("w-restore").focus(); }); };   // a click or tap on Restore goes straight to the words; arrow keys (detail 0) stay in the group
+$("w-pass1").oninput=wPassSum;
+$("w-pass1").onkeydown=e=>{ if(e.key==="Enter") $(wPick()==="words"?"w-restoreok":"w-create").click(); };   // Enter: the primary on screen, as Unlock does
+function wRestoreErr(msg="", words=false){                 // Restore's error: the reason (role=alert), and for a rejected phrase the red border and aria-invalid; "" clears them all
+  const r=$("w-restore"), m=$("w-restoremsg"); m.textContent=msg; m.hidden=!msg; r.style.borderColor=words?"#ff5c5c":"";
+  if(words) r.setAttribute("aria-invalid","true"); else r.removeAttribute("aria-invalid"); }   // empty when hidden: the field's description (aria-describedby) never reads an old reason
+$("w-restore").oninput=()=>wRestoreErr();                  // a rejected phrase's red border and its reason go once it is edited
+function wFundNote(){ if(!WALLET) return;                                        // #w-ready, under the address: where its coins come from; a dialog waiting on funds (wWaiting): how much to send, the same figure in the QR, and while it waits with the balance known, why that much
+  const wt=wWaiting(), short=wt&&walletUtxos ? Math.max(0, wt.outs().reduce((a,o)=>a+o.sats,0)+wt.fee()-walletSats()) : null, ask=wt&&short!==0?WFUND:0;   // short null: the balance is not known yet; 0: it holds enough now (Funds arrived comes next). ask: the sats the note and the QR ask for
+  $("w-fundnote").textContent= ask ? `Send about ${fmt(ask)}\u00a0sats to this address${short&&ask>=short ? `: the ${fmt(short)} missing, plus ${walletUtxos.length&&ask-short>500?"the new coin's fee and ":""}a small margin` : ""}. Your ${wt.noun||"take"} is waiting.`   // WFUND: what is missing, the fee of the coin that lands (one more input to sign, none for a first coin: priced in), 500 sats for a fee that moves
+    : walletIsLedger() ? "Burns spend from any address of this Ledger account; change comes back to this one. Reading the balance shows the explorer every address of the account: your own node (Data source) keeps them private." : "Fund it by sending sats to this address.";
+  const uri="bitcoin:"+WALLET.addr+(ask?`?amount=${(ask/1e8).toFixed(8)}`:"");   // the QR says what the note says: an amount only while the note asks for one
+  if($("w-qr")._uri!==uri) try{ const q=qrcode(0,"M"); q.addData(uri,"Byte"); q.make(); $("w-qr").src=q.createDataURL(4,4); $("w-qr")._uri=uri; }catch{}
+}
 ["pointerenter","focus"].forEach(ev=>$("w-ledger").addEventListener(ev,()=>{ if(ledgerSupported()) ledgerLibs().catch(()=>{}); }));
 $("w-ledger").onclick=async()=>{
   const b=$("w-ledger"), m=$("w-ledgermsg"); m.hidden=true; b.disabled=true; b.textContent="Connecting…";
   try{
     const r=await ledgerConnect(NET);
     WALLET={kind:"ledger", net:NET, addr:r.addr, xpub:r.xpub, fp:r.fp}; walletSave(); wKey=null; walletUtxos=null;
-    await walletPaint(); PAY.forEach(p=>p.paint());
+    const painted=walletPaint(true); $("w-copy").focus(); await painted; PAY.forEach(p=>p.paint());   // the Connect view is gone: focus lands on the new one, never on <body>
   }catch(e){ m.hidden=false; m.textContent=ledgerError(e).message; }
   b.disabled=!ledgerSupported(); b.textContent="Connect a Ledger";
 };
@@ -2250,12 +2455,14 @@ async function walletInstall(words){
   const pass=$("w-pass1").value;
   const k=await walletDerive(words, pass, NET);
   WALLET={net:NET, enc:!!pass, data: pass? await encryptSecret(words, pass) : words, addr:k.address};
-  walletSave(); wKey=k; wKey.words=words; walletUtxos=null; $("w-pass1").value="";
-  await walletPaint(); PAY.forEach(p=>p.paint());
+  walletSave(); wKey=k; wKey.words=words; walletUtxos=null; $("w-pass1").value=""; $("w-restore").value=""; wRestoreErr();   // the Restore card keeps no words and no old error
+  const painted=walletPaint(true); $("w-copy").focus(); await painted; PAY.forEach(p=>p.paint());   // the Connect view is gone: focus lands on the new one (Create moves it to the words)
 }
-$("w-create").onclick=async()=>{ $("w-createmsg").hidden=true; $("w-create").disabled=true; $("w-create").textContent="Creating…"; try{ const {mnemonic}=await walletGenerate(); await walletInstall(mnemonic); $("w-backup").click(); }catch(e){ $("w-createmsg").hidden=false; $("w-createmsg").textContent="Could not create the wallet: "+e.message; } $("w-create").disabled=false; $("w-create").textContent="Create wallet"; };
-$("w-restoreok").onclick=async()=>{ const words=$("w-restore").value.trim().toLowerCase().split(/\s+/).join(" "); if(!(await walletValidate(words))){ $("w-restore").style.borderColor="#ff5c5c"; return; } await walletInstall(words); $("w-restore").value=""; $("w-restorebox").hidden=true; };
-$("w-unlock").onclick=async()=>{ try{ await walletLoadKey($("w-pass2").value); $("w-lockmsg").hidden=true; $("w-pass2").value=""; await walletPaint(); PAY.forEach(p=>p.paint()); }catch{ $("w-lockmsg").hidden=false; } };
+$("w-create").onclick=async()=>{ $("w-createmsg").hidden=true; $("w-create").disabled=true; $("w-create").textContent="Creating…"; try{ const {mnemonic}=await walletGenerate(); await walletInstall(mnemonic); $("w-backup").click(); $("w-wordshide").focus(); }catch(e){ $("w-createmsg").hidden=false; $("w-createmsg").textContent="Could not create the wallet: "+e.message; } $("w-create").disabled=false; $("w-create").textContent="Create wallet"; };
+$("w-restoreok").onclick=async()=>{ const words=$("w-restore").value.trim().toLowerCase().split(/\s+/).join(" ");
+  try{ if(!(await walletValidate(words))) return wRestoreErr("These words are not a valid 12 or 24-word phrase.",true); await walletInstall(words); $("w-restorebox").hidden=true; }
+  catch(e){ wRestoreErr("Could not restore the wallet: "+e.message); } };   // the libraries not loading, a derive that fails: said, like Create
+$("w-unlock").onclick=async()=>{ try{ await walletLoadKey($("w-pass2").value); $("w-lockmsg").hidden=true; $("w-pass2").value=""; await walletPaint(); PAY.forEach(p=>p.paint()); $("w-copy").focus(); }catch{ $("w-lockmsg").hidden=false; } };
 $("w-pass2").onkeydown=e=>{ if(e.key==="Enter") $("w-unlock").click(); };
 $("w-copy").onclick=()=>copyText(WALLET.addr,$("w-copy"));
 $("w-refresh").onclick=async()=>{ walletUtxos=null; await walletPaint(); PAY.forEach(p=>p.paint()); };
@@ -2264,16 +2471,16 @@ $("w-backup").onclick=async()=>{
   if(!wKey){ try{ await walletLoadKey(""); }catch{ return; } }
   $("w-words").innerHTML=wKey.words.split(" ").map(w=>`<li>${w}</li>`).join(""); $("w-backupbox").hidden=false; $("w-forgetbox").hidden=true; $("w-backupbox").scrollIntoView({block:"nearest"});
 };
-$("w-wordshide").onclick=()=>{ $("w-backupbox").hidden=true; $("w-words").innerHTML=""; };
+$("w-wordshide").onclick=()=>{ $("w-backupbox").hidden=true; $("w-words").innerHTML=""; $("w-backup").focus(); };   // back on the button that shows them, not on <body>
 $("w-wordscopy").onclick=()=>copyText(wKey.words,$("w-wordscopy"));
 const forgetUI=()=>{ const sec=$("w-ready").hidden?$("w-locked"):$("w-ready"); sec.querySelector(".dlgfoot").before($("w-forgetbox")); $("w-forgetbox").hidden=false;
   $("w-forgetnote").innerHTML= walletIsLedger() ? "This removes the Ledger from this browser. Its keys and sats stay on the device; connect it again any time. Type <b>FORGET</b> to confirm." : "This removes the wallet from this browser. Its sats stay on the chain, reachable only with the 12 words. Type <b>FORGET</b> to confirm."; $("w-backupbox").hidden=true; $("w-forgetinput").value=""; $("w-forgetok").disabled=true; $("w-forgetbox").scrollIntoView({block:"nearest"}); $("w-forgetinput").focus(); };
 $("w-forget1").onclick=forgetUI;
 $("w-forget2").onclick=forgetUI;
 $("w-forgetinput").oninput=()=>{ $("w-forgetok").disabled=$("w-forgetinput").value!=="FORGET"; };
-$("w-forgetcancel").onclick=()=>{ $("w-forgetbox").hidden=true; };
+$("w-forgetcancel").onclick=()=>{ $("w-forgetbox").hidden=true; ($("w-ready").hidden?$("w-forget1"):$("w-forget2")).focus(); };   // back on the Forget wallet… that opened it
 $("w-forgetinput").onkeydown=e=>{ if(e.key==="Enter"&&!$("w-forgetok").disabled) $("w-forgetok").click(); };
-$("w-forgetok").onclick=()=>{ WALLET=null; wKey=null; walletUtxos=null; try{ localStorage.removeItem(NETKEY("bv.wallet")); }catch{} $("w-forgetbox").hidden=true; walletPaint(); PAY.forEach(p=>p.paint()); };
+$("w-forgetok").onclick=()=>{ WALLET=null; wKey=null; walletUtxos=null; try{ localStorage.removeItem(NETKEY("bv.wallet")); }catch{} $("w-forgetbox").hidden=true; $("w-restore").value=""; wRestoreErr(); walletPaint(); PAY.forEach(p=>p.paint()); $("w-opts").querySelector("input:checked")?.focus(); };   // the Connect view, on the picked way; the Restore card empty
 addEventListener("resize",walletPill);
 walletPill();
 if(walletState()==="sealed") walletLoadKey("").then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); }).catch(()=>{});
@@ -2293,7 +2500,7 @@ function txLink(btn,s){ const foot=btn.closest(".dlgfoot"); if(!foot) return; le
   if(!a){ a=document.createElement("a"); a.className="btn"; a.dataset.txlink=""; a.target="_blank"; a.rel="noopener"; a.innerHTML=ICON_EXT+"<span>Explorer</span>"; (btn.closest(".signwrap")||btn).before(a); }
   const sent=!!(s&&s.kind==="sent"); a.hidden=!sent; if(sent) a.href=TXURL(s.txid); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-copytx]"); if(b) copyText(b.dataset.copytx,b); });
-document.addEventListener("click",e=>{ const b=e.target.closest("[data-fund]"); if(!b) return; const [pre,n]=b.dataset.fund.split(":"); FUNDING=pre; WFUND=+n; walletOpen(); });   // short of funds: the wallet opens with the amount in its QR
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-fund]"); if(!b) return; const [pre,n]=b.dataset.fund.split(":"); FUNDING=pre; WFUND=+n; WFUNDAT=walletUtxos; walletOpen(); });   // short of funds: the wallet opens with the amount in its QR
 document.addEventListener("click",e=>{ if(!e.target.closest("[data-wretry]")) return; chainReset(); const p=walletBalance(true); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) $("w-balhint").textContent="checking…";   // the wallet's balance: another try, when the reader asks
   p.then(()=>{ walletPill(); PAY.forEach(x=>x.paint()); if($("walletdlg")?.open) walletPaint(); }); });
 // ---------- the mining fee speed: Fast / Normal / Economy with their sat/vB, remembered on this network; every panel repaints with it ----------
@@ -2301,6 +2508,16 @@ const feeSegHtml=(id,note=false)=>`${note?`<div class="field feef"><label><span>
 function feeSegPaint(seg, off=false, sum=null, tip=null){ const r=feeRates(), sp=feeSpeed(); seg.querySelectorAll("[data-fee]").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.fee===sp)); b.querySelector("span").textContent=`${r[b.dataset.fee]} sat/vB`; b.disabled=off; });
   const S=FEE_SPEEDS.find(x=>x[0]===sp)[1]; if(sum) sum.textContent= (tip==null ? `Advanced · mining fee · ${S} · ${r[sp]} sat/vB` : `Advanced · ${tip?`tip ${fmt(tip)}`:"no tip"} · ${S} mining fee`).replace(/ ·/g,"\u00a0·"); }   // sum: the <summary> of an edit view's Advanced; tip: the tip it also holds (null: none there); a wrap never starts a line with a "·"
 const feeSegWire=seg=>{ seg.onclick=e=>{ const b=e.target.closest("[data-fee]"); if(!b||b.disabled) return; LS(NETKEY("bv.fee"),b.dataset.fee); PAY.forEach(p=>p.paint()); }; };
+// ---------- short of funds, said where it matters (walletTab.funds): the take and the first views (fundsHtml), under a row of amount chips (capNoteHtml), the transaction step ----------
+const fundsPart=([w,n,c])=>(c>1?`${fmt(n)} in ${c} ${w}s`:`${fmt(n)} ${w}`).replace(/ /g,"\u00a0");   // "330 burn", "1,330 in 2 burns": a part never breaks across lines
+function fundsHtml(wt){ const f=wt.funds(); if(!f||!f.short) return "";   // what it needs, what the wallet holds, what is missing; Add funds: the wallet opens with the amount in its QR (data-fund)
+  return `<div class="funds">${iconBadge("",ICONS.wallet)}<p><b>Your wallet is ${fmt(f.short)} sats short</b><span>It holds ${fmt(f.bal)} of the ${fmt(f.need)} sats needed: ${[...f.parts.map(fundsPart),`≈\u00a0${fmt(f.fee)}\u00a0mining\u00a0fee`].join("\u00a0+ ")}.</span></p><i class="fundsbar" aria-hidden="true"><i style="width:${(f.bal/f.need*100).toFixed(1)}%"></i></i><button type="button" class="efgo" data-fund="${wt.prefix}:${f.topup}"><span><b>Add funds</b></span></button></div>`; }
+const fundsPaint=(host,wt,on=true)=>{ const h=on?fundsHtml(wt):""; if(host._h!==h){ host._h=h; host.innerHTML=h; } host.hidden=!h; };   // a view's callout host: rebuilt only when it changes (a focused Add funds keeps its focus)
+function capNoteHtml(wt, f, noun, v, cap, lo, lead=true){     // under amount chips (amountChips): what fits with the rest of the transaction, or what is missing even at the lowest; lead: the dialog's first note, which says what the wallet holds
+  const own=noun==="registration"?["registration","sponsorship"]:[noun];   // a registration's chip covers its sponsorship too (funds() splits them)
+  const it=[...f.parts.filter(p=>!own.includes(p[0])).map(p=>"the "+fundsPart(p)), "the mining fee"], w=it.length>1?it.slice(0,-1).join(", ")+" and "+it[it.length-1]:it[0];   // no fee figure: the footer says the one the signers pay
+  const add=` <button type="button" class="linkbtn" data-fund="${wt.prefix}:${f.topup+Math.max(0,lo-v)}">Add funds</button>`;   // enough for the lowest too, when the amount typed is under it
+  return (lead?`Your wallet holds ${fmt(f.bal)} sats: with `:"With ")+`${w}, `+(cap>=lo ? `up to ${fmt(cap)} fits.${v>cap?add:""}` : lo ? `even ${fmt(lo)} is ${fmt(lo-cap)} short.${add}` : `it is about ${fmt(-cap)} short even without a ${noun}.${add}`); }   // about: that fee still prices this output
 // ---------- wallet block of the transaction step: tiles + status; the dialog footer's primary button drives it (walletPrimary). speed:false when the dialog sets the fee elsewhere ----------
 function walletTab(prefix, root, {speed=true}={}){
   const id=k=>prefix+"-w-"+k;
@@ -2311,12 +2528,21 @@ function walletTab(prefix, root, {speed=true}={}){
       <div class="wsum"><div><b id="${id("total")}">…</b><span>to send</span></div><div><b id="${id("fee")}">…</b><span>mining fee<span class="more" id="${id("rate")}"></span></span></div><div><b id="${id("after")}">…</b><span>balance after</span></div></div>
       ${speed?feeSegHtml(id("speed")):""}
       <p class="note mono" id="${id("msg")}" style="margin:8px 0 0" aria-live="polite"></p>
+      <div id="${id("short")}" aria-live="polite" hidden></div>
       <div id="${id("result")}" aria-live="polite" hidden></div>
     </div></div>`;
   const $$=k=>$(id(k)); let last=null, status=null;   // status: null | {kind:"busy"} | {kind:"sent", txid} | {kind:"err", msg}
-  const api={ update(p){ last=p; if(!status||status.kind!=="busy") status=null; }, onsent:null };   // onsent({txid, outputs, hex}): the page records what went out (pending burns for the receipt page); status.msg: the Ledger stage
-  const calc=()=>{ const total=last.outputs.reduce((a,o)=>a+o.sats,0), fee=Math.ceil(feeRate()*walletVsize(Math.max(1,(walletUtxos||[]).length),[...last.outputs.map(o=>fromHex(o.scriptHex)),new Uint8Array(22)])); let mismatch=true; try{ mismatch=bech32Decode(last.outputs[0].addr).hrp!==HRP; }catch{} return {total, fee, bal:walletSats(), mismatch}; };   // priced like the signers: every coin in, the real output scripts, a P2WPKH change
+  const api={ update(p){ last=p; if(!status||status.kind!=="busy") status=null; }, onsent:null, chips:[] };   // onsent({txid, outputs, hex, from}): the page records what went out (pending burns for the receipt page; from: the burner, the first input's address); status.msg: the Ledger stage; chips: the amount chips this panel prices (amountChips), synced on every paint
+  const calc=()=>{ const total=last.outputs.reduce((a,o)=>a+o.sats,0), outs=last.outputs.map(o=>({value:o.sats, script:fromHex(o.scriptHex)})), rate=feeRate(), coins=walletUtxos||[];
+    let fee; try{ fee=ledgerFund({utxos:coins, outputs:outs, changeAddr:WALLET.addr, feeRate:rate}).fee; }   // what the signers pay: their own selection (ledgerFund is signP2wpkh's), coins in the wallet's order until the outputs and the fee are covered
+    catch{ fee=Math.ceil(rate*walletVsize(Math.max(1,coins.length),[...outs.map(o=>o.script),new Uint8Array(22)])); }   // short of funds, or coins unknown: every coin in (one when none), the most it could take
+    let mismatch=true; try{ mismatch=bech32Decode(last.outputs[0].addr).hrp!==HRP; }catch{} return {total, fee, bal:walletSats(), mismatch}; };
   const canSend=()=>{ if(walletState()!=="ready"||!last||!walletUtxos||(status&&status.kind!=="err")) return false; const c=calc(); return !c.mismatch && c.bal>=c.total+c.fee; };   // after an error the button stays live: open the Ledger app, plug it back in, try again
+  const funds=()=>{ if(walletState()!=="ready"||!last||!walletUtxos||(status&&status.kind!=="err")) return null;   // the balance against this transaction, only when it is known and nothing is under way: never a guess
+    const c=calc(); if(c.mismatch) return null;
+    const scripts=[...last.outputs.map(o=>fromHex(o.scriptHex)),new Uint8Array(22)], feeAt=n=>Math.ceil(feeRate()*walletVsize(n,scripts));   // every coin in and a change, as calc() prices it when short: the fee at the most the wallet can pay (a dust change the signers leave to the miners is no fee to plan on)
+    const fee=feeAt(Math.max(1,walletUtxos.length)), short=Math.max(0,c.total+c.fee-c.bal);   // short: the signers' own view (calc), so it agrees with canSend
+    return {total:c.total, bal:c.bal, fee, need:c.total+fee, short, room:Math.max(-short,c.bal-c.total-fee), topup:c.total+feeAt(walletUtxos.length+1)-c.bal+500, parts:outParts(last.outputs,api.noun)}; };   // topup, what to send: the coin that lands is one more input to sign, and a margin for a fee that moves; parts: [word, sats, outputs], in output order
   const paint=()=>{
     const st=walletState(), sent=!!(status&&status.kind==="sent");
     root.closest(".pay")?.classList.toggle("sent",sent);   // sent: the txid and the receipt link stay, the rest goes (base.css)
@@ -2324,6 +2550,7 @@ function walletTab(prefix, root, {speed=true}={}){
     $$("result").hidden=!status||status.kind==="busy";
     if(status&&status.kind==="sent") $$("result").innerHTML=sentHtml(status, !!api.onsent);   // a receipt only where the page recorded a burn (not for a plain tip)
     else if(status&&status.kind==="err") $$("result").innerHTML=`<p class="note mono" style="margin:6px 0 0">${esc(status.msg)}</p>`;
+    fundsPaint($$("short"), api);                            // short of funds: the callout (fundsHtml), empty in every other state
     if(st!=="ready") return;
     const r=feeRates(), sp=feeSpeed(); $$("rate").textContent=` · ${r[sp]} sat/vB`;
     if(speed) feeSegPaint($$("speed"), !!(status&&status.kind!=="err"));
@@ -2333,15 +2560,13 @@ function walletTab(prefix, root, {speed=true}={}){
     $$("total").textContent=fmt(total)+" sats"; $$("fee").textContent="≈ "+fmt(fee)+" sats"; $$("after").textContent=fmt(Math.max(0,bal-total-fee))+" sats";
     if(status&&status.kind==="busy"){ $$("msg").textContent=status.msg||"signing…"; return; }
     if(!walletUtxos){ $$("after").textContent="—"; $$("msg").innerHTML= WREADING ? "checking the balance…" : `<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer · balance unknown`; return; }
-    if(FUNDING===prefix&&!mismatch&&bal>=total+fee){ FUNDING=null; WFUND=0; toast("Funds arrived · your burn is ready to sign"); }   // the wallet caught up with the dialog waiting on it
-    $$("msg").innerHTML = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.`
-      : bal<total+fee ? `Needs ${fmt(total+fee)} sats, the wallet has ${fmt(bal)}. <button type="button" class="linkbtn" data-fund="${prefix}:${total+fee-bal+500}">Add funds</button>`
-      : "";                                                   // all is well: nothing to say
+    if(FUNDING===prefix&&!mismatch&&bal>=total+fee){ FUNDING=null; WFUND=0; if(root.closest("dialog")?.open) toast(`Funds arrived · your ${api.noun||"burn"} is ready to sign`); }   // the wallet caught up with the dialog waiting on it (noun: signMenu's, or the batch's); a dialog closed meanwhile: its ask goes without a word
+    $$("msg").innerHTML = mismatch ? `This wallet is on ${NET}; this address is not. The transaction cannot relay.` : "";   // short of funds: the callout says it; all is well: nothing to say
   };
   const send=async()=>{
     if(!canSend()) return;
     const outputs=last.outputs.map(o=>({value:o.sats, script:fromHex(o.scriptHex)}));   // pinned: the step can change under a slow explorer
-    status={kind:"busy"}; PAY.forEach(p=>p.paint());
+    status={kind:"busy", msg:walletIsLedger()?"checking the balance…":""}; PAY.forEach(p=>p.paint());   // a Ledger's fresh read is the whole account: say so, not "signing…"
     try{
       await walletBalance(true);
       if(!walletUtxos) throw new Error(`balance unknown: the explorer at ${esploraBase(NET)} is unreachable from this page`);
@@ -2352,7 +2577,7 @@ function walletTab(prefix, root, {speed=true}={}){
       if(b.error) throw new Error(b.error);                // the explorer's rejection, verbatim
       const outSum=last.outputs.reduce((a,o)=>a+o.sats,0);
       status={kind:"sent", txid:b.txid||r.txid, fee:r.fee, outs:last.outputs, after:Number.isFinite(r.fee)?walletSats()-outSum-r.fee:null};   // what went out, for the success panel
-      try{ api.onsent?.({txid:status.txid, outputs:last.outputs, hex:r.hex}); }catch{}
+      try{ api.onsent?.({txid:status.txid, outputs:last.outputs, hex:r.hex, from:r.from||WALLET.addr}); }catch{}   // from: a Ledger's burn can go out from another address of the account (ledgerSign), the burner wallet's always from its one
       walletUtxos=null; walletBalance().then(()=>{ walletPill(); PAY.forEach(p=>p.paint()); });   // coins spent: the change shows once the explorer sees it
     }catch(e){ status={kind:"err", msg:walletIsLedger()?ledgerError(e).message:e.message}; }
     PAY.forEach(p=>p.paint());
@@ -2360,21 +2585,23 @@ function walletTab(prefix, root, {speed=true}={}){
   if(speed) feeSegWire($$("speed"));
   const fee=()=>last ? calc().fee : null;                     // coins unknown (no wallet yet, or the explorer has not answered): priced for one coin, exact once they load
   const need=()=>last ? calc().total+calc().fee+500 : 0;       // what to send the wallet for this burn: its outputs, the fee, a little margin
-  return Object.assign(api, { paint:()=>{ paint(); feeReady(); }, send, canSend, fee, need, prefix, status:()=>status });
+  return Object.assign(api, { paint:()=>{ paint(); api.chips.forEach(f=>f()); feeReady(); }, send, canSend, fee, need, funds, prefix, status:()=>status, outs:()=>last?last.outputs:[] });   // outs: the outputs it holds (the Connect dialog's waiting line and fund note read them)
 }
 // the dialogs' primary from the first step that can sign: "Sign take and…" opens Broadcast / Add to batch (batch null: no batch item).
 // Broadcast walks the wallet (connect, unlock), brings up the Transaction step (show), where progress and errors show, then signs and sends; once sent the button is Done.
 const CARET='<svg class="caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-function signMenu(btn, menu, wt, {label, ok=true, show=()=>{}, batch=null, tx=null, done}){   // tx: bring up the transaction details (null: already there)
+function signMenu(btn, menu, wt, {label, noun="take", ok=true, show=()=>{}, batch=null, batchOff="", batchNote="", tx=null, done}){   // noun: what the dialog signs (take, answer, sponsorship, registration, tip); tx: bring up the transaction details (null: already there); batchOff: why Add to batch is greyed out ("": it works); batchNote: what it would do besides adding
   if(!btn._close){ btn._close=dropMenu(btn,menu); btn._toggle=btn.onclick; }       // the menu's toggle, outside click and Escape: wired once
+  wt.noun=noun;                                                // said wherever the wallet is missing or short: the Connect dialog, its fund note, Funds arrived
   const st=walletState(), s=wt.status(), bc=menu.querySelector('[data-act="broadcast"]'), ba=menu.querySelector('[data-act="batch"]'), tt=menu.querySelector('[data-act="tx"]'); txLink(btn,s);
   if(s&&s.kind==="sent"){ btn._close(); btn.textContent="Done"; btn.disabled=false; btn.removeAttribute("aria-haspopup"); btn.onclick=done; return; }
   btn.setAttribute("aria-haspopup","menu"); btn.onclick=btn._toggle;
   if(s&&s.kind==="busy"){ btn._close(); btn.textContent=walletIsLedger()?"On the Ledger…":"Signing…"; btn.disabled=true; return; }
   btn.innerHTML=label+CARET; btn.disabled=!ok;
-  bc.textContent= st==="none" ? "Broadcast · set up a wallet (your take is kept)" : st!=="ready" ? "Broadcast · unlock the wallet first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
-  bc.onclick=()=>{ btn._close(); if(st!=="ready"){ if(st==="none"){ FUNDING=wt.prefix; WFUND=wt.need(); } return walletOpen(); } show(); if(wt.canSend()) wt.send(); };   // no wallet yet: the dialog stays open under the wallet's, the take kept
-  ba.hidden=!batch; ba.onclick=()=>{ btn._close(); if(batch) batch(); };
+  const f=wt.funds(), short=f?f.short:0;                     // the balance known and short of it: Broadcast says so and leads to the funds
+  bc.textContent= st==="none" ? `Broadcast · set up a wallet (your ${noun} is kept)` : st!=="ready" ? "Broadcast · unlock the wallet first" : short ? "Broadcast · add funds first" : (walletIsLedger() ? "Broadcast · confirm on the Ledger" : "Broadcast");   // the fee sits under the price (dlgPrice)
+  bc.onclick=()=>{ btn._close(); if(st!=="ready"){ if(st==="none"){ FUNDING=wt.prefix; WFUND=wt.need(); WFUNDAT=null; } return walletOpen(); } show(); if(short){ FUNDING=wt.prefix; WFUND=f.topup; WFUNDAT=walletUtxos; return walletOpen(); } if(wt.canSend()) wt.send(); };   // no wallet yet, or short: the dialog stays open under the wallet's, the take kept
+  ba.hidden=!batch; ba.setAttribute("aria-disabled",String(!!batchOff)); ba.textContent="Add to batch"+(batchOff?" · "+batchOff:batchNote?" · "+batchNote:""); ba.onclick=()=>{ if(batchOff) return; btn._close(); if(batch) batch(); };   // greyed out, still in the arrow walk: its reason is focused and read out ("…, unavailable")
   tt.hidden=!tx; tt.onclick=()=>{ btn._close(); if(tx) tx(); };
 }
 // the footer's left in every dialog that builds a transaction: what signing costs, the amount and its word, then what comes on top (fee: wt.fee(), null until the dialog has a transaction to price)
@@ -2387,7 +2614,7 @@ function walletPrimary(btn, wt, done, ok=true){
   const st=walletState(), s=wt.status(); txLink(btn,s);
   let label, act, off=false;
   if(s&&s.kind==="sent"){ label="Done"; act=done; }
-  else if(st==="none"){ label="Connect a wallet"; act=walletOpen; }
+  else if(st==="none"){ label="Connect a wallet"; act=()=>{ FUNDING=wt.prefix; WFUND=wt.need(); WFUNDAT=null; walletOpen(); }; }   // like signMenu's Broadcast: the dialog stays open under the wallet's, which says what it keeps
   else if(st==="locked"){ label="Unlock wallet"; act=walletOpen; }
   else if(st==="sealed"){ label="Open wallet"; act=walletOpen; }
   else if(walletIsLedger()){ label= s&&s.kind==="busy" ? "On the Ledger…" : "Sign on Ledger"; act=wt.send; off=!ok||!wt.canSend(); }
@@ -2433,7 +2660,8 @@ const DB=(()=>{
 
 // ---------- toast: one line at the bottom, gone after a moment ----------
 function toast(msg){
-  let t=document.querySelector(".toast"); if(!t){ t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); document.body.appendChild(t); }
+  let t=document.querySelector(".toast"); if(!t){ t=document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); }
+  const host=[...document.querySelectorAll("dialog[open]")].pop()||document.body; if(t.parentNode!==host) host.appendChild(t);   // inside the top open dialog: a modal's backdrop would hide it and make it inert
   t.textContent=msg; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2600);
 }
 function download(name,text,type){                        // a file from text; a host that blocks downloads gets a toast pointing at the copy button
@@ -2444,8 +2672,9 @@ function download(name,text,type){                        // a file from text; a
 // ---------- batch: several burns kept aside (shared.js ballotGet/ballotAdd…), cast as ONE transaction from buildBallotPayload ----------
 // The nav pill (#ballotbtn) counts the entries; the dialog lists them, compares one fee with N, and signs through the same wallet block as a single burn.
 const bwt=walletTab("bpay",$("bpay-wallet"),{speed:false});   // the fee speed sits in the fees view (the price's edit)
+bwt.noun="batch";                                            // what the wallet dialog says waits on it (signMenu sets it for the other dialogs)
 $("bfeehost").innerHTML=feeSegHtml("bfeeseg",true); feeSegWire($("bfeeseg"));
-let bLast=null, bSent=null, bStep=1, bSnap=null;            // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast, shown until the dialog is reopened
+let bLast=null, bSent=null, bSentTip=0, bStep=1, bSnap=null;   // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast (bSentTip: its tip), shown until the dialog is reopened
 const bTipSats=()=>tipEnabled() ? Math.max(0,Math.round(Number($("b-tip").value||0))) : 0;   // "No tip" is 0
 function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
 addEventListener("resize",ballotPill);
@@ -2462,27 +2691,30 @@ function bPaint(){
   $("b-clear").hidden = bStep!==1 || !n || sent;
   const editing=bStep===2, busy=!!(s&&s.kind==="busy");
   $("bback").hidden = bStep!==3 || sent; $("bsend").hidden = !n || editing; $("bcancel").hidden = $("bapply").hidden = !editing;   // the primary signs from the list on; the fees view applies or cancels
+  const dust=!!tipDust(bTipSats()); $("bapply").disabled=dust;   // a tip of 1–329 sats cannot relay: not applied, not signed (the note under the tip says why)
   ballotPill();
   $("bprice").hidden=!n||sent;
   if(!n) return;
   const firstAt=new Map(); e.forEach(x=>{ if(!firstAt.has(x.addr)) firstAt.set(x.addr,x); });   // a second burn to one address in one transaction is summed under the first (spec §4)
+  const tip=sent?bSentTip:bTipSats(), sentTag=`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`;   // sent: the tip that went out with these burns
   $("b-list").innerHTML=e.map((x,i)=>`<div class="bent${sent?" sent":""}">
       ${x.name?iconBadge("",ICON_TAKE):x.intent==="feature"?iconBadge("feature",ICONS.feature):iconBadge("reg",ICONS.reg)}
       <span class="topic">${x.name?topicLabel(x.name):x.intent==="feature"?"sponsor":"register"}</span>
       <span class="stmt">${x.statement?esc(x.statement):"<i>no take</i>"}${sent?"":bTag(x, firstAt.get(x.addr))}</span>
       <b class="mono">${fmt(x.sats)}<small> sats</small></b>
-      ${sent?`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
-    </div>`).join("");
-  const tip=bTipSats();
+      ${sent?sentTag:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
+    </div>`).join("")
+    +(tip?`<div class="bent tipr${sent?" sent":""}">${iconBadge("tip",ICONS.tip)}<span class="stmt">Tip the project</span><b class="mono">${fmt(tip)}<small> sats</small></b>${sent?sentTag:`<button type="button" class="copy" data-btip aria-label="Remove the tip">remove</button>`}</div>`:"");   // the batch's one tip output: its own row, after the burns
   dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+(!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:""), bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
-  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"), tipEnabled()?bTipSats():null);
+  feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"), tipEnabled()?tip:null);
   $("b-tipf").hidden=!tipEnabled(); $("b-tipusd").textContent=tip?usdOf(tip):"";
   $("b-shared").hidden=!bLast||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";
   $("bpay-text").textContent=bLast?bLast.rawHex:"…"; $("bpay-copy").disabled=!bLast;
   bwt.paint();
-  walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close(), !!bLast);   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, from any step
+  fundsPaint($("bfunds"), bwt, bStep===1);                    // the list: short of funds, said before Sign & broadcast (the Transaction step says it in the wallet block)
+  walletPrimary($("bsend"), bwt, ()=>$("ballotdlg").close(), !!bLast&&!dust);   // Connect a wallet / Unlock wallet / Sign & broadcast / Done, from any step
   if(/^Sign/.test($("bsend").textContent)) $("bsend").onclick=()=>{ if(bStep!==3) bGo(3); bwt.send(); };   // signing shows the Transaction step, where progress and errors show
 }
 // what a batch row would really do, said on the row: summed into an earlier burn to the same topic, too late for a deadline, or an answer off the topic's list
@@ -2505,17 +2737,19 @@ function batchConflict(note, i, e, done){
   note.onclick=ev=>{ const b=ev.target.closest("[data-bx]"); if(!b) return; ballotSet(i, b.dataset.bx==="replace" ? e : {sats:x.sats+e.sats}); note.hidden=true; done(); };
 }
 PAY.push({paint:bPaint, wallet:bwt});                        // repainted with every wallet change, like the burn dialogs
-bwt.onsent=({txid})=>{                                       // one transaction, N rows: each topic gets its own pending burn (h:null) so the receipt page and the boards find them
-  const e=ballotGet(), from=WALLET?WALLET.addr:"", short=txid.slice(0,6)+"…"+txid.slice(-4);
+bwt.onsent=({txid, outputs, from:signer})=>{                // one transaction, N rows: each topic gets its own pending burn (h:null) so the receipt page and the boards find them
+  const e=ballotGet(), from=signer||(WALLET?WALLET.addr:""), short=txid.slice(0,6)+"…"+txid.slice(-4);   // from: the signed transaction's first input (a Ledger can spend from another address of its account), what the chain will say
   e.forEach((x,i)=>{ const v={txid, t:x.statement||"", sats:x.sats, h:null, from, tx:short, vout:i}; DB.putPending(x.name,[v]); globalThis.addPending?.(x.name,[v]); });
-  bSent=e; ballotClear(); ballotPill();
+  bSent=e; bSentTip=outputs.filter(o=>o.label==="tip").reduce((a,o)=>a+o.sats,0); ballotClear(); ballotPill();   // cleared: the batch's own tip goes too (ballotSave)
   toast(`Batch burned · ${e.length} burn${e.length===1?"":"s"} in one transaction`);
 };
-$("b-list").onclick=e=>{ const b=e.target.closest("[data-brm]"); if(!b) return; const n=ballotRemove(+b.dataset.brm); bSync(); toast(n?`Removed · ${n} left`:"Batch is empty"); };
+const bFocusNext=i=>{ const l=!$("b-body").hidden&&$("b-list"), c=$("b-clear"); (l&&(l.querySelector(`[data-brm="${i}"]`)||i<Infinity&&l.querySelector("[data-btip]"))||!c.hidden&&c||$("ballotdlg").querySelector("[data-close]")).focus(); };   // a row removed (i: its index, Infinity for the tip): the next row's remove, else Clear (the close button once empty: the old rows stay, hidden), never <body>
+$("b-list").onclick=e=>{ if(e.target.closest("[data-btip]")){ ballotTipSet(0); bTip.reset(0); bSync(); toast("Tip removed"); bFocusNext(Infinity); return; }   // 0: this batch goes without, the other dialogs keep their tip
+  const b=e.target.closest("[data-brm]"); if(!b) return; const i=+b.dataset.brm, n=ballotRemove(i); bSync(); toast(n?`Removed · ${n} left`:"Batch is empty"); bFocusNext(i); };
 $("b-clear").onclick=()=>{ ballotClear(); bSync(); toast("Batch cleared"); };
 $("b-tipf").hidden=!tipEnabled();                            // no tip address on this network: the ballot's tip line is never shown
-const bTipSave=()=>tipPrefSave($("b-tip").value);   // shared with every amount dialog (tipPref)
-const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }); bTip.reset(tipPref());
+const bTipSave=()=>{ tipPrefSave($("b-tip").value); ballotTipSet(null); };   // the chips: every amount dialog's tip (tipPref), and this batch follows it again
+const bTip=amountChips($("b-tipseg"), $("b-tip"), ()=>{ bTipSave(); bSync(); }, {wallet:bwt, noun:"tip", check:tipDust}); bTip.reset(ballotTip());
 $("b-tip").oninput=()=>{ bTipSave(); bSync(); };
 $("bpay-copy").onclick=()=>{ if(bLast) copyText(bLast.rawHex,$("bpay-copy")); };
 function bGo(n){                                             // show a step; focus its first action
@@ -2524,12 +2758,15 @@ function bGo(n){                                             // show a step; foc
   if($("ballotdlg").open) (n===2?$("bfeeseg").querySelector('[aria-pressed="true"]'):$("bsend")).focus({preventScroll:true});
 }
 $("bback").onclick=()=>bGo(1);
-$("bprice").onclick=e=>{ if(!e.target.closest("[data-editfee]")) return; bSnap={tip:$("b-tip").value, fee:feeSpeed()}; bGo(2); };
-$("bapply").onclick=()=>{ bSnap=null; bGo(1); };
-$("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ bTip.reset(s.tip); bTipSave(); LS(NETKEY("bv.fee"),s.fee); } bSync(); PAY.forEach(p=>p.paint()); bGo(1); };
-function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bTip.reset(tipPref()); bSync(); $("ballotdlg").showModal(); bGo(1); }
+$("bprice").onclick=e=>{ if(!e.target.closest("[data-editfee]")) return; bSnap={tip:LS(NETKEY("bv.ballot.tip")), pref:tipPref(), fee:feeSpeed()}; bGo(2); };   // tip: this batch's own (null: it follows pref)
+$("bapply").onclick=()=>{ if(tipDust(bTipSats())) return; bSnap=null; bGo(1); };
+$("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ tipPrefSave(s.pref); ballotTipSet(s.tip); bTip.reset(ballotTip()); LS(NETKEY("bv.fee"),s.fee); } bSync(); PAY.forEach(p=>p.paint()); bGo(1); };
+function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bTip.reset(ballotTip()); bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
-addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) { ballotPill(); if($("ballotdlg").open) bSync(); } });   // another tab added a burn
+$("ballotdlg").addEventListener("close",()=>{ if(FUNDING==="bpay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
+function ballotTipAdd(sats){ const was=ballotTip(); ballotTipSet(sats); const now=ballotTip(); bTip.reset(now); bSync(); toast(was&&was!==now ? `Batch tip set to ${fmt(now)} sats (was ${fmt(was)})` : `Tip added to your batch · ${fmt(now)} sats`); }   // the tip dialog's Add to batch: this batch's one tip (a different one it held is replaced, and said), the saved tip of the other dialogs stays
+addEventListener("storage",e=>{ if(e.key!==NETKEY("bv.ballot")&&e.key!==NETKEY("bv.ballot.tip")) return;   // another tab changed the batch or its tip
+  if(!bSnap) bTip.reset(ballotTip()); ballotPill(); if($("ballotdlg").open) bSync(); PAY.forEach(p=>p.paint()); });   // not while the fees view is being edited; PAY: the tip dialog's Add to batch follows the count
 ballotPill();
 // ---------- the data path, no rendering (every app page): IndexedDB first, then the explorer for everything newer ----------
 // loadVotes(name, {onPage, onPhase, cancelled}) -> Promise<{votes, source:"cache"|"snapshot"|"scan", requests, height, error?}|null>
@@ -2699,7 +2936,7 @@ segThumbs();
 
 
 
-// ---------- tip dialog: a plain payment to the project, the burn dialogs' logic: the note, the price (edit: the amount and the fee speed), Validate tip ▾ ----------
+// ---------- tip dialog: a plain payment to the project, the burn dialogs' logic: the note, the price (edit: the amount and the fee speed), Validate tip ▾ (Add to batch: the batch's one tip) ----------
 // #tipcard and #tipdlg ship with the hidden attribute: without a tip address on this network (TIP_ADDRESSES in shared.js) nothing tip-related is ever shown or wired.
 if(tipEnabled()){
   $("tipcard").hidden=false; $("tipdlg").hidden=false;
@@ -2707,21 +2944,24 @@ if(tipEnabled()){
   $("tfeehost").innerHTML=feeSegHtml("tfeeseg",true); feeSegWire($("tfeeseg"));
   let tStep=2, tEdit=false, tSnap=null;                     // 2: the note (the amount when editing), 4: the transaction; tSnap: what the amount view started from
   const tipAmount=()=>Number($("tipdamt").value||0);
+  const tBatch=typeof ballotTipAdd==="function" ? ()=>{ ballotTipAdd(tipAmount()); $("tipdlg").close(); } : null;   // the batch's one tip output (ballotui.js); a page without the batch: no item
   const tipRender=()=>{
     const sats=tipAmount();
     $("tipdusd").textContent=usdOf(sats);
     $("tipdaddr").textContent=TIP_EFFECTIVE; $("copytipd").dataset.copy=TIP_EFFECTIVE;
     tpay.set({burnAddr:TIP_EFFECTIVE, burnSats:sats, statementBytes:null, tipAddr:null, tipSats:0, burnLabel:"tip"});
   };
-  const tAmt=amountChips($("tipseg"), $("tipdamt"), tipRender); tAmt.reset(5000);   // presets over #tipdamt, same chips as the burn dialogs
+  const tAmt=amountChips($("tipseg"), $("tipdamt"), tipRender, {wallet:tpay.wallet, noun:"tip", check:v=>tipDust(v)&&"A tip under 330 sats cannot relay: 330 and up."}); tAmt.reset(5000);   // presets over #tipdamt, same chips as the burn dialogs
   const tGo=n=>{ tStep=n; $("tstep-2").hidden=!(n===2&&tEdit); $("tstep-4").hidden=n!==4; tPaint(); segThumbs(); };
   function tPaint(){
     const s=tpay.wallet.status(), editing=tStep===2&&tEdit, ok=tipAmount()>=330;
     $("tprice").hidden=s?.kind==="sent";
+    fundsPaint($("tfunds"), tpay.wallet, tStep===2&&!tEdit);   // the first view: short of funds, said before Validate tip
     dlgPrice($("tprice"), tipAmount(), "tip"+(!editing&&!(s&&(s.kind==="sent"||s.kind==="busy"))?` <button type="button" class="linkbtn" data-edittip>edit</button>`:""), tpay.wallet.fee());
     feeSegPaint($("tfeeseg"), !!(s&&s.kind!=="err"), $("tfeesum"));
     $("tcancel").hidden=$("tapply").hidden=!editing; $("tapply").disabled=!ok; $("tsendwrap").hidden=editing;
-    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
+    const was=ballotTip(), amt=Math.round(tipAmount());       // the batch's one tip: another amount there is replaced, not added to
+    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", noun:"tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, batch:tBatch, batchOff:ballotGet().length?"":"add a burn first", batchNote:was&&was!==amt?`replaces its ${fmt(was)} tip`:"", tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
   }
   tpay.onpaint=tPaint;
   $("tprice").onclick=e=>{ if(!e.target.closest("[data-edittip]")) return; tSnap={amt:$("tipdamt").value, fee:feeSpeed()}; tEdit=true; tGo(2); };
@@ -2730,6 +2970,7 @@ if(tipEnabled()){
   $("tipdamt").oninput=tipRender;
   $("copytipd").onclick=()=>copyText(TIP_EFFECTIVE,$("copytipd"));
   $("tipbtn").onclick=()=>{ tEdit=false; tSnap=null; $("tfeeadv").open=false; tipRender(); $("tipdlg").showModal(); tGo(2); };
+  $("tipdlg").addEventListener("close",()=>{ if(FUNDING==="tpay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
   segThumbs();
 }
 // ---------- footer data source (foot.html + foot.js on every app page, not the embed): which Esplora API this browser reads the chain through, per network, read by wallet.js too ----------

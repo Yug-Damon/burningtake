@@ -8,7 +8,7 @@ const shortAddr=a=>a.slice(0,10)+"…"+a.slice(-6);
 const hv=v=>v.h===null?Number.MAX_SAFE_INTEGER:v.h;         // pending first
 function paintHead(){
   $("baddr").textContent=ADDR ? shortAddr(ADDR) : "…"; $("baddr").title=ADDR;   // condensed; the copy button and the tooltip carry the full address
-  $("bmine").hidden=!(WALLET&&WALLET.addr===ADDR);
+  $("bmine").hidden=!walletOwns(ADDR);                      // the wallet's shown address, or another address of a Ledger's account
   $("bwrong").hidden=!ADDR||validAddr(ADDR);
   $("bmeta").hidden=$("bwrong").hidden;                              // no badge to show: no empty row under the sync line
   $("explorerlink").href="https://mempool.space/"+(NET==="mainnet"?"":"signet/")+"address/"+ADDR; $("explorerlink").hidden=!validAddr(ADDR);

@@ -1,8 +1,8 @@
 // ---------- ledger.js: a Ledger over WebHID — BIP-84 account xpub read once, every burn signed on the device (PSBT). No DOM ----------
 // Uses from shared.js / qr.js / wallet.js: toHex, fromHex, varint, le64, bech32, scriptPubKey, concatBytes, psbtKV, psbtBase64, txidOf,
-// serializeUnsignedTxWithInputs, walletLibs (HDKey), walletNet, walletVsize, hash160. Defines nothing twice.
+// serializeUnsignedTxWithInputs, walletLibs (HDKey), walletNet, walletVsize, hash160, esploraGet, fetchUtxos. Defines nothing twice.
 // The Ledger libraries are ESM, loaded lazily from jsdelivr on the first call that needs them; the node test injects fakes instead.
-// Wallet record (walletui.js, NETKEY("bv.wallet")): {kind:"ledger", net, addr, xpub, fp} — no words, nothing secret, nothing to encrypt.
+// Wallet record (walletui.js, NETKEY("bv.wallet")): {kind:"ledger", net, addr, xpub, fp, used} — no words, nothing secret, nothing to encrypt; used: the addresses the last balance read found used.
 // hw-app-btc 11.x API (README, lib-es/BtcNew.js): getWalletXpub({path, xpubVersion}) and signPsbtBuffer(Buffer, {finalizePsbt, accountPath,
 // addressFormat, knownAddressDerivations}) -> {psbt, tx}. The device needs the Bitcoin app 2.1+ (Bitcoin Test on signet); the Legacy apps cannot sign a PSBT.
 
@@ -72,12 +72,39 @@ async function ledgerFingerprint(transport){                     // app-bitcoin-
   if(!r||r.length<6) throw ledgerError(new Error("no fingerprint from the device"));
   return toHex(r.subarray(0,4));
 }
-async function ledgerAddress(xpub, network="mainnet", change=0, index=0){   // local derivation from the account xpub -> {address, pubkey(33), path:number[], pathString}
+async function ledgerAccount(xpub, network="mainnet"){          // the account xpub, parsed once -> (change, index) => Promise<{address, pubkey(33), path:number[], pathString}>; throws on another network's key or one that is not account-level
   const {HDKey}=await walletLibs();
   const hd=HDKey.fromExtendedKey(String(xpub).trim(), LEDGER_XPUBVER[network]||LEDGER_XPUBVER.signet);
   if(hd.depth!==3) throw new Error("not an account-level xpub (depth "+hd.depth+")");
-  const k=hd.deriveChild(change).deriveChild(index);
-  return {address:bech32(walletNet(network).hrp,0,await hash160(k.publicKey)), pubkey:k.publicKey, path:ledgerPathElements(network,change,index), pathString:ledgerPathString(network,change,index)};
+  const chains=[hd.deriveChild(0), hd.deriveChild(1)], hrp=walletNet(network).hrp;   // receive, change: each derived once, then one child per address
+  return async(change=0, index=0)=>{ const k=chains[change].deriveChild(index);
+    return {address:bech32(hrp,0,await hash160(k.publicKey)), pubkey:k.publicKey, path:ledgerPathElements(network,change,index), pathString:ledgerPathString(network,change,index)}; };
+}
+async function ledgerAddress(xpub, network="mainnet", change=0, index=0){ return (await ledgerAccount(xpub, network))(change, index); }   // one address, local derivation from the account xpub
+const LEDGER_GAP=20;                                             // BIP-44 gap limit: a chain ends after 20 unused addresses in a row (used = any history, so an emptied address keeps the scan going)
+const LEDGER_CAP=2000;                                           // ponytail: 2,000 addresses per chain at most (0/0..0/1999, 1/0..1/1999). A chain still inside its gap there (an explorer that calls every address used) is a balance this page cannot read: null, never a partial one
+async function ledgerUtxos(xpub, network="mainnet"){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
+  try{                                                           // null, never a rejection: an xpub that does not parse or the libraries not loading (jsdelivr blocked) are a balance this page cannot read either
+    const acct=await ledgerAccount(xpub, network);
+    const stat=async a=>{ const j=await esploraGet(`/address/${a}`,network), s=[j&&j.chain_stats, j&&j.mempool_stats];   // Esplora /address: confirmed + mempool -> {used, sats} | null
+      const n=k=>s.every(x=>x&&Number.isFinite(x[k])) ? s[0][k]+s[1][k] : NaN, tx=n("tx_count"), sats=n("funded_txo_sum")-n("spent_txo_sum");
+      return Number.isNaN(tx+sats) ? null : {used:tx>0, sats}; };
+    const used=[], funded=[];                                    // funded: used addresses still holding sats, the only ones whose coins are asked for
+    for(const chain of [0,1]) for(let next=0, last=-1; next<=last+LEDGER_GAP; ){   // receive, then change; last: the highest used index read
+      if(next>=LEDGER_CAP) return null;
+      const idx=[]; while(idx.length<5&&next<=last+LEDGER_GAP&&next<LEDGER_CAP) idx.push(next++);   // 5 in flight (the explorers rate-limit bursts), only indexes the scan reads whatever these answer
+      const as=await Promise.all(idx.map(i=>acct(chain,i))), st=await Promise.all(as.map(a=>stat(a.address)));
+      if(st.some(s=>!s)) return null;
+      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0) funded.push({chain, index:idx[k], address:as[k].address}); });
+    }
+    const coins=[];
+    for(let i=0;i<funded.length;i+=5){ const rs=await Promise.all(funded.slice(i,i+5).map(a=>fetchUtxos(a.address,network))); if(rs.some(r=>!r)) return null;
+      rs.forEach((r,k)=>{ const {chain,index,address}=funded[i+k]; coins.push(...r.map(u=>({...u, chain, index, address}))); }); }
+    if(new Set(coins.map(u=>u.txid+":"+u.vout)).size<coins.length) return null;   // one coin listed twice, under one address or two: answers that do not add up
+    const own=u=>u.chain===0&&u.index===0 ? 0 : 1;
+    coins.sort((a,b)=>own(a)-own(b) || b.confirmed-a.confirmed || b.value-a.value);   // the signers spend in this order: 0/0's coins first (a burn's burner is its first input's address, so the shown address stays it while it holds a coin), confirmed before unconfirmed, the largest first (fewest inputs, fewest addresses tied to one burn); ties keep the scan's order
+    return {coins, used};
+  }catch{ return null; }
 }
 async function ledgerConnect(network="mainnet"){                 // MUST run from a click (the browser's device prompt). -> {addr, xpub, fp, path, app}
   if(!ledgerSupported()) throw ledgerError(Object.assign(new Error("navigator.hid is not supported"),{id:"HIDNotSupported"}));
@@ -123,30 +150,35 @@ function ledgerPsbt({unsignedTxHex, inputs=[], outputs=[], changeIndex=-1, chang
   outputs.forEach((o,i)=>{ if(i===changeIndex&&changeBip32) parts.push(psbtKV(0x02,changeBip32.pubkey,der(changeBip32))); parts.push([0x00]); });
   return concatBytes(parts);
 }
-async function ledgerSign({utxos=[], outputs=[], changeAddr, feeRate=1, wallet, network="mainnet", onstage=()=>{}}){   // -> {hex, txid, fee, change, vsize, inputs, outputs, psbtBase64}
+async function ledgerSign({utxos=[], outputs=[], changeAddr, feeRate=1, wallet, network="mainnet", onstage=()=>{}}){   // -> {hex, txid, fee, change, vsize, inputs, outputs, psbtBase64, from: the first input's address, the burn's burner}
   const stage=s=>{ try{ onstage(s); }catch{} };
   if(!wallet||wallet.kind!=="ledger"||!wallet.xpub||!/^[0-9a-f]{8}$/i.test(wallet.fp||"")) throw ledgerError(Object.assign(new Error("No Ledger wallet in this browser."),{ledger:true, code:"nowallet"}));
   stage("preparing the transaction…");
   let libs; try{ libs=await ledgerLibs(); }catch(e){ throw ledgerError(Object.assign(new Error("Could not load the Ledger libraries (offline? cdn.jsdelivr.net blocked?)."),{ledger:true, code:"libs", cause:e})); }
-  const key=await ledgerAddress(wallet.xpub, network, 0, 0);
+  const acct=await ledgerAccount(wallet.xpub, network), key=await acct(0,0);
   if(key.address!==wallet.addr) throw ledgerError(Object.assign(new Error("The stored address does not match this Ledger account. Forget the wallet and connect it again."),{ledger:true, code:"mismatch"}));
   let f; try{ f=ledgerFund({utxos, outputs, changeAddr, feeRate}); }catch(e){ throw ledgerError(e); }
-  const bip32={pubkey:key.pubkey, fingerprint:fromHex(wallet.fp), path:key.path}, inScript=scriptPubKey(wallet.addr);
-  const inputs=f.inputs.map(u=>({txid:u.txid, vout:u.vout, value:u.value, script:inScript, bip32}));
+  const at=u=>u.chain+"/"+u.index, keys=new Map([["0/0",key]]);   // "chain/index" -> derived key
+  for(const u of f.inputs){                                      // every coin comes from ledgerUtxos with its chain and index: one without is a stale or foreign list, refused, never given a guessed key
+    if(!(u.chain===0||u.chain===1)||!Number.isInteger(u.index)||u.index<0||u.index>=LEDGER_CAP) throw ledgerError(Object.assign(new Error("A coin has no Ledger derivation. Refresh the balance."),{ledger:true, code:"coin"}));
+    if(!keys.has(at(u))) keys.set(at(u), await acct(u.chain, u.index));
+  }
+  const bip32=k=>({pubkey:k.pubkey, fingerprint:fromHex(wallet.fp), path:k.path});
+  const inputs=f.inputs.map(u=>{ const k=keys.get(at(u)); return {txid:u.txid, vout:u.vout, value:u.value, script:scriptPubKey(k.address), bip32:bip32(k)}; });
   const unsignedTxHex=serializeUnsignedTxWithInputs(inputs, f.outputs);
-  const psbt=ledgerPsbt({unsignedTxHex, inputs, outputs:f.outputs, changeIndex:f.changeIndex, changeBip32: changeAddr===wallet.addr ? bip32 : null});
+  const psbt=ledgerPsbt({unsignedTxHex, inputs, outputs:f.outputs, changeIndex:f.changeIndex, changeBip32: changeAddr===wallet.addr ? bip32(key) : null});
   let transport=null;
   try{
     stage("connecting to the Ledger…");
     transport=await libs.TransportWebHID.create();
     await ledgerCheckApp(transport, network);
     const btc=new libs.AppBtc({transport, currency:"bitcoin"});
-    const known=new Map([[toHex(await hash160(key.pubkey)), {pubkey:libs.Buffer.from(key.pubkey), path:key.path}]]);   // belt and braces: the PSBT already carries the derivations
+    const known=new Map(); for(const k of keys.values()) known.set(toHex(await hash160(k.pubkey)), {pubkey:libs.Buffer.from(k.pubkey), path:k.path});   // belt and braces: the PSBT already carries the derivations
     stage("confirm on the Ledger…");
     const r=await btc.signPsbtBuffer(libs.Buffer.from(psbt), {finalizePsbt:true, accountPath:ledgerAccountPath(network), addressFormat:"bech32", knownAddressDerivations:known, onDeviceSignatureGranted:()=>stage("signing…")});
     const hex=String((r&&r.tx)||"").toLowerCase();
     if(!/^[0-9a-f]{20,}$/.test(hex)) throw Object.assign(new Error("The Ledger returned no transaction."),{ledger:true, code:"notx"});
-    return {hex, txid:await txidOf(hex), fee:f.fee, change:f.change, vsize:f.vsize, inputs:f.inputs, outputs:f.outputs, psbtBase64:psbtBase64(psbt)};
+    return {hex, txid:await txidOf(hex), fee:f.fee, change:f.change, vsize:f.vsize, inputs:f.inputs, outputs:f.outputs, psbtBase64:psbtBase64(psbt), from:keys.get(at(f.inputs[0])).address};
   }catch(e){ throw ledgerError(e); }
   finally{ if(transport) try{ await transport.close(); }catch{} }
 }

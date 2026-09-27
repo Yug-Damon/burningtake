@@ -20,13 +20,14 @@ function countVote(v){
   if (p.range){ const x=numOf(v.t); if(Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]){ k="n:"+x; t=String(x); } }   // number answers merge by value: "150k" and "150000" are one row
   const a=agg[k]||(agg[k]={t, sats:0, votes:0, last:0, first:Infinity, pend:0, mine:0, from:new Set(), h0:Infinity, tx0:""});
   a.sats+=v.sats; a.votes++; a.last=Math.max(a.last, v.h??Infinity); a.first=Math.min(a.first, v.h??Infinity); spell(a,v,t);   // spell: the earliest burn's spelling (shared.js)
-  if (v.h===null) a.pend+=v.sats; if (v.from) a.from.add(v.from); if (WALLET&&v.from===WALLET.addr) a.mine+=v.sats;
+  if (v.h===null) a.pend+=v.sats; if (v.from) a.from.add(v.from); if (walletOwns(v.from)) a.mine+=v.sats;
   if (inW && fixed){ const w=AGGW[k]||(AGGW[k]={t, sats:0, votes:0}); w.sats+=v.sats; w.votes++; }
 }
 const onKey=k=>{ const p=scope.spec||{}; return p.range ? k.startsWith("n:") : p.opts ? p.opts.includes(k) : true; };   // in the result: an option, an in-range number, any take
 const keyOfRow=s=>{ const p=scope.spec||{}; if(p.range){ const x=numOf(s.t); if(Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]) return "n:"+x; } return norm(s.t); };
 const noun=()=>kind(scope.spec||{})==="open"?"take":"answer";
 const burnsTxt=n=>`${fmt(n)} burn${n===1?"":"s"}`;
+const noBurns=()=>isClosed()?"no burns":"no burns yet";              // a row or a side nobody burned for; closed: no "yet"
 // the lines under the board for burns that are not a take: no take (counted in the total only), late and below the minimum (not counted); each opens on its burns
 const bucketsHtml=()=>{
   if(q) return "";
@@ -39,8 +40,9 @@ const PHONE=matchMedia("(max-width:480px)");
 // closed: the next block reaches the deadline (shared.js closedAt, as tallyOf counts a pending burn late); with no tip at all a deadline topic counts as closed for its buttons (the header says "checking") until the first tip lands
 const isClosed=()=>{ const p=scope.spec||{}; return !!(p.deadline&&(!TIP||closedAt(p))); };
 const closedKnown=()=>TIP>0&&isClosed();                    // closed for sure: the header, the dialog's note and the standings say so
-let WASCLOSED=null;                                          // the last closed state painted: closedFlip() repaints when the estimate crosses the deadline
-function closedFlip(){ const c=isClosed(); if(c===WASCLOSED) return; WASCLOSED=c; headMeta(); if(SEEN.length||synced) recount(); }   // recount: the late bucket moves with it; placeholders stay until there are burns
+let WASCLOSED=null;                                          // the last closed state painted: closedFlip() repaints when the estimate crosses the deadline, and when the first tip turns "checking" into closed for sure
+const closedKey=()=>[isClosed(),closedKnown()].join();
+function closedFlip(){ const c=closedKey(); if(c===WASCLOSED) return; WASCLOSED=c; headMeta(); if(SEEN.length||synced) recount(); }   // recount: the late bucket moves with it; placeholders stay until there are burns
 const shareOf=s=>s.total?s.sats/s.total*100:0;
 const pct=v=>Math.round(v)+"%";
 const wouldLead=gap=>Math.max(gap+1, 330, (scope.spec||{}).min||0);   // the exact amount that would lead: shown only from fresh data, never past a 100,000-sat gap
@@ -56,7 +58,7 @@ const rowHtml=(s,rank,cls="")=>{ const sh=shareOf(s), over=enc.encode(s.t).lengt
       <span class="rank">${rank}</span>
       <span class="txt"><span class="tt${fold?" hid":""}" title="${esc(disp)}"${fold?` data-reveal="${esc(norm(s.t))}"`:""}>${esc(disp)}</span>${s.tags||""}</span>
       <span class="sats">${unk?"—":fmt(s.sats)}<small> sats${s.total&&s.sats&&!unk?` · ${pct(sh)}`:""}</small></span>
-      <span class="votes">${unk?"—":s.votes?burnsTxt(s.votes):"no burns yet"}</span>
+      <span class="votes">${unk?"—":s.votes?burnsTxt(s.votes):noBurns()}</span>
       <span class="act">${off?"":`<button class="btn sm" data-vote="${esc(s.t)}" aria-label="Burn for “${esc(disp)}”">${p.range&&Number.isFinite(numOf(s.t))?`Burn for ${esc(nfc(numOf(s.t)))}`:"Burn for it"}</button>`}</span>
       <span class="plus" aria-hidden="true">${off?"":"+"}</span>
       <span class="bar" style="width:${sh.toFixed(1)}%"></span>
@@ -81,7 +83,7 @@ function rowEl(s,rank,cls=""){                          // s carries total (for 
   const disp=s.disp??s.t, tt=r.querySelector(".tt");
   if(r._disp!==disp){ r._disp=disp; tt.textContent=disp; tt.title=disp; r.dataset.voteRow=s.t; const b=r.querySelector("[data-vote]"); if(b){ b.dataset.vote=s.t; b.setAttribute("aria-label",`Burn for “${disp}”`); } }
   if(r._tags!==(s.tags||"")){ r._tags=s.tags||""; r.querySelectorAll(".txt .tg").forEach(x=>x.remove()); tt.insertAdjacentHTML("afterend",r._tags); }
-  r.querySelector(".votes").textContent=s.votes?burnsTxt(s.votes):"no burns yet";
+  r.querySelector(".votes").textContent=s.votes?burnsTxt(s.votes):noBurns();
   const sats=r.querySelector(".sats"); sats.lastChild.textContent=` sats${s.total&&s.sats?` · ${pct(sh)}`:""}`;
   tween(r,"_sats",s.sats,v=>{ sats.firstChild.nodeValue=fmt(Math.round(v)); });
   r._barW=sh.toFixed(1)+"%";                           // applied in commit(), after the DOM move, so the width transition runs
@@ -126,7 +128,7 @@ function duelEl(A,B,yn){
     <div class="duel${tot?"":unk?" unknown":" blank"}${yn?" yesno":""}">
       ${yn?`<div class="fc"><b class="fcbig"></b><span class="fcmeta"></span></div>`:""}
       <div class="duel-head"><span class="a">${esc(L(A))}<b class="side pa">${nA?pct(pa):""}</b></span>${vs?`<i class="vs" aria-hidden="true">VS</i>`:""}<span class="b"><b class="side pb">${nB?pct(100-pa):""}</b>${esc(L(B))}</span></div>
-      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"></div><div class="b" style="width:${(100-pa).toFixed(1)}%"></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot||unk?"":`<span class="nocall">${yn?"No call yet":"No side yet"}</span>`}</div>
+      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"></div><div class="b" style="width:${(100-pa).toFixed(1)}%"></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot||unk?"":`<span class="nocall">${yn?"No call":"No side"}${closed?"":" yet"}</span>`}</div>
       ${figs?`<div class="duel-sides">${fig(A,"a")}${fig(B,"b")}</div>`:""}
       <p class="duel-verdict"></p>
       ${closed?"":`<div class="duel-acts">${[A,B].map((s,i)=>`<button type="button" class="btn dbtn d${"ab"[i]}" data-vote="${esc(s.key)}">Burn for ${esc(L(s))}</button>`).join("")}</div>`}
@@ -142,15 +144,15 @@ function duelEl(A,B,yn){
     DUEL._w=[pa,100-pa];                                  // applied in commit(), after the DOM move
   }
   const qs=sel=>DUEL.querySelector(sel), p=scope.spec||{};
-  qs(".duel-bar").setAttribute("aria-label", tot ? `${L(A)} ${pct(pa)}, ${L(B)} ${pct(100-pa)}` : unk ? "—" : yn?"No call yet":"No side yet");
+  qs(".duel-bar").setAttribute("aria-label", tot ? `${L(A)} ${pct(pa)}, ${L(B)} ${pct(100-pa)}` : unk ? "—" : (yn?"No call":"No side")+(closed?"":" yet"));
   if(yn){ qs(".fcbig").className="fcbig "+(tot&&!tie?(lead===A?"a":"b"):"");   // the leader's color; "Dead even" in neutral ink, never side A's
-    qs(".fcbig").textContent= !tot ? (unk?"—":"No call yet") : tie ? "Dead even" : `${L(lead)} ${pct(lead.sats/tot*100)}`;
+    qs(".fcbig").textContent= !tot ? (unk?"—":closed?"No call":"No call yet") : tie ? "Dead even" : `${L(lead)} ${pct(lead.sats/tot*100)}`;
     const nb=new Set([...A.from,...B.from]).size; qs(".fcmeta").textContent= tot ? `${tie?"50% / 50% · ":""}of ${fmt(tot)} sats burned · ${burnsTxt(A.votes+B.votes)} · ${nb} burner${nb===1?"":"s"}` : ""; }
-  const dl=p.deadline&&!closed&&TIP ? ` Closes ≈ ${new Date(Date.now()+blocksTo(p.deadline)*600000).toLocaleDateString(undefined,{dateStyle:"medium"})}.` : "";
-  qs(".duel-verdict").innerHTML= !tot ? (unk ? "" : SEEN.length ? "No counted burns yet. The lines below list the ones that don't count." : yn ? `The first burn sets the forecast.${dl}` : "Nobody has picked a side yet. The first burn sets the bar.")
-    : tie ? `${asOf()}Tied at ${fmt(lead.sats)} sats each${yn?`<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`:""}`
-    : yn ? `${asOf()}${esc(L(trail))} is ${efSats(gap)} behind<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`
-    : `${asOf()}${esc(L(lead))} leads by ${efSats(gap)}`;
+  const fin=closeState(p, synced?TIPLIVE:0)?.k==="final";   // final: the verdict in the past tense
+  qs(".duel-verdict").innerHTML= !tot ? (unk ? "" : SEEN.length ? `${closed?"":"No counted burns yet. "}The lines below list the ones that don't count.` : closed ? "" : yn ? "The first burn sets the forecast." : "Nobody has picked a side yet. The first burn sets the bar.")   // closed: no first-burn call, "No call" / "No side" and the banner say it (checking: nothing said until the tip)
+    : tie ? `${asOf()}${fin?"Finished level":"Tied"} at ${fmt(lead.sats)} sats each${yn?`<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`:""}`
+    : yn ? `${asOf()}${esc(L(trail))} ${fin?"finished":"is"} ${efSats(gap)} behind<span class="fcx">Burned sats are gone for good and nobody gets paid: the split shows how much each side was willing to burn.</span>`
+    : `${asOf()}${esc(L(lead))} ${fin?"won":"leads"} by ${efSats(gap)}`;
   for(const [s,c] of [[A,"a"],[B,"b"]]){ const h=qs(".dh"+c); if(!h) continue;   // no figures or closed: no hint
     const behind=tot&&!tie&&trail===s, amt=behind&&leadOk(gap)?wouldLead(gap):0, wait=behind&&!amt&&!synced&&gap<100000;   // the trailing side, duel or yes-no; wait: saved data before the sync keeps the row (hidden), so the amount's arrival moves nothing
     h.textContent=amt?`${fmt(amt)} sats would lead`:wait?"would lead":""; h.dataset.amt=amt||""; h.classList.toggle("wait",wait);   // a tap burns that amount (boardClick: data-amt)
@@ -163,7 +165,7 @@ function forecastLine(){ const vs=SEEN.filter(v=>!BUCKET.has(v.txid)&&onKey(keyO
   const pts=[]; let y=0, t=0; for(const v of vs){ t+=v.sats; if(norm(v.t)==="yes") y+=v.sats; const h=v.h??Infinity, s=y/t*100; if(pts.length&&pts[pts.length-1].h===h) pts[pts.length-1].s=s; else pts.push({h,s}); }
   const W=160, H=28, X=i=>(i/(pts.length-1)*W).toFixed(1), Y=v=>(H-2-v/100*(H-4)).toFixed(1), d=`M0 ${Y(pts[0].s)}`+pts.slice(1).map((p,i)=>` H${X(i+1)} V${Y(p.s)}`).join("");
   return `<span class="spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>Yes: ${pct(pts[0].s)} after the first burn, ${pct(pts[pts.length-1].s)} now</span>`; }
-const sideMeta=s=>s.votes?`<span>${burnsTxt(s.votes)}</span>${s.from.size?`<span class="dsep"> · </span><span>${fmt(s.from.size)} burner${s.from.size===1?"":"s"}</span>`:""}`:"<span>no burns yet</span>";   // a side's counts under its sats: numbers and fixed words only, no esc(); a real " · " between them (copy-paste reads it), hidden on phones where they stack
+const sideMeta=s=>s.votes?`<span>${burnsTxt(s.votes)}</span>${s.from.size?`<span class="dsep"> · </span><span>${fmt(s.from.size)} burner${s.from.size===1?"":"s"}</span>`:""}`:`<span>${noBurns()}</span>`;   // a side's counts under its sats: numbers and fixed words only, no esc(); a real " · " between them (copy-paste reads it), hidden on phones where they stack
 // ---- a take's details: who burned it first and when, how many burns and burners, the other spellings, its burns with receipts, a link to it ----
 let OPEN_TAKE=null;                                          // the take whose details are open (its norm)
 function withDetail(row,s){ if(norm(s.t)!==OPEN_TAKE) return [row]; const p=scope.spec||{}, key=keyOfRow(s), vs=SEEN.filter(v=>keyOfRow(v)===key).sort((a,b)=>(a.h??Infinity)-(b.h??Infinity)||String(a.txid).localeCompare(b.txid));
@@ -189,7 +191,7 @@ const othersHtml=other=>{ if(!other.length) return "";
   return `<details class="others" data-b="others"${OPEN.has("others")?" open":""}><summary>Other answers · not in the result · ${fmt(tot)} sats in ${burnsTxt(n)}</summary><div class="orows">${(all?top:top.slice(0,5)).map(s=>`<div class="orow"><span>${esc(s.t)}</span><span>${fmt(s.sats)} sats</span></div>`).join("")}${top.length>5&&!all?`<button type="button" class="orow more" data-othersall>+ ${top.length-5} more</button>`:""}</div></details>`+again; };
 const optClean=o=>norm(o).replace(/[?|@!]/g,"").replace(/\s+/g,"-");   // an answer as an option of a name: no grammar characters, hyphens for spaces
 const quietHtml=()=>`<div class="emptybox quietbox">No burns ${WINLABEL[win]}. <button type="button" class="linkbtn" data-win-all>All time</button></div>`;
-const noCountHtml=()=>`<div class="emptybox quietbox">No counted burns yet. The lines below list the ones that don't count.</div>`;
+const noCountHtml=()=>`<div class="emptybox quietbox">${isClosed()?"":"No counted burns yet. "}The lines below list the ones that don't count.</div>`;   // closed: the banner says none counted before the close; checking: nothing said until the tip
 function renderList(){
   const p=scope.spec||{}, k=kindKey(p);
   if(FAILED && !synced && !SEEN.length){                      // the explorer did not answer and nothing is saved: say so, never "no takes yet"
@@ -204,15 +206,15 @@ function renderList(){
 // ---- an open wall of takes: the leader as a quote over the board, the gap to it, Top | New, and a search that is also where a take gets written ----
 function renderOpen(p){
   const tot=S.reduce((a,s)=>a+s.sats,0), ranked=S.slice().sort((a,b)=>b.sats-a.sats), labels=rankLabels(ranked);
-  if(synced && !SEEN.length){ ROWS.clear(); hero.hidden=true;   // a brand-new wall: what the first take does
-    list.innerHTML=`<div class="emptybox first"><b>Be the first take on ${esc(niceQ(scope.name).toLowerCase())}</b><span>Any burn from ${fmt(Math.max(330,p.min||0))} sats puts it at 01. Others can burn for it or answer with their own.</span>${isClosed()?"":`<span class="acts"><button type="button" class="btn sm primary" data-first>Burn the first take</button><button type="button" class="btn sm" data-copylink>Copy link</button></span>`}</div>`; return; }
+  if(synced && !SEEN.length){ ROWS.clear(); hero.hidden=true;   // a brand-new wall: what the first take does; closed: nothing, the banner says it (checking: nothing yet)
+    list.innerHTML= isClosed() ? "" : `<div class="emptybox first"><b>Be the first take on ${esc(niceQ(scope.name).toLowerCase())}</b><span>Any burn from ${fmt(Math.max(330,p.min||0))} sats puts it at 01. Others can burn for it or answer with their own.</span><span class="acts"><button type="button" class="btn sm primary" data-first>Burn the first take</button><button type="button" class="btn sm" data-copylink>Copy link</button></span></div>`; return; }
   if(q) return renderSearch(p);
   if(!ranked.length){ ROWS.clear(); hero.hidden=true; list.innerHTML=(SEEN.some(v=>BUCKET.get(v.txid)==="window")?quietHtml():noCountHtml())+bucketsHtml(); return; }
-  const [a,b]=ranked, gap=b?a.sats-b.sats:0, one=a.from.size;
+  const [a,b]=ranked, gap=b?a.sats-b.sats:0, one=a.from.size, fin=closeState(p, synced?TIPLIVE:0)?.k==="final";   // final: the lead in the past tense
   hero.hidden=false; hero.className="hero lead1";
   hero.innerHTML=`<p class="lq">“${esc(a.t)}”</p>
-    <p class="lm">${b&&!gap ? `Tied for the lead at ${fmt(a.sats)} sats` : `Leads with ${pct(a.sats/tot*100)} of ${fmt(tot)} sats`} · ${burnsTxt(a.votes)} from ${one} burner${one===1?"":"s"}${closedKnown()?" · at the close":""}</p>
-    ${b&&gap ? `<p class="lg">${asOf()}“${esc(b.t)}” is ${fmt(gap)} sats behind${leadOk(gap)?` · ${fmt(wouldLead(gap))} would lead <button type="button" class="btn sm" data-vote="${esc(b.t)}" data-amt="${wouldLead(gap)}">Burn for “${esc(b.t)}”</button>`:""}</p>` : ""}`;
+    <p class="lm">${b&&!gap ? `Tied for the lead at ${fmt(a.sats)} sats` : `${fin?"Led":"Leads"} with ${pct(a.sats/tot*100)} of ${fmt(tot)} sats`} · ${burnsTxt(a.votes)} from ${one} burner${one===1?"":"s"}${closedKnown()?" · at the close":""}</p>
+    ${b&&gap ? `<p class="lg">${asOf()}“${esc(b.t)}” ${fin?"finished":"is"} ${fmt(gap)} sats behind${leadOk(gap)?` · ${fmt(wouldLead(gap))} would lead <button type="button" class="btn sm" data-vote="${esc(b.t)}" data-amt="${wouldLead(gap)}">Burn for “${esc(b.t)}”</button>`:""}</p>` : ""}`;
   const order= sortBy==="new" ? ranked.slice().sort((x,y)=>(y.first===Infinity?1e12:y.first)-(x.first===Infinity?1e12:x.first)||y.sats-x.sats) : ranked;
   const look=new Map(), vis=s=>norm(s.t).replace(/\p{Cf}/gu,"");   // lookalikes: the same text once invisible characters are stripped
   for(const s of ranked){ const o=ranked.find(x=>x!==s&&vis(x)===vis(s)); if(o) look.set(s,labels.get(o)); }
@@ -226,7 +228,7 @@ function renderSearch(p){
   const qn=norm(q), T=tallyOf(scope.name, SEEN), all=T.answers, exact=all.find(r=>r.key===qn), part=all.filter(r=>r!==exact&&(r.key.includes(qn)||norm(r.t).includes(qn))).sort((a,b)=>b.sats-a.sats);
   const raw=$("q").value.trim(), row=(r,t)=>rowHtml({t:r.t, sats:r.sats, votes:r.burns, total:T.shareSats, tags:t}, "·", "lane");
   list.innerHTML = `<div class="searchnote">Takes of every window matching “${esc(raw)}”</div>`
-    + (exact ? row(exact, tag("same take","pend")) : !raw ? "" : synced ? `
+    + (exact ? row(exact, tag("same take","pend")) : !raw||isClosed() ? "" : synced ? `
     <div class="st newrow" data-vote-row="${esc(raw)}" data-new>
       <span class="rank">new</span><span class="txt"><span class="tt">New take · “${esc(raw)}”</span></span><span class="sats">0<small> sats</small></span><span class="votes">starts at 0 sats</span>
       <span class="act"><button class="btn sm primary" data-vote="${esc(raw)}" data-new>Burn it as a new take</button></span><span class="plus" aria-hidden="true">+</span>
@@ -239,13 +241,15 @@ function renderPoll(p){
   const tot=rows.reduce((a,s)=>a+s.sats,0), ranked=rows.slice().sort((a,b)=>b.sats-a.sats), labels=rankLabels(ranked), other=S.filter(s=>!p.opts.includes(norm(s.t))), unk=!synced&&!tot;
   const burned=ranked.filter(s=>s.sats), [a,b]=burned, gap=b?a.sats-b.sats:0, tint=i=>i?(i<3?"s"+i:"s3"):"s0";
   // the race: one segment per option with burns, the leader in ember; the line says who leads and by how much
-  const line= !tot ? (unk?"":SEEN.length?"No counted burns yet. The lines below list the ones that don't count.":`${p.opts.length} options, no burns yet. The first burn sets the leader.`)
-    : b&&!gap ? `${asOf()}${esc(a.t)} and ${esc(b.t)} are tied at ${fmt(a.sats)} sats`
-    : b ? `${asOf()}${esc(a.t)} leads · ${pct(a.sats/tot*100)} · ${fmt(gap)} sats ahead of ${esc(b.t)}`
-    : `${asOf()}${esc(a.t)} leads · the other ${p.opts.length-1} have no burns yet`;
-  hero.hidden=false; hero.className="hero race";
+  const fin=closeState(p, synced?TIPLIVE:0)?.k==="final";   // final: the race in the past tense
+  const line= !tot ? (unk?"":isClosed()?(SEEN.length?"The lines below list the ones that don't count.":""):SEEN.length?"No counted burns yet. The lines below list the ones that don't count.":`${p.opts.length} options, no burns yet. The first burn sets the leader.`)   // closed: the banner says none counted (checking: nothing said until the tip)
+    : b&&!gap ? `${asOf()}${esc(a.t)} and ${esc(b.t)} ${fin?"finished level":"are tied"} at ${fmt(a.sats)} sats`
+    : b ? `${asOf()}${esc(a.t)} ${fin?"won":"leads"} · ${pct(a.sats/tot*100)} · ${fmt(gap)} sats ahead of ${esc(b.t)}`
+    : `${asOf()}${esc(a.t)} ${fin?"won":"leads"} · the other ${p.opts.length-1} have ${noBurns()}`;
+  const mom=[momentum(ranked.map(s=>({key:s.key,t:s.t}))), concLine(ranked)].filter(Boolean);
+  hero.hidden=!tot&&!line&&!mom.length; hero.className="hero race";   // nothing counted and nothing to say: no empty race over the lanes
   hero.innerHTML=`${tot?`<div class="racebar" role="img" aria-label="${esc(ranked.map(s=>`${s.t} ${pct(s.sats/tot*100)}`).join(", "))}">${burned.map((s,i)=>`<i class="${tint(i)}" style="flex:${s.sats}">${s.sats/tot>=.12?`<b>${esc(s.t)} ${pct(s.sats/tot*100)}</b>`:""}</i>`).join("")}</div>`:""}
-    <p class="rline">${line}</p>${[momentum(ranked.map(s=>({key:s.key,t:s.t}))), concLine(ranked)].filter(Boolean).map(x=>`<p class="rmom">${x}</p>`).join("")}`;
+    ${line?`<p class="rline">${line}</p>`:""}${mom.map(x=>`<p class="rmom">${x}</p>`).join("")}`;
   // rank moves since yesterday (144 blocks): only from fresh data, a replay over partial data could invent them
   const old=synced ? rankLabels(p.opts.map(o=>({key:o, sats:SEEN.filter(v=>!BUCKET.has(v.txid)&&v.h!==null&&v.h<TIP-144&&norm(v.t)===o).reduce((x,v)=>x+v.sats,0)})).sort((x,y)=>y.sats-x.sats)) : null;
   const oldRank=o=>{ if(!old) return null; for(const [s,l] of old) if(s.key===o) return l==="·"?null:parseInt(l.replace("=",""),10); return null; };
@@ -273,7 +277,7 @@ function renderNumber(p){
   const spark=hist.length>1 ? (()=>{ const ys=hist.map(x=>x.m), y0=Math.min(...ys), y1=Math.max(...ys)||1, W=200, H=36, pts=hist.map((x,i)=>`${(i/(hist.length-1)*W).toFixed(1)},${(H-2-(y1===y0?H/2:(x.m-y0)/(y1-y0)*(H-4))).toFixed(1)}`).join(" ");
       return `<div class="spark"><svg viewBox="0 0 200 36" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg><span>${nf(hist[0].m)} → ${nf(med)} since block ${hist[0].h===Infinity?"—":fmt(hist[0].h)}</span></div>`; })() : "";
   hero.hidden=false; hero.className="hero est";
-  hero.innerHTML = !tot ? `<div class="numview empty"><p class="histempty">${!synced?"":other.length||late.votes||dust.votes?"No answers in range yet":"No answers yet. Where will it land?"}</p><div class="hist-axis">${[lo,(lo+hi)/2,hi].map(x=>`<span>${nf(x)}</span>`).join("")}</div>${synced&&!isClosed()&&!SEEN.length?`<button type="button" class="btn sm primary" data-first>Burn the first answer</button>`:""}</div>`
+  hero.innerHTML = !tot ? `<div class="numview empty"><p class="histempty">${!synced?"":isClosed()?(other.length||late.votes||dust.votes?"The lines below list the ones that don't count.":""):other.length||late.votes||dust.votes?"No answers in range yet":"No answers yet. Where will it land?"}</p><div class="hist-axis">${[lo,(lo+hi)/2,hi].map(x=>`<span>${nf(x)}</span>`).join("")}</div>${synced&&!isClosed()&&!SEEN.length?`<button type="button" class="btn sm primary" data-first>Burn the first answer</button>`:""}</div>`
     : `<div class="esttop"><div class="esthero"><span class="lbl">${fin?"Final estimate":"Estimate"}</span><b>${nf(med)}</b><span class="sub">the middle answer, weighted by sats burned</span></div>
       <div class="eststats"><div><span>Average</span><b>${nf(mean)}</b></div><div><span>Middle half</span><b>${nf(q1)} – ${nf(q3)}</b></div></div></div>
     <div class="numview">
@@ -307,12 +311,11 @@ function renderStand(){
   paintVerdict();
   $("tseg").hidden=closed; $("sortseg").hidden=k!=="open"||closed||!SEEN.length; $("numseg").hidden=k!=="number"||!SEEN.length;
   $("standhint").hidden=k!=="open"||!SEEN.length||closed;
-  const fin=closed ? (synced&&TIPLIVE>=p.deadline+6 ? `Final · block ${fmt(p.deadline)}` : `closed · final after block ${fmt(p.deadline+6)}`) : null;   // final a few confirmations past the deadline (spec: reorgs), checked on this visit
   $("standchip").hidden=closed||win==="all"||!SEEN.length; $("standchip").innerHTML=`Filtered: ${WINLABEL[win]} <span aria-hidden="true">✕</span>`; $("standchip").setAttribute("aria-label",`Remove the ${WINLABEL[win]} filter`);
   if(!synced&&!SEEN.length){ $("standsum").textContent=""; return; }   // nothing known yet: no "0 takes · 0 sats"
   const on=S.filter(s=>onKey(keyOfRow(s))), sats=on.reduce((a,s)=>a+s.sats,0)+none.sats, burns=on.reduce((a,s)=>a+s.votes,0)+none.votes;
   const pend=p.deadline&&!closed&&TIP&&blocksTo(p.deadline)<=6 ? SEEN.filter(v=>v.h===null&&!BUCKET.has(v.txid)).reduce((a,v)=>a+v.sats,0) : 0;   // the last blocks: what the result counts only if it confirms in time
-  $("standsum").textContent=[fin, fixed?null:`${fmt(S.length)} take${S.length===1?"":"s"}`, `${fmt(sats)} sats`, fixed?burnsTxt(burns):null, closed?`every burn before block ${fmt(p.deadline)}`:fixed?"all time":WINLABEL[win], pend?`includes ${fmt(pend)} pending sats, counted only if they confirm before block ${fmt(p.deadline)}`:null].filter(Boolean).join(" · ");
+  $("standsum").textContent=[fixed?null:`${fmt(S.length)} take${S.length===1?"":"s"}`, `${fmt(sats)} sats`, fixed?burnsTxt(burns):null, closed?`every burn before block ${fmt(p.deadline)}`:fixed?"all time":WINLABEL[win], pend?`includes ${fmt(pend)} pending sats, counted only if they confirm in time`:null].filter(Boolean).join(" · ");   // no "Final · block N" lead: the strip and the banner say it; "in time": the card says before which block
 }
 const ghostFor = (k,p) => k==="duel"||k==="yes-no"             // loading: the final shape of each kind, unranked, at its final height
   ? `<div class="duel ghost">${k==="yes-no"?`<div class="fc"><span class="sk" style="width:180px;height:40px"></span></div>`:""}<div class="duel-head"><span class="sk" style="width:70px;height:16px"></span><span class="sk" style="width:70px;height:16px"></span></div><div class="duel-bar"></div><div class="duel-sides">${["a","b"].map(c=>`<p class="dside ${c}"><span class="sk" style="width:88px;height:16px"></span><span class="sk" style="width:128px"></span></p>`).join("")}</div><p class="duel-verdict"><span class="sk" style="width:220px"></span></p>${isClosed()?"":`<div class="duel-acts"><span class="sk"></span><span class="sk"></span></div>`}</div>`
@@ -346,7 +349,7 @@ async function loadScope(name){
   if(!r) return;
   await tipFresh(); if(my!==seq) return;                      // "synced" needs the tip read too: deadlines and windows hang on it
   SEEN=r.votes.slice(); synced=!r.error; FAILED=!!r.error||TIPERR; SHOWN_H=r.error?r.height:TIP; LOADED=true; LASTTICK=Date.now();
-  recount(); paintSync();
+  recount(); headTick(); paintSync();                          // headTick: the deadline card, now that the burns and this visit's tip are known
   const tk=new URLSearchParams(location.search).get("take"); if(tk&&my===seq&&!TAKE_DONE){ TAKE_DONE=true; OPEN_TAKE=norm(tk); render(); const r=list.querySelector(`.st[data-key="${CSS.escape(OPEN_TAKE)}"]`); if(r){ r.classList.add("hl"); r.scrollIntoView({block:"center"}); } }
   if(!r.error){ const T=tallyOf(name,r.votes), w=watchGet().find(x=>x.name===name), news=w&&w.seenAt?watchNews(w,r.votes,T):null;   // a watched topic: once per visit, what changed since the last one
     SINCE=w&&w.seenAt?w.seenH:0; if(w) paintSince(news, w.seenAt); watchMarkSeen(name,r.votes.length,TIP,callSeen(name,T)); if(SINCE) renderBurners(); }
@@ -364,7 +367,7 @@ function paintTwins(addrNow){
 }
 function paintSync(){                                         // the line under the title, from this topic's state; the failed state is announced once, on the way in and on the way out
   const n=SEEN.length;
-  status.innerHTML=syncLine({state:FAILED?"failed":"fresh", height:SHOWN_H, tail:n?`${n} burn${n===1?"":"s"}`:"no burns yet"});
+  status.innerHTML=syncLine({state:FAILED?"failed":"fresh", height:SHOWN_H, tail:n?`${n} burn${n===1?"":"s"}`:noBurns()});   // closed: no "yet"
   if(FAILED!==WASFAILED){ WASFAILED=FAILED; announce(FAILED?"The explorer did not answer":"Synced"); }
 }
 // a burn signed in this browser (single or ballot) lands on the board at once as pending; the explorer takes over on the next scan
@@ -408,7 +411,7 @@ function boardClick(e){
   if(b.dataset&&b.dataset.amt){ vAmt.reset(+b.dataset.amt); AMTFOR=norm(stmt.value); update(); }   // "831 would lead": the amount comes with it, for this answer
   else if(AMTFOR!==null&&AMTFOR!==norm(stmt.value)){ vAmt.reset(amt.min); AMTFOR=null; update(); }   // another answer: back to the topic's minimum
 }
-list.addEventListener("click",boardClick); hero.addEventListener("click",boardClick);
+list.addEventListener("click",boardClick); hero.addEventListener("click",boardClick); $("hclosed").addEventListener("click",boardClick);   // #hclosed: its Copy link
 hero.addEventListener("focusin",e=>{ const bin=e.target.closest("[data-bin]"); if(bin&&+bin.dataset.bin!==binAt){ binAt=+bin.dataset.bin; hero.querySelectorAll("[data-bin]").forEach(x=>x.classList.toggle("on",x===bin)); const c=hero.querySelector(".hcap"); if(c) c.textContent=bin.getAttribute("aria-label"); } });   // a bin under the finger or the keyboard says its range
 
 let scope={name:"general",addr:"…",poll:null};
@@ -422,7 +425,7 @@ $("tipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copytip"
 const stmt=document.getElementById("stmt"), amt=document.getElementById("amt"),
       hexEl=document.getElementById("hex"), usd=document.getElementById("usd");
 let AMTFOR=null;                                             // the answer a suggested amount (would lead, Make it) was set for; a preset picked by hand clears it
-const vAmt=amountChips($("vamtseg"), amt, ()=>{ AMTFOR=null; update(); });   // presets over #amt; reset per topic in openScope (330 or the topic minimum)
+const vAmt=amountChips($("vamtseg"), amt, ()=>{ AMTFOR=null; update(); }, {wallet:vpay.wallet, noun:()=>featureMode?"sponsorship":"burn"});   // presets over #amt; reset per topic in openScope (330 or the topic minimum); off past the wallet's balance
 const burnTitle=()=>{ const t=stmt.value.trim(), p=scope.spec||{};   // a new take: the question it answers; an existing one (Burn for it): that take, a yes-no's side in capitals
   return vLocked&&t ? (kindKey(p)==="yes-no"&&p.opts.includes(norm(t)) ? `Burn for ${norm(t).toUpperCase()}` : `Burn for “${shownT(p,t)}”`) : niceQ(scope.name); };
 const amtLabelText=()=>featureMode ? "Amount to burn to sponsor" : `Amount to burn for this ${kind(scope.spec||{})==="open"?"take":"answer"}${scope.spec&&scope.spec.min?` · min ${fmt(scope.spec.min)}`:""}`;
@@ -445,14 +448,14 @@ function update(){
   $("tiprow").hidden=!t; amt.setAttribute("aria-invalid",String(!vValid2()));
   const withReg=vRegOK()&&$("vreg").checked&&vRegFits(); $("vregf").hidden=!vRegOK(); $("vregnote").hidden=!(vRegOK()&&$("vreg").checked&&!vRegFits());
   $("vpay-outputs").hidden=withReg;                           // two burns: the raw transaction below carries both
-  if(withReg) vpay.set({entries:vRegEntries(), tipAddr:TIP_EFFECTIVE, tipSats:t}); else vpay.set({burnAddr:featureMode&&ROOT?ROOT.addr:scope.addr, burnSats:b, statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});
+  if(withReg) vpay.set({entries:vRegEntries(), tipAddr:TIP_EFFECTIVE, tipSats:t}); else vpay.set({burnAddr:featureMode&&ROOT?ROOT.addr:scope.addr, burnSats:b, statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:regMode?"register · root":featureMode?"sponsor · root":"burn"});   // registering, sponsoring: labeled like the batch's root burns (the short-of-funds callout's word)
   syncPollUI(); paintNumPick(); vPaint();
 }
 // effective amounts: the burn is the vote (never optional); tip only when ticked
 const burnSats=()=>regMode ? REG_SATS : Number(amt.value||0);   // registering burns the fixed amount; the amount chips stay as they were for the next burn
 const tipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("tip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
 const vTipSave=()=>tipPrefSave($("tip").value);   // the tip chosen here is every amount dialog's next one (tipPref)
-const vTip=amountChips($("vtipseg"), $("tip"), ()=>{ vTipSave(); update(); });
+const vTip=amountChips($("vtipseg"), $("tip"), ()=>{ vTipSave(); update(); }, {wallet:vpay.wallet, noun:"tip", check:tipDust});   // a tip of 1–329: said under it, Apply and signing off
 $("tip").oninput=()=>{ vTipSave(); update(); };
 $("opts").onclick=e=>{const b=e.target.closest("[data-opt]"); if(!b||b.getAttribute("aria-disabled")==="true") return; vOther=false; stmt.value=b.dataset.opt; update();};
 $("num").oninput=()=>{ stmt.value=$("num").value; update(); };
@@ -519,7 +522,7 @@ async function openScope(n){
   amt.min=Math.max(330,sp.min||0); vAmt.reset(330);   // never under 330: a smaller output is dust and does not relay
   $("amtlabel").textContent=amtLabelText();
   update();
-  WASCLOSED=isClosed(); headMeta();
+  WASCLOSED=closedKey(); headMeta();
   tipReady().then(()=>{ if(scope.addr===addrNow) closedFlip(); });   // the fresh tip alone decides closed: never wait for the directory
   TWIN=null; TWINT=null; $("twins").hidden=true;
   dirLoad().then(()=>{ if(scope.addr===addrNow){ headMeta(); renderBurners(); paintTwins(addrNow); } });   // the sponsor score, Recent's sponsorships and the twin topics need the directory
@@ -535,11 +538,11 @@ $("copyaddr").onclick=()=>copyText($("addr").textContent,$("copyaddr"));
 function numInRange(){ const r=scope.spec?.range; if(!r) return true; const v=+stmt.value.trim(); return Number.isFinite(v) && v>=r[0] && v<=r[1]; }   // hoisted like vValid: a number scope only takes numbers inside its range
 function vValid1(){ if(featureMode) return true; const raw=stmt.value.trim(); if(!raw||enc.encode(raw).length>80) return false; if(!scope.spec?.range) return true; return Number.isFinite(+raw) ? numInRange() : vLocked; }   // a number topic takes in-range numbers, or an existing off-list row opened from the board
 function vValid2(){ return burnSats()>=+(amt.min||330); }
-function vValid(n=vStep){ return n<=1 ? vValid1() : vValid1()&&vValid2(); }   // step n reachable when everything before it holds   // hoisted: update() runs at load, before this section
+function vValid(n=vStep){ return n<=1 ? vValid1() : vValid1()&&vValid2()&&!tipDust(tipSats()); }   // step n reachable when everything before it holds (a tip of 1–329 cannot relay)   // hoisted: update() runs at load, before this section
 function vPaint(){
   const first=2, sign=vStep>=first, s=vpay.wallet.status(), amtView=vStep===2&&vEdit;   // the first view: the take (none for Burn for it and sponsoring), or the amount in its place; the primary signs
   const sent=!!(s&&s.kind==="sent"), editing=vStep===2&&vEdit; $("vprice").hidden=sent;   // editing: the amount in place of the take, Apply or Cancel
-  $("vcancel").hidden=$("vapply").hidden=!editing; $("vapply").disabled=!vValid2();
+  $("vcancel").hidden=$("vapply").hidden=!editing; $("vapply").disabled=!vValid2()||!!tipDust(tipSats());
   $("vsendwrap").hidden=!sign||editing; const t=tipSats();
   const edit=!regMode&&!amtView&&!(s&&(s.kind==="sent"||s.kind==="busy"));   // edit: the amount and the fee speed, in place of the view
   const reg=vRegOK()&&$("vreg").checked&&vRegFits();
@@ -552,6 +555,7 @@ function vPaint(){
   if($("veffectsay").textContent!==say) $("veffectsay").textContent=say;   // the dialog's live region: words only, and only when they change (not on every key of a take)
   $("minnote").hidden=!(amtView&&!featureMode&&scope.spec&&scope.spec.min); if(!$("minnote").hidden) $("minnote").textContent=`Burns under ${fmt(scope.spec.min)} sats are listed but never counted, even when they add up.`;
   if(sign) signMenu($("vsend"), $("vsendmenu"), vpay.wallet, {label: regMode?"Validate topic":featureMode?"Validate sponsorship":kind(scope.spec||{})==="open"?"Validate take":"Validate answer",
+    noun: regMode?"registration":featureMode?"sponsorship":kind(scope.spec||{})==="open"?"take":"answer",   // what the wallet dialog says is kept
     ok:vValid(4)&&scope.addr.length>=20, show:()=>{ if(vStep!==4) vGo(4); }, batch:vBatch, tx: vStep!==4 ? ()=>vGo(4) : null, done:()=>$("votedlg").close()});
   $("vsend").title= !featureMode&&enc.encode(stmt.value.trim()).length>80 ? "Shorten your take to 80 bytes" : "";
 }
@@ -623,7 +627,7 @@ function estAmt(){
   const g=Math.abs(lo-hi)-at+1, s=Math.max(g, 330, p.min||0);   // g: capped like leadAmt's gap, not the topic minimum
   return g<=100000&&weightedMedian([...rows,{t:String(x),sats:s}])===x ? s : null; }   // checked on the median itself: never a wrong promise
 function effectHtml(){
-  const p=scope.spec||{}, k=kindKey(p), t=stmt.value.trim(), sats=burnSats(); if(featureMode||!t||closedKnown()) return "";
+  const p=scope.spec||{}, k=kindKey(p), t=stmt.value.trim(), sats=burnSats(), fs=fundsHtml(vpay.wallet); if(featureMode||!t||closedKnown()) return fs;   // fs: short of funds, said here before the transaction (sponsoring and an empty take too)
   const key=keyOfRow({t}), on=onKey(key), notes=[]; let card="", warn="";
   if(!on){ if(p.range&&Number.isFinite(numOf(t))) card=efWarn(`Pick a number between ${esc(numU(p.range[0],p))} and ${esc(numU(p.range[1],p))}.`); else if(!vOther) card=efWarn(esc(offListText())); }   // typed as another answer: the note under the field says it
   else if(p.min&&sats<p.min) card=efWarn(`Below this topic's ${fmt(p.min)}-sat minimum: this burn would not count.`);
@@ -635,7 +639,7 @@ function effectHtml(){
   if(lateRisk()){ const left=blocksTo(p.deadline), n=Math.max(1,Math.ceil(left)), sp=FEE_SPEEDS.find(f=>f[0]===feeSpeed())[1]; warn=efWarn(`Closes in ≈ ${untilText(left)} (${fmt(n)} block${n===1?"":"s"}). ${sp==="Fast"?"Even Fast":sp} may confirm too late and not count${sp==="Fast"?"":": use Fast"}.`,ICONS.latest); }
   if(walletState()==="none") notes.push(efNote(efIcon("wallet"),`No wallet in this browser yet · set one up to burn. Your ${noun()} is kept.`));
   const fee=vpay.wallet.fee(), reg=vRegOK()&&$("vreg").checked&&vRegFits(), all=sats+(reg?REG_SATS:0)+tipSats()+(fee||0); if(BTCUSD) notes.push(efNote(efIcon("cost"),`≈ $${(all/1e8*BTCUSD).toFixed(2)} all in`,"cost"));
-  return card+warn+(notes.length?`<ul class="efnotes">${notes.join("")}</ul>`:"");
+  return card+warn+(notes.length?`<ul class="efnotes">${notes.join("")}</ul>`:"")+fs;
 }
 // the amount view (the footer's edit): the same action while the amount falls short; once it is enough, said, with the exact amount one tap away when it overshoots
 function leadNoteHtml(){
@@ -681,7 +685,7 @@ function vGo(n){
 }
 let vSnap=null;                                              // what the amount view started from: Cancel puts it back
 $("vprice").onclick=e=>{ if(!e.target.closest("[data-editamt]")) return; vSnap={amt:amt.value, tip:$("tip").value, fee:feeSpeed()}; vEdit=true; vGo(2); };
-$("vapply").onclick=()=>{ if(!vValid2()) return; vEdit=false; vGo(2); };
+$("vapply").onclick=()=>{ if(!vValid2()||tipDust(tipSats())) return; vEdit=false; vGo(2); };
 $("vcancel").onclick=()=>{ const s=vSnap; vSnap=null; if(s){ vAmt.reset(s.amt); vTip.reset(s.tip); vTipSave(); LS(NETKEY("bv.fee"),s.fee); } vEdit=false; update(); PAY.forEach(p=>p.paint()); vGo(2); };
 function vLock(){                                      // per-row Burn +: the chosen answer is fixed until "change" is clicked; never blocks Next
   const k=kind(scope.spec||{}), v=norm(stmt.value), raw=stmt.value.trim();
@@ -701,8 +705,9 @@ $("unlock").onclick=()=>{
   (!stmt.readOnly&&!$("stmtfield").hidden ? stmt : k==="number" ? $("num") : $("opts").querySelector("[data-opt]")||stmt).focus({preventScroll:true});
 };
 let vOpener=null; $("votedlg").addEventListener("close",()=>{ vOpener?.focus?.({preventScroll:true}); vOpener=null;
-  const s=vpay.wallet.status(); if(FUNDING==="vpay"&&!(s&&s.kind==="sent")&&stmt.value.trim()){ FUNDING=null; const e=featureMode&&ROOT ? {name:"", addr:ROOT.addr, statement:scope.name, sats:burnSats(), intent:regMode?"register":"feature"} : {name:scope.name, addr:scope.addr, statement:stmt.value.trim(), sats:burnSats()};   // closed while the wallet was being funded: the take waits in the batch
-    if(ballotFind(e.addr)<0){ ballotAdd(e); ballotPill(); toast("Your take is in your batch. It waits there until your wallet is funded."); } } });
+  const s=vpay.wallet.status(), asked=FUNDING==="vpay"; if(asked){ FUNDING=null; WFUND=0; }   // no amount waits for a closed dialog (QR, fund note, Funds arrived)
+  if(asked&&!(s&&s.kind==="sent")&&stmt.value.trim()){ const e=featureMode&&ROOT ? {name:"", addr:ROOT.addr, statement:scope.name, sats:burnSats(), intent:regMode?"register":"feature"} : {name:scope.name, addr:scope.addr, statement:stmt.value.trim(), sats:burnSats()};   // closed while the wallet was being funded: the take waits in the batch
+    if(ballotFind(e.addr)<0){ ballotAdd(e); ballotPill(); toast(`Your ${vpay.wallet.noun||"take"} is in your batch. It waits there until your wallet is funded.`); } } });
 function openVote(locked=false, feature=false, start=1){   // start 2: the take is known (Burn for it), straight to the amount
   featureMode=!!feature; regMode=featureMode && !featureScore(scope.name); vTip.reset(tipPref());   // the saved tip, whichever dialog chose it
   $("votehead").textContent = regMode ? "Register #"+scope.q : featureMode ? "Sponsor #"+scope.q : burnTitle();
@@ -732,7 +737,7 @@ addEventListener("hashchange",go);
 go();
 segThumbs();
 
-// ---------- header: kind, badges, live countdown, actions ----------
+// ---------- header: kind, badges, actions (the deadline has its own card under it: headTick) ----------
 // (featureScore lives in shared.js: the sats burned to the root topic with this name; explore and index rank by it)
 function headMeta(){                                          // the static part: from the name alone, before any burn is known
   const p=scope.spec||{}, fs=featureScore(scope.name), closed=closedKnown(), segs=p.q?p.q.split("/"):[];
@@ -748,7 +753,7 @@ function headMeta(){                                          // the static part
   const ri=fs?null:regIssue(scope.name);                      // a name the directory would never list: said at once, and Register stays off
   $("hreg").hidden=!!fs || scope.name==="" || !DIRFRESH&&!ri;  // "not registered" only from a directory read on this visit
   $("hreg").textContent= ri ? `can't be registered · ${ri}` : "not registered · not in Explore";
-  $("hcount").hidden=!p.deadline; headTick();
+  headTick();                                                 // the deadline card
   $("hmeta").hidden=[...$("hmeta").children].every(b=>b.hidden);   // no rules and registered: no badge line at all
   $("featurebtn").hidden=scope.name==="";
   $("featurebtn").textContent= fs ? `✦ Sponsor · ${satsShort(fs)}` : DIRFRESH ? "Register" : "Register / sponsor";
@@ -756,15 +761,17 @@ function headMeta(){                                          // the static part
   $("featurebtn").disabled=!!ri;
   $("burnbtn").textContent= kind(p)==="open" ? "+ New take" : kind(p)==="poll" ? "+ Burn an answer" : "+ New answer"; $("qrow").hidden=kind(p)==="duel";   // beside the search, like Explore's + New topic; a duel burns from its two sides
   $("burnbtn").hidden=isClosed();                             // closed: no path offers a burn that would not count
+  const qt=isClosed()?"Search the takes":"Search the takes, or write yours"; $("q").placeholder=qt+"…"; $("q").setAttribute("aria-label",qt);   // closed: nothing left to write
   paintMbar(); watchPaint();
 }
 // phones: the burn within thumb reach, in the header's words (a duel's two sides), the result once closed
 function paintMbar(){ const p=scope.spec||{}, k=kindKey(p), el=$("mbar");
-  el.hidden=scope.name===""; if(el.hidden) return;
-  el.innerHTML= isClosed() ? `<button type="button" class="btn" data-seeresult>See the result ↓</button>`
+  el.hidden=scope.name===""||isClosed()&&!closedKnown(); if(el.hidden) return;   // checking the deadline: no burn, and no result to see yet
+  const h= isClosed() ? `<button type="button" class="btn" data-seeresult>See the result ↓</button>`
     : k==="duel"||k==="yes-no" ? (k==="yes-no"?["yes","no"]:p.opts).map((o,i)=>`<button type="button" class="btn${i?" sideb":" primary"}" data-vote="${esc(o)}"><span>Burn for ${esc(k==="yes-no"?o.toUpperCase():o)}</span></button>`).join("")
-    : `<button type="button" class="btn primary" data-newburn>${esc($("burnbtn").textContent)}</button>`; }
-$("mbar").addEventListener("click",e=>{ if(e.target.closest("[data-seeresult]")) $("hclosed").scrollIntoView({block:"start"}); else if(e.target.closest("[data-newburn]")) $("burnbtn").click(); else boardClick(e); });
+    : `<button type="button" class="btn primary" data-newburn>${esc($("burnbtn").textContent)}</button>`;
+  if(el._h!==h){ el._h=h; el.innerHTML=h; } }   // unchanged: left alone, so focus on it survives the minute refresh
+$("mbar").addEventListener("click",e=>{ if(e.target.closest("[data-seeresult]")) ($("dcard").hidden?$("hclosed"):$("dcard")).scrollIntoView({block:"start"}); else if(e.target.closest("[data-newburn]")) $("burnbtn").click(); else boardClick(e); });
 // phones: Sponsor joins Watch and More in the header's action row
 const placeSponsor=()=>{ const b=$("featurebtn"); if(PHONE.matches) document.querySelector(".hactions").prepend(b); else $("tactions").prepend(b); };
 PHONE.addEventListener("change",placeSponsor); placeSponsor();
@@ -773,31 +780,56 @@ function scopeLines(){                                        // the dialog's li
   scope.rules=[sp.min?`min ${fmt(sp.min)} sats`:null, dl].filter(Boolean);   // what still matters when the take is given
   scope.sub=[scope.kindLine, sp.min?`min ${fmt(sp.min)} sats`:null, dl].filter(Boolean).join(" · ");
 }
-function headTick(){                                          // every minute: the deadline's state, the time left as a bar from the registration to the close, the result banner once closed
-  const p=scope.spec||{}; if(!p.deadline) return;
+// ---------- the deadline card, under the header: calm while open, amber when closing soon, ember in the last blocks, then a strip over the result banner, slim once final ----------
+// the time left under big numerals, at ~10 min a block: days (their hours under a week), hours and minutes under a day, minutes in the last hour
+function dcTime(left){ const m=Math.max(0,Math.round(left*10)), d=Math.floor(m/1440), h=Math.floor(m%1440/60), n=m%60, u=(v,w)=>` <b>${v}</b> <i>${w}${v===1||w==="min"?"":"s"}</i>`;   // the spaces: a screen reader and a copy read "96 days", the flex layout ignores them
+  return d>=7 ? u(fmt(Math.round(m/1440)),"day") : d ? u(d,"day")+(h?u(h,"hour"):"") : h ? u(h,"hour")+(n?u(n,"min"):"") : u(Math.max(1,n),"min"); }
+// the close as a clock time, rounded to 10 min (an estimate: the caller says ≈); the weekday when it is not today
+function dcClock(left){ const t=new Date(Date.now()+left*600000); t.setMinutes(Math.round(t.getMinutes()/10)*10,0,0);
+  return t.toLocaleString(undefined, t.toDateString()===new Date().toDateString() ? {hour:"numeric",minute:"2-digit"} : {weekday:"short",hour:"numeric",minute:"2-digit"}); }
+// where the bar starts: the registration or the first confirmed burn, the earlier one; null when neither is known (a registration still in the mempool, at the next block in dirBuild, is none yet)
+function dcStart(){ const d=DIRECTORY.find(x=>x.name===scope.name), r=d&&Number.isFinite(d.first)&&d.first<=tipEst()?d.first:Infinity, b=SEEN.reduce((a,v)=>v.h!==null&&v.h<a?v.h:a,Infinity);
+  return Math.min(r,b)<Infinity ? {h:Math.min(r,b), reg:r<=b} : null; }
+function dcHtml(p,st){
+  const D=fmt(p.deadline), clock=iconBadge("sm",ICONS.latest), lock=iconBadge("sm",svgIcon('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>')), rule=`Only burns confirmed before block ${D} count.`;
+  if(st.k==="checking") return `<div class="dc-main"><p class="dc-lbl">${clock}<span>Deadline</span></p><p class="dc-chk"><span class="spin"></span>checking the deadline…</p></div><p class="dc-rule">${rule}</p>`;   // no tip yet: the block from the name, no countdown
+  if(st.k==="closing"||st.k==="closed"||st.k==="final"){ const past=tipEst()-p.deadline, on=Math.max(0,Math.min(6,past)), n=Math.max(1,6-past), fin=st.k==="final";   // final 6 blocks past the deadline: one pip a block; 6 by the estimate is "final" only once this visit's read says so
+    return `<div class="dc-main"><p class="dc-lbl">${lock}<span>${st.k==="closing"?"Closed to new burns":`Closed at block ${D}`}</span></p>${fin?"":`
+      <p class="dc-sub">${st.k==="closing"?`The next block is ${D}: a burn sent now would be late and not count.`:"Burns confirmed from that block on are late and not counted."}</p>`}</div>
+      <p class="dc-fin" title="Final at block ${fmt(p.deadline+6)}, 6 blocks past the deadline: deep enough that a reorg is very unlikely to move a burn across it"><span class="dc-pips" aria-hidden="true">${'<i class="on"></i>'.repeat(on)+"<i></i>".repeat(6-on)}</span>${fin?"final":on<6?`final in ≈ ${untilText(n)}`:"final · checking…"}</p>`; }   // final: the slim strip, the block kept over the result
+  const left=p.deadline-tipEst(), n=Math.max(1,left), last=st.k==="last", s=dcStart(), bar=!!s&&s.h<p.deadline, pc=bar?Math.max(0,Math.min(100,(1-left/(p.deadline-s.h))*100)):0;   // whole blocks (2 or more here): the count, the clock, the bar and the blocks to go move once a block, never back at a tip read; tipEst still ages a saved tip a block per 10 min
+  const togo=last?"":`${fmt(n)} block${n===1?"":"s"} to go`, scale=[bar?`<span class="st0">${s.reg?"registered":"first burn"} · block ${fmt(s.h)}</span>`:"", togo?`<span>${togo}</span>`:""].filter(Boolean).join(" ");   // the last blocks: the count says them
+  return `<div class="dc-main"><p class="dc-lbl">${last?`<span class="hot">Last blocks</span>`:`${clock}<span>${st.k==="soon"?"Closing soon":"Closes in"}</span>`}</p>
+      <p class="dc-count" role="timer">${last?`<b>${n}</b> <i>block${n===1?"":"s"}</i> `:""}<span class="ap">≈</span>${dcTime(left)}</p></div>
+    <div class="dc-side"><p class="dc-when" title="An estimate at ~10 min a block: the deadline is block ${D}">≈ ${st.k==="open"?dlWhen(p.deadline):dcClock(blocksTo(p.deadline))}</p>
+      ${bar?`<div class="dc-bar" role="img" aria-label="Now, block ${fmt(tipEst())}: ${Math.round(pc)}% of the way from the ${s.reg?"registration":"first burn"} to the close"><i style="width:${pc.toFixed(1)}%"></i><em style="left:clamp(6px,${pc.toFixed(1)}%,calc(100% - 6px))" title="now · block ${fmt(tipEst())}"></em></div>`:""}
+      ${scale?`<p class="dc-scale">${scale}</p>`:""}</div>
+    <p class="dc-rule">${rule}${last?" Sending now? Use the Fast fee.":""}</p>`;
+}
+function headTick(){                                          // every minute: the deadline card (the time left, the close as a date or a clock time, the way from the registration to the close, the rule), the result banner once closed
+  const p=scope.spec||{}, el=$("dcard");
+  if(!p.deadline){ el.hidden=true; return; }
   closedFlip();
-  const st=closeState(p, synced?TIPLIVE:0);
-  $("hcounttxt").textContent=st.text; $("hcount").classList.toggle("live",st.k==="soon"||st.k==="last"); $("hcount").classList.toggle("done",!["open","soon","last","checking"].includes(st.k));
-  $("hcount").title= TIP ? `block ${fmt(p.deadline)} · about ${fmt(Math.max(0,Math.ceil(blocksTo(p.deadline))))} blocks to go` : "";
-  const d=DIRECTORY.find(x=>x.name===scope.name), from=d&&Number.isFinite(d.first)?d.first:null;
-  $("tleft").hidden=!from||!TIP||st.k!=="open"&&st.k!=="soon"&&st.k!=="last";
-  if(!$("tleft").hidden) $("tleft").firstElementChild.style.width=Math.max(0,Math.min(100,(tipEst()-from)/Math.max(1,p.deadline-from)*100)).toFixed(1)+"%";
+  const st=closeState(p, synced?TIPLIVE:0), tick=["open","soon","last"].includes(st.k);
+  el.hidden=false; el.className=`dcard s-${st.k}${tick?" ticking":st.k==="checking"?"":" band"}`;   // ticking: the countdown; band: the closed strip over the banner, slim once final (the deadline never leaves the page)
+  const h=dcHtml(p,st); if(el._h!==h){ el._h=h; el.innerHTML=h; }   // repainted only when a word changes
   paintVerdict();
 }
-// a closed topic's result, said once at the top: who the burns backed, final only a few confirmations past the deadline on a tip read now
+// a closed topic's result, said once at the top: under the closed strip (the strip says when, the result card the numbers)
 function paintVerdict(){
   const p=scope.spec||{}, el=$("hclosed"), st=p.deadline&&closedKnown()&&(synced||SEEN.length)?closeState(p, synced?TIPLIVE:0):null;
   el.hidden=!st; if(!st) return;
-  const fin=st.k==="final", k=kindKey(p), on=S.filter(s=>onKey(keyOfRow(s))).sort((a,b)=>b.sats-a.sats), tot=on.reduce((a,s)=>a+s.sats,0), [a,b]=on, pc=s=>pct(s.sats/tot*100), after=`final after block ${fmt(p.deadline+6)}`;
+  const fin=st.k==="final", k=kindKey(p), on=S.filter(s=>onKey(keyOfRow(s))).sort((a,b)=>b.sats-a.sats), tot=on.reduce((a,s)=>a+s.sats,0), [a,b]=on, pc=s=>pct(s.sats/tot*100);
   const nm=s=>k==="yes-no"?norm(s.t).toUpperCase():k==="open"?`“${s.t}”`:s.t;
   let line;
-  if(!tot) line= fin ? `Final · no counted burns before block ${fmt(p.deadline)}` : `Closed · no counted burns · ${after}`;
-  else if(k==="number"){ const v=on.map(s=>({...s,x:numOf(s.t)})), med=weightedMedian(v), mean=v.reduce((x,s)=>x+s.x*s.sats,0)/tot; line= fin ? `Final estimate ${numU(med,p)} · average ${numU(mean,p)}` : `Closed · estimate ${numU(med,p)} · ${after}`; }
-  else if(b&&a.sats===b.sats) line= fin ? `Final · tie · ${pc(a)} / ${pc(b)}` : `Closed · tied · ${after}`;
-  else if(k==="yes-no") line= fin ? `Final · the burns said ${nm(a)} · ${pc(a)} of ${fmt(tot)} sats` : `Closed · ${nm(a)} ahead · ${after}`;
-  else if(k==="open") line= fin ? `Top take at close: ${nm(a)} · ${fmt(a.sats)} sats` : `Closed · ${nm(a)} leads · ${after}`;
-  else line= fin ? `Final · ${nm(a)} wins · ${pc(a)} of ${fmt(tot)} sats` : k==="duel" ? `At the deadline: ${nm(a)} ahead · ${after}` : `Closed · ${nm(a)} ahead · ${after}`;
-  el.innerHTML=`<p class="verdict">${esc(line)}</p>${k==="yes-no"&&fin?`<p class="vnote">Burning Take records what people burned, not what happened.</p>`:""}<div class="vacts"><button type="button" class="btn sm" data-share>Share</button><button type="button" class="btn sm" data-copylink>Copy link</button></div>`;
+  if(!tot) line= fin ? `Final · no counted burns before block ${fmt(p.deadline)}` : "No counted burns before the close";
+  else if(k==="number"){ const v=on.map(s=>({...s,x:numOf(s.t)})), med=weightedMedian(v), mean=v.reduce((x,s)=>x+s.x*s.sats,0)/tot; line= fin ? `Final estimate ${numU(med,p)} · average ${numU(mean,p)}` : `Estimate ${numU(med,p)} at the close`; }
+  else if(b&&a.sats===b.sats) line= fin ? `Final · tie · ${pc(a)} / ${pc(b)}` : "Tied at the close";
+  else if(k==="yes-no") line= fin ? `Final · the burns said ${nm(a)} · ${pc(a)} of ${fmt(tot)} sats` : `${nm(a)} ahead at the close`;
+  else if(k==="open") line= fin ? `Top take at close: ${nm(a)} · ${fmt(a.sats)} sats` : `${nm(a)} leads at the close`;
+  else line= fin ? `Final · ${nm(a)} wins · ${pc(a)} of ${fmt(tot)} sats` : `${nm(a)} ahead at the close`;   // closing, closed: the verdict in words, the card under it has the numbers and the strip above says when it is final
+  const h=`<p class="verdict">${esc(line)}</p>${k==="yes-no"&&fin?`<p class="vnote">Burning Take records what people burned, not what happened.</p>`:""}<div class="vacts"><button type="button" class="btn sm" data-share>Share</button><button type="button" class="btn sm" data-copylink>Copy link</button></div>`;
+  if(el._h!==h){ el._h=h; el.innerHTML=h; }                   // repainted only when a word changes: the focus on Share or Copy link, and its "copied", survive the minute tick
 }
 setInterval(headTick,60000);
 // ---- watch ★ ----
@@ -834,7 +866,7 @@ function vBatch(){ const e=featureMode&&ROOT ? {name:"", addr:ROOT.addr, stateme
   const n=ballotAdd(e); $("votedlg").close(); ballotPill(); toast(`Added to your batch · ${n} burn${n===1?"":"s"}`); }
 // ---- receipts: a burn signed here is on disk at once as pending (h:null, from = this wallet), so receipt.html#<txid> can show it before the explorer does ----
 // a burn sent from here: pending on disk and on the board at once; registered or sponsored, the header follows at once too
-vpay.wallet.onsent=({txid})=>{ const v={txid, t:stmt.value.trim(), sats:burnSats(), h:null, from:WALLET?WALLET.addr:"", tx:txid.slice(0,6)+"…"+txid.slice(-4), vout:0};
+vpay.wallet.onsent=({txid, from})=>{ const v={txid, t:stmt.value.trim(), sats:burnSats(), h:null, from:from||(WALLET?WALLET.addr:""), tx:txid.slice(0,6)+"…"+txid.slice(-4), vout:0};   // from: the signed transaction's first input, what the chain will say
   if(!featureMode&&vRegOK()&&$("vreg").checked&&vRegFits()){ const r={...v, t:scope.name, sats:REG_SATS, vout:1, at:Date.now()}; DB.putPending("",[r]); dirAddPending([cleanVote(r)]); headMeta(); }   // registered in the same transaction: listed at once, in the mempool
   if(featureMode){ DB.putPending("",[v]); dirAddPending([cleanVote({...v, at:Date.now()})]); headMeta(); renderBurners(); return; } DB.putPending(scope.name,[v]); addPending(scope.name,[v]); paintAfter(v.t); };
 const STAR='<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>';   // the top take of the topic, in Recent
@@ -845,7 +877,7 @@ function renderBurners(){
   host.hidden=!SEEN.length || !!q; if(host.hidden) return;   // from the first burns known (saved ones included), not during a search
   const top=Object.entries(BURN).sort((a,b)=>b[1].sats-a[1].sats).slice(0,5);   // counted sats only
   const off=v=>!BUCKET.has(v.txid)&&!onKey(keyOfRow(v));      // counted, but not one of the answers the result is made of
-  const pendTag=v=>(v.h===null&&p.deadline&&!closed ? ` · counts if it confirms before block ${fmt(p.deadline)}` : "")+(SINCE&&(v.h===null||v.h>SINCE)?" · new":"")+(WALLET&&v.from===WALLET.addr?" · you":"");   // pending near a deadline, new since the last visit, this browser's own
+  const pendTag=v=>(v.h===null&&p.deadline&&!closed ? ` · counts if it confirms before block ${fmt(p.deadline)}` : "")+(SINCE&&(v.h===null||v.h>SINCE)?" · new":"")+(walletOwns(v.from)?" · you":"");   // pending near a deadline, new since the last visit, this browser's own
   // the burn that took the lead, replayed in block order: only from fresh data, a replay over part of the burns could invent one
   const flips=new Set(); if(synced&&kind(p)!=="open"){ const run={}; let lead=null; for(const v of SEEN.filter(v=>!BUCKET.has(v.txid)&&onKey(keyOfRow(v))).sort((a,b)=>(a.h??Infinity)-(b.h??Infinity))){ const k=keyOfRow(v); run[k]=(run[k]||0)+v.sats; if(lead!==null&&k!==lead&&run[k]>(run[lead]||0)){ flips.add(v.txid); lead=k; } else if(lead===null) lead=k; } }
   const burnRow=v=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<span class="lbt">${v.t?esc(shownT(p,v.t)):"<i>no take</i>"}</span><b>${fmt(v.sats)} sats</b>
@@ -883,6 +915,7 @@ document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&LOADED&&
 // ---------- share: the result as it stands on a card (shared.js drawCard), the system's share sheet, else the text copied and the image saved ----------
 function shareText(){
   const p=scope.spec||{}, k=kindKey(p), on=S.filter(s=>onKey(keyOfRow(s))).sort((a,b)=>b.sats-a.sats), tot=on.reduce((a,s)=>a+s.sats,0), q=niceQ(scope.name);
+  if(closedKnown()){ const v=!$("hclosed").hidden&&$("hclosed").querySelector(".verdict"); return `${v?v.textContent:"Closed"} · “${q}”:`; }   // closed: the banner's own words, never a call to burn
   if(!tot) return `“${q}” · no burns yet · burn the first one:`;
   if(k==="poll") return `${q} · ${p.opts.map(o=>[o,(agg[o]||{sats:0}).sats]).sort((a,b)=>b[1]-a[1]).map(([o,x])=>`${o} ${pct(x/tot*100)}`).join(" · ")} · burn for yours:`;
   if(k==="number") return `Estimate ${numU(weightedMedian(on.map(s=>({t:String(numOf(s.t)),sats:s.sats}))),p)} on “${q}” · burn to disagree:`;
@@ -892,7 +925,7 @@ const topicCard=()=>{ const p=scope.spec||{}, k=kindKey(p), on=S.filter(s=>onKey
   return drawCard(kindWord(p).toUpperCase(), x=>{
     const W="#f3efe9", G="#a89f95", E="#ffb547", B="#7fa8ff", SL=["#ff6a1a","#56667f","#44526a","#343f52"];
     x.font=`600 36px ${CF.D}`; x.fillStyle=W; let y=200; for(const l of wrapLines(x,niceQ(scope.name),1000).slice(0,2)){ x.fillText(l,96,y); y+=44; }
-    const meta=[tot?`${fmt(tot)} sats burned`:"no burns yet", st?st.short:null].filter(Boolean).join(" · ");
+    const meta=[tot?`${fmt(tot)} sats burned`:closedKnown()?"no counted burns":"no burns yet", st?st.short:null].filter(Boolean).join(" · ");   // closed: no "yet", no call to burn
     if(k==="yes-no"||k==="duel"){ const ia=k==="yes-no"?p.opts.indexOf("yes"):0, A=p.opts[ia], Bo=p.opts[1-ia], a=(agg[A]||{sats:0}).sats, b=(agg[Bo]||{sats:0}).sats, L=o=>k==="yes-no"?o.toUpperCase():o;
       if(k==="yes-no"&&tot){ x.font=`800 84px ${CF.D}`; x.fillStyle=a>=b?E:B; x.fillText(`${L(a>=b?A:Bo)} ${pct(Math.max(a,b)/tot*100)}`,96,y+80); y+=100; }
       else { x.font=`700 44px ${CF.D}`; x.fillStyle=E; x.fillText(L(A),96,y+50); const w=x.measureText(L(A)).width; x.fillStyle=G; x.font=`500 26px ${CF.M}`; x.fillText(" VS ",96+w+10,y+48); x.fillStyle=B; x.font=`700 44px ${CF.D}`; x.fillText(L(Bo),96+w+90,y+50); y+=70; }
@@ -900,10 +933,10 @@ const topicCard=()=>{ const p=scope.spec||{}, k=kindKey(p), on=S.filter(s=>onKey
     else if(k==="poll"){ cardBar(x,96,y,1008,40,tot?on.map((r,i)=>[r.sats,SL[Math.min(i,3)]]):[[1,"rgba(255,255,255,.07)"]]); y+=80; x.font=`500 28px ${CF.B}`;
       on.slice(0,3).forEach((r,i)=>{ x.fillStyle=i?G:E; x.fillText(`${String(i+1).padStart(2,"0")}`,96,y); x.fillStyle=W; x.fillText(`${r.t} · ${pct(r.sats/tot*100)}`,150,y); y+=40; }); }
     else if(k==="number"){ const v=on.map(s=>({t:String(numOf(s.t)),sats:s.sats,x:numOf(s.t)})), m=weightedMedian(v);
-      x.font=`500 18px ${CF.M}`; x.fillStyle=G; x.fillText(tot?(closedKnown()?"FINAL ESTIMATE":"ESTIMATE"):"NO ANSWERS YET",96,y+20); if(tot){ x.font=`700 76px ${CF.D}`; x.fillStyle=E; x.fillText(numU(m,p),96,y+96); }
+      x.font=`500 18px ${CF.M}`; x.fillStyle=G; x.fillText(tot?(st&&st.k==="final"?"FINAL ESTIMATE":closedKnown()?"ESTIMATE AT THE CLOSE":"ESTIMATE"):closedKnown()?"NO COUNTED ANSWERS":"NO ANSWERS YET",96,y+20); if(tot){ x.font=`700 76px ${CF.D}`; x.fillStyle=E; x.fillText(numU(m,p),96,y+96); }
       const Bn=binsOf(p.range[0],p.range[1]), sums=Array(Bn.n).fill(0); for(const s of v) sums[Math.max(0,Math.min(Bn.n-1,Math.floor((s.x-Bn.start)/Bn.step)))]+=s.sats; const mx=Math.max(1,...sums), bw=(1008-(Bn.n-1)*6)/Bn.n;
       sums.forEach((s,i)=>{ const h=s/mx*70; x.fillStyle=s?"#ff8a2a":"rgba(255,255,255,.06)"; rr(x,96+i*(bw+6),y+190-Math.max(3,h),bw,Math.max(3,h),4); x.fill(); }); y+=210; }
-    else { x.font=`500 30px ${CF.B}`; on.slice(0,3).forEach((r,i)=>{ x.fillStyle=i?G:E; x.fillText(String(i+1).padStart(2,"0"),96,y+10); x.fillStyle=W; const t=wrapLines(x,`“${r.t}”`,760)[0]; x.fillText(t,150,y+10); x.textAlign="right"; x.fillStyle=G; x.fillText(`${fmt(r.sats)} sats · ${pct(r.sats/tot*100)}`,1104,y+10); x.textAlign="left"; y+=54; }); if(!tot){ x.fillStyle=G; x.fillText("No takes yet · burn the first one",96,y+10); } }
+    else { x.font=`500 30px ${CF.B}`; on.slice(0,3).forEach((r,i)=>{ x.fillStyle=i?G:E; x.fillText(String(i+1).padStart(2,"0"),96,y+10); x.fillStyle=W; const t=wrapLines(x,`“${r.t}”`,760)[0]; x.fillText(t,150,y+10); x.textAlign="right"; x.fillStyle=G; x.fillText(`${fmt(r.sats)} sats · ${pct(r.sats/tot*100)}`,1104,y+10); x.textAlign="left"; y+=54; }); if(!tot){ x.fillStyle=G; x.fillText(closedKnown()?"No counted takes":"No takes yet · burn the first one",96,y+10); y+=40; } }   // y: the meta line under it, not over it
     x.font=`400 20px ${CF.M}`; x.fillStyle="#8a8177"; x.fillText(meta,96,Math.min(512,y+10));
   }, `as of block ${fmt(SHOWN_H||TIP)}`); };
 async function sharePage(){ const url=new URL(location.href); url.search=NET==="mainnet"?"":`?net=${NET}`;   // the link to the topic, with its network, no dialog in it

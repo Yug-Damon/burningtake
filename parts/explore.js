@@ -267,10 +267,10 @@ function updateList(){
   $("listtiprow").hidden=!t;
   $("spay-outputs").hidden=!!(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits());   // two burns: the raw transaction below carries both
   if(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits()) spay.set({entries:[{name:"", addr:$("rootaddr").textContent, statement:n, sats:regSats(), intent:"register"}, {name:n, addr:SQADDR.addr, statement:SQFIRST, sats:REG_SATS}], tipAddr:TIP_EFFECTIVE, tipSats:t});
-  else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t});   // "…" until the root address is derived
+  else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:"register · root"});   // "…" until the root address is derived; labeled like the batch's root burns (the chips' and the callout's word)
 }
 const sqTipSave=()=>tipPrefSave($("listtip").value), sqTipDefault=tipPref;   // the tip every amount dialog shares: 1,000 until another is chosen
-const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }); sqTip.reset(sqTipDefault());
+const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }, {wallet:spay.wallet, noun:"tip", check:tipDust}); sqTip.reset(sqTipDefault());
 if(!tipEnabled()){ $("listtipf").hidden=true; $("listtiprow").hidden=true; }   // no tip address on this network: every tip control disappears (regTipSats() is 0)
 deriveScope("").then(r=>{ $("rootaddr").textContent=r.addr; updateList(); });
 $("listtip").oninput=()=>{ sqTipSave(); updateList(); sqPaint(); };
@@ -309,7 +309,7 @@ const sqIssue=()=>{ const p=sqSpec(); if(!p.q) return "it has no name";
 function sqValid(n){
   if(n===1) return !sqIssue();
   if(n===2) return !minBad()&&!(sqDL.kind==="date"&&!sqDL.at);
-  if(n===3) return +$("sqamt").value>=REG_SATS;   // the fee view: at least the registration
+  if(n===3) return +$("sqamt").value>=REG_SATS&&!tipDust(regTipSats());   // the fee view: at least the registration, and a tip that relays (No tip, or 330 and up)
   return true;                                   // 4 Transaction: nothing to fill in
 }
 function sqGo(n){
@@ -340,9 +340,10 @@ function sqPaint(){                              // the footer, idempotent, call
   $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
   feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"), tipEnabled()?regTipSats():null);
   sqRegLine();
+  fundsPaint($("sqfunds"), spay.wallet, sqStep===1);          // the topic step: short of funds, said before Validate topic
   $("sqdone").hidden=!sent; if(sent) paintDone();
   $("sqsendwrap").hidden=editing;
-  signMenu($("sqsend"), $("sqsendmenu"), spay.wallet, {label:"Validate topic", ok:!sqIssue()&&$("rootaddr").textContent.length>=20,   // the reason shows in the Registers as line
+  signMenu($("sqsend"), $("sqsendmenu"), spay.wallet, {label:"Validate topic", noun:"registration", ok:!sqIssue()&&!tipDust(regTipSats())&&$("rootaddr").textContent.length>=20,   // the reason shows in the Registers as line (a dust tip: under the tip)
     show:()=>{ if(sqStep!==4){ updateList(); sqGo(4); } }, batch:sqBatch, tx: sqStep!==4 ? ()=>{ updateList(); sqGo(4); } : null, done:()=>$("scopedlg").close()});
 }
 // registered: the way to the new topic, and to its first burn, so it does not open empty
@@ -377,7 +378,7 @@ function sqRender(){
   if(SQFIRST&&(!SQADDR||SQADDR.name!==name)) deriveScope(name).then(r=>{ if($("listname").value===name){ SQADDR={name, addr:r.addr}; updateList(); sqPaint(); } });
   updateList(); sqPaint();
 }
-let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; });
+let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; if(FUNDING==="spay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
 function openScopeDialog(prefill, reg=false, kindHint=null){     // kindHint: a kind to start from (Home's "Start one →")
   const p=parseScope((prefill||"").toLowerCase()), um=p.q.match(/-(in-usd|in-eur|in-sats|percent)$/)||(p.range?p.q.match(/-(in-\p{L}[\p{L}\p{N}]*)$/u):null);   // a custom unit only on a number: "best-pizza-in-rome" keeps its words
   sqUnit=um?"-"+um[1]:""; sqUnitCustom=!!um&&!/^(in-usd|in-eur|in-sats|percent)$/.test(um[1]); $("squnitc").value=sqUnitCustom?um[1].slice(3):""; $("sqq").value=um?p.q.slice(0,-um[0].length):p.q||"";
@@ -470,14 +471,14 @@ $("sqapply").onclick=()=>{ if(!sqValid(sqStep)) return; sqSnap=null; sqGo(1); };
 $("sqcancel").onclick=()=>{ const s=sqSnap; sqSnap=null; if(s) (sqStep===2?sqRulesPut:sqFeePut)(s); sqGo(1); };
 const sqMin=amountChips($("sqminseg"), $("sqmin"), ()=>sqRender());   // None, 1,000, 5,000, 10,000 or a custom whole number of 330 and up
 $("sqmin").addEventListener("input",()=>sqRender());
-const sqAmt=amountChips($("sqamtseg"), $("sqamt"), ()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });   // the initial sponsorship: 330 registers, more ranks it at once
+const sqAmt=amountChips($("sqamtseg"), $("sqamt"), ()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); }, {wallet:spay.wallet, noun:"registration"});   // the initial sponsorship: 330 registers, more ranks it at once
 $("sqamt").addEventListener("input",()=>{ $("sqamtusd").textContent=usdOf(regSats()); updateList(); sqPaint(); });
 $("sqprice").onclick=e=>{ if(e.target.closest("[data-regfee]")){ sqSnap=sqFeeSnap(); sqGo(3); } };
 $("sqback").onclick=()=>sqGo(1);
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later
 const dirMine=vs=>{ dirAddPending(vs.map(cleanVote).filter(Boolean)); renderDir(); dirTopics({only:d=>!d.stats, onTopic:renderSoon}); };
-spay.wallet.onsent=({txid})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:WALLET?WALLET.addr:"", vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]);
+spay.wallet.onsent=({txid, from})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:from||(WALLET?WALLET.addr:""), vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]);
   if(SQFIRST&&SQADDR&&SQADDR.name===v.t&&sqFirstFits()) DB.putPending(v.t,[{...v, t:SQFIRST, sats:REG_SATS, vout:1}]); };   // the first answer too: the topic opens with it, in the mempool
 globalThis.addPending=(name,vs)=>{                        // the batch (ballotui.js): root burns register or sponsor, the others are takes in a listed topic
   if(name===""){ dirMine(vs); return; }

@@ -93,7 +93,7 @@ $("rshare").onclick=()=>{ copyText(location.href,$("rshare")); toast("Link copie
 
 // ---------- share image: the receipt on a card (shared.js drawCard); "I said" only on this browser's own burn ----------
 const receiptCard=()=>drawCard("RECEIPT", x=>{
-  const v=R, root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, mine=WALLET&&v.from===WALLET.addr, head=$("rstmt").textContent, text=root?head:!stmtOf(v)?"no take":mine?`I said ${/^[A-Z]+$/.test(head)?head:"“"+head+"”"}`:(/^[A-Z]+$/.test(head)?head:"“"+head+"”");
+  const v=R, root=v.scope==="", tn=root?nameOf(v.t)||"":v.scope, mine=walletOwns(v.from), head=$("rstmt").textContent, text=root?head:!stmtOf(v)?"no take":mine?`I said ${/^[A-Z]+$/.test(head)?head:"“"+head+"”"}`:(/^[A-Z]+$/.test(head)?head:"“"+head+"”");
   let size=64, lines; for(const s of [64,54,44,36,30]){ size=s; x.font=`600 ${s}px ${CF.D}`; lines=wrapLines(x,text,1000); if(lines.length<=(s>=54?2:3)) break; }
   x.fillStyle=stmtOf(v)||root?"#f3efe9":"#8a8177"; let y=180+size; for(const l of lines.slice(0,3)){ x.fillText(l,96,y); y+=size*1.15; }
   y+=12; x.font=`400 28px ${CF.B}`; x.fillStyle="#a89f95"; const pre=`burned `; x.fillText(pre,96,y); let dx=96+x.measureText(pre).width;

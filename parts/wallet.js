@@ -1,5 +1,5 @@
 // ---------- wallet.js: burner wallet — BIP-39 words, BIP-84 key, P2WPKH signing (BIP-143/144), encrypted backup, mempool.space I/O. Pure, no DOM ----------
-// Uses from shared.js / qr.js: toHex, fromHex, enc, varint, le64, bech32, scriptPubKey, concatBytes, sha256d, txidOf, estimateVsize, serializeUnsignedTxWithInputs. Defines nothing twice.
+// Uses from shared.js / qr.js: toHex, fromHex, enc, sleep, varint, le64, bech32, scriptPubKey, concatBytes, sha256d, txidOf, estimateVsize, serializeUnsignedTxWithInputs. Defines nothing twice.
 // The libraries (@scure/bip39, @scure/bip32, @noble/curves) are ESM, loaded lazily from jsdelivr on the first call that needs them; the node test injects them instead.
 
 // ---------- libraries ----------
@@ -129,15 +129,22 @@ async function decryptSecret(blob,pass){                         // -> Promise<s
 // ---------- explorer I/O (mempool.space, Esplora API; CORS open, text/plain POST needs no preflight) ----------
 const WALLET_ESPLORA={mainnet:"", signet:"signet/", testnet:"testnet/", testnet4:"testnet4/"};
 const esploraBase=network=> (typeof ESPLORA_OVERRIDE_URL==="string"&&ESPLORA_OVERRIDE_URL) ? ESPLORA_OVERRIDE_URL : (typeof LIVE_BASE==="string"&&LIVE_BASE&&typeof NET==="string"&&network===NET) ? LIVE_BASE : "https://mempool.space/"+(WALLET_ESPLORA[network]??"signet/")+"api";   // a page-level override (own node) wins; unknown network -> signet, never mainnet by accident
-async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure
-  for(let i=0;i<2;i++){                                             // 6 s each, a second try: a stale connection often answers the next time
+async function esploraGet(path,network="mainnet"){               // GET esploraBase(network)+path -> JSON | null once 3 tries failed (the wallet's reads: fetchUtxos, ledger.js ledgerUtxos)
+  for(let i=0;i<3;i++){                                             // 6 s each. A network error or a cut answer is asked again at once (a stale connection often answers the next time), a busy explorer (429, 5xx) after 0.8 s, then 1.6 s, like chainGet
     try{
-      const r=await fetch(`${esploraBase(network)}/address/${address}/utxo`,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
-      if(!r.ok) return null;
-      const j=await r.json();
-      return Array.isArray(j) ? j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)})) : null;
-    }catch{ if(i) return null; }
+      const r=await fetch(esploraBase(network)+path,{headers:{accept:"application/json"}, signal:typeof AbortSignal!=="undefined"&&AbortSignal.timeout?AbortSignal.timeout(6000):undefined});
+      if(r.ok) return await r.json();
+      if(r.status!==429&&r.status<500) return null;                  // a 4xx is the answer
+      if(i<2) await sleep(800<<i);
+    }catch{}
   }
+  return null;
+}
+const utxoOk=u=>!!u&&/^[0-9a-f]{64}$/i.test(u.txid)&&Number.isInteger(u.vout)&&u.vout>=0&&Number.isSafeInteger(u.value)&&u.value>=0;   // an Esplora /utxo entry the signers can spend: a txid, an output index, whole sats
+async function fetchUtxos(address,network="mainnet"){            // -> [{txid, vout, value, confirmed}] | null on any failure, or an answer that is not a list of distinct coins
+  const j=await esploraGet(`/address/${address}/utxo`,network);
+  if(!Array.isArray(j)||!j.every(utxoOk)||new Set(j.map(u=>u.txid+":"+u.vout)).size<j.length) return null;
+  return j.map(u=>({txid:u.txid, vout:u.vout, value:u.value, confirmed:!!(u.status&&u.status.confirmed)}));
 }
 async function broadcastTx(hex,network="mainnet"){               // -> {txid} | {error}
   try{
