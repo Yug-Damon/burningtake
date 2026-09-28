@@ -2,9 +2,11 @@
 // Data: the address's own history from the explorer, each transaction matched against every topic this page can name (the directory, and the topics opened in this browser); IndexedDB when the explorer does not answer.
 // Nothing is watched or remembered here: an address is a fact on the chain, not a thing this browser follows.
 const status=$("status"), groups=$("groups");
-let ADDR="", ROWSB=[], seq=0, TALLY={};     // TALLY[topic]: its counted standings (tallyOf), for the ranks of this burner's takes                // (loading: the tiles and groups show shimmering placeholders until the scan lands)                // ROWSB: this address's burns [{txid,t,sats,h,from,tx,scope}], LOADED: the last loadAll done phase
+let ADDR="", ROWSB=[], seq=0, TALLY={}, VOTES={};   // VOTES[topic]: its burns as read, so its standings can be counted with the wallet's batch too     // TALLY[topic]: its counted standings (tallyOf), for the ranks of this burner's takes                // (loading: the tiles and groups show shimmering placeholders until the scan lands)                // ROWSB: this address's burns [{txid,t,sats,h,from,tx,scope}], LOADED: the last loadAll done phase
 const validAddr=a=>{ try{ return bech32Decode(a).hrp===HRP; }catch{ return false; } };
 const shortAddr=a=>a.slice(0,10)+"…"+a.slice(-6);
+const batchVotes=()=>{ if(!ADDR||!walletOwns(ADDR)) return []; const first=new Map();   // this page is the wallet's: its batch as burns not sent yet (txid batch:i, never saved), drawn in the takes' bars
+  return ballotGet().flatMap((e,i)=>{ if(!e.name) return []; if(!first.has(e.addr)) first.set(e.addr,e); return [{txid:"batch:"+i, scope:e.name, t:first.get(e.addr).statement, sats:e.sats, h:null, from:ADDR, batch:true}]; }); };   // a second burn to one address in one transaction counts under the first statement (spec §4)
 const hv=v=>v.h===null?Number.MAX_SAFE_INTEGER:v.h;         // pending first
 function paintHead(){
   $("baddr").textContent=ADDR ? shortAddr(ADDR) : "…"; $("baddr").title=ADDR;   // condensed; the copy button and the tooltip carry the full address
@@ -16,10 +18,10 @@ function paintHead(){
   document.title=(ADDR?shortAddr(ADDR):"Burner")+" · Burning Take";
 }
 const keyIn=(name,t)=>{ const p=parseScope(name), x=p.range?numOf(t):NaN; return Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1] ? "n:"+x : norm(t); };   // a take as tallyOf keys it
-const takesOf=()=>{ const by=new Map();                    // this burner's takes, one per topic and statement, its sats summed: the biggest first
-  for(const v of ROWSB){ const key=keyIn(v.scope,v.t), k=v.scope+"\u0000"+key, x=by.get(k)||by.set(k,{name:v.scope, key, t:v.t, sats:0, burns:0}).get(k); x.sats+=v.sats; x.burns++; }
+const takesOf=(rows=ROWSB)=>{ const by=new Map();          // this burner's takes, one per topic and statement, its sats summed (bat: the batch's part): the biggest first
+  for(const v of rows){ const key=keyIn(v.scope,v.t), k=v.scope+"\u0000"+key, x=by.get(k)||by.set(k,{name:v.scope, key, t:v.t, sats:0, burns:0, bat:0}).get(k); x.sats+=v.sats; x.burns++; if(v.batch) x.bat+=v.sats; }
   return [...by.values()].sort((a,b)=>b.sats-a.sats); };
-const groupsOf=()=>{ const by={}; for(const v of ROWSB){ const g=by[v.scope]||(by[v.scope]={name:v.scope, sats:0, rows:[]}); g.sats+=v.sats; g.rows.push(v); } return Object.values(by).sort((a,b)=>b.sats-a.sats); };
+const groupsOf=(rows=ROWSB)=>{ const by={}; for(const v of rows){ const g=by[v.scope]||(by[v.scope]={name:v.scope, sats:0, rows:[]}); g.sats+=v.sats; g.rows.push(v); } return Object.values(by).sort((a,b)=>b.sats-a.sats); };
 // ---- loading: placeholders shaped like the real tiles and rows, so the page does not read "0 burns" while it is still looking ----
 const skel=(w,h)=>`<span class="sk" style="width:${w};height:${h}px"></span>`;
 function paintLoading(){
@@ -38,34 +40,34 @@ function countUp(el,to){                                    // the tiles count u
 }
 const setNum=(el,v)=>{ el._cu=(el._cu||0)+1; el.textContent=fmt(v); };   // no animation, and any count-up still running stops
 function paintRows(animate=false){
-  const gs=groupsOf(), total=ROWSB.reduce((a,v)=>a+v.sats,0), takes=takesOf();
-  if(animate){ countUp($("tsats"),total); countUp($("tburns"),ROWSB.length); countUp($("ttopics"),gs.length); }
-  else { setNum($("tsats"),total); setNum($("tburns"),ROWSB.length); setNum($("ttopics"),gs.length); }
+  const B=batchVotes(), total=ROWSB.reduce((a,v)=>a+v.sats,0), topicsN=groupsOf().length, gs=groupsOf([...ROWSB,...B]), takes=takesOf([...ROWSB,...B]);   // the tiles and Recent: the chain; the takes by topic: as if the wallet's batch were sent
+  if(animate){ countUp($("tsats"),total); countUp($("tburns"),ROWSB.length); countUp($("ttopics"),topicsN); }
+  else { setNum($("tsats"),total); setNum($("tburns"),ROWSB.length); setNum($("ttopics"),topicsN); }
   $("exportbtn").disabled=!ROWSB.length;
   $("bcols").hidden=$("bgroupshead").hidden=!gs.length;
   // HOTTEST TAKES: this burner's statements, their sats summed
-  $("bhot").innerHTML=takes.slice(0,8).map(x=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<a class="lbt" href="topic.html#${esc(x.name)}">${x.t?esc(shownT(parseScope(x.name),x.t)):"<i>no take</i>"}</a><b>${fmt(x.sats)} sats</b><span class="m">${topicName(x.name)} · ${x.burns} burn${x.burns===1?"":"s"}</span></div>`).join("");
+  $("bhot").innerHTML=takesOf().slice(0,8).map(x=>`<div class="bchip lb ic">${iconBadge("",ICON_TAKE)}<a class="lbt" href="topic.html#${esc(x.name)}">${x.t?esc(shownT(parseScope(x.name),x.t)):"<i>no take</i>"}</a><b>${fmt(x.sats)} sats</b><span class="m">${topicName(x.name)} · ${x.burns} burn${x.burns===1?"":"s"}</span></div>`).join("");
   // RECENT: Explore's timeline, this burner's part of it (its takes, the topics it registered or sponsored, its first burn)
   const items=recentDigest(ROWSB.map(v=>({v, name:v.scope})), rootBurns().filter(v=>v.from===ADDR), {burns:12, roots:12, joins:1, all:12});
   $("brecent").innerHTML=items.map(x=>recentRow(x,{self:ADDR})).join("")||`<span class="note">nothing yet</span>`;
   // TAKES BY TOPIC: each take drawn like its topic's board row, with its rank there; the burner's own part under the take
   groups.removeAttribute("aria-busy"); groups.classList.toggle("rise",animate);
   groups.hidden=!gs.length;
-  groups.innerHTML=gs.map((g,gi)=>{ const p=parseScope(g.name), T=TALLY[g.name];
+  groups.innerHTML=gs.map((g,gi)=>{ const p=parseScope(g.name), bv=B.filter(v=>v.scope===g.name), T=bv.length&&VOTES[g.name] ? tallyOf(g.name,[...VOTES[g.name],...bv]) : TALLY[g.name];   // standings with the batch in them
     const rows=takes.filter(x=>x.name===g.name).map(x=>{ const i=T?T.answers.findIndex(a=>a.key===x.key):-1; return {...x, rank:i>=0?i+1:null, row:T?(i>=0?T.answers[i]:T.other.find(a=>a.key===x.key)):null}; })
       .sort((a,b)=>(a.rank??1e9)-(b.rank??1e9) || b.sats-a.sats);
     return `<div class="bgroup" style="--i:${Math.min(gi,8)}">
       <div class="divider"><a href="topic.html#${encodeURIComponent(g.name)}" class="tlink">${topicName(g.name)}</a><span class="more"> · ${kindWord(p)}</span> · ${fmt(g.sats)} sats · ${g.rows.length} burn${g.rows.length===1?"":"s"}</div>
-      ${rows.map(x=>{ const sats=x.row?x.row.sats:x.sats, burns=x.row?x.row.burns:x.burns, share=T&&T.sats&&x.rank?x.row.sats/T.sats*100:0;
+      ${rows.map(x=>{ const sats=x.row?x.row.sats:x.sats, burns=x.row?x.row.burns:x.burns, share=T&&T.sats&&x.rank?x.row.sats/T.sats*100:0, bw=share&&x.bat?x.bat/T.sats*100:0;   // bw: the batch's part of the bar
         const k=kindKey(p), two=k==="duel"||k==="yes-no", lead=T&&T.answers[0], tie=two&&T&&T.answers[1]&&T.answers[1].sats===lead.sats;
       const tag= !T ? "" : x.rank ? (k==="number" ? "in range" : two ? (tie?"tied":x.rank===1?"leads":"trails") : "") : x.row ? "not in the result" : "not counted";   // a number is not a podium, a side is not a rank; off the list or late: said
       const rk= !T ? "" : k==="number"||two ? "" : x.rank ? String(x.rank).padStart(2,"0") : "—";
     return `<a class="st${x.rank===1&&!two&&k!=="number"?" r1":""}" href="topic.html#${esc(g.name)}">
         <span class="rank" title="${x.rank?`ranked ${x.rank} in ${esc(topicName(g.name))}`:T?"not ranked: off the topic's list, late or below its minimum":"counting…"}">${rk}</span>
         <span class="txt">${x.t?esc(k==="yes-no"&&p.opts.includes(norm(x.t))?norm(x.t).toUpperCase():shownT(p,x.t)):"<i>no take</i>"}${tag?`<span class="tg${/not/.test(tag)?" warn":""}">${tag}</span>`:""}<small class="mine">this burner · ${fmt(x.sats)} sats${x.burns>1?` · ${x.burns} burns`:""}</small></span>
-        <span class="sats">${T?fmt(sats):skel("60px",14)}<small> sats</small></span>
+        <span class="sats">${T?`${x.bat?`<span class="was">${fmt(sats-x.bat)} → </span>`:""}${fmt(sats)}`:skel("60px",14)}<small> sats</small></span>
         <span class="votes">${T?`${burns} burn${burns===1?"":"s"}`:""}</span>
-        <span class="bar" style="width:${share.toFixed(1)}%"></span>
+        <span class="bar" style="width:${share.toFixed(1)}%"></span><span class="bar bbar" style="left:${(share-bw).toFixed(1)}%;width:${bw.toFixed(1)}%"></span>
       </a>`; }).join("")}
     </div>`; }).join("");
 }
@@ -77,7 +79,7 @@ function paintEmpty(kind){                                  // kind: "none" (not
   $("bpaste").hidden=kind==="zero";
 }
 async function load(){
-  ADDR=hashText().trim().toLowerCase(); ROWSB=[]; TALLY={}; const my=++seq;
+  ADDR=hashText().trim().toLowerCase(); ROWSB=[]; TALLY={}; VOTES={}; const my=++seq;
   paintHead();
   if(!ADDR||!validAddr(ADDR)){ status.innerHTML=""; paintRows(); $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; paintEmpty(ADDR?"bad":"none"); return; }
   paintEmpty(null); paintLoading(); status.innerHTML=syncLine({state:"loading"});
@@ -89,7 +91,7 @@ async function load(){
   const disk=(all||[]).filter(v=>v.from===ADDR&&v.scope).map(v=>v.h===null?{...v, unver:true}:v);
   let painted=false, low=0;
   if(disk.length){
-    for(const n of new Set(disk.map(v=>v.scope))){ const r=rec.get(n); if(!r) continue; TALLY[n]=tallyOf(n,by.get(n)||[]); if(r.height) low=low?Math.min(low,r.height):r.height; }
+    for(const n of new Set(disk.map(v=>v.scope))){ const r=rec.get(n); if(!r) continue; VOTES[n]=by.get(n)||[]; TALLY[n]=tallyOf(n,VOTES[n]); if(r.height) low=low?Math.min(low,r.height):r.height; }
     ROWSB=disk; paintRows(true); painted=true; status.innerHTML=syncLine({state:"updating", height:low});
   }
   await dirLoad(); if(my!==seq) return;
@@ -108,12 +110,15 @@ async function load(){
   ROWSB=rows; paintRows(!painted);                           // the tiles count up once, on this address's first paint
   await tipFresh(); if(my!==seq) return;
   status.innerHTML= failed ? syncLine({state:"failed", height:low}) : syncLine({state:TIPERR?"failed":"fresh", height:TIP, tail:ROWSB.length?"":"no burns"});
-  if(!ROWSB.length){ if(failed) $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; else paintEmpty("zero"); return; }   // "no burns" only from a read that answered
-  const todo=[...new Set(ROWSB.map(v=>v.scope))];            // each topic's standings, three at a time (cache first): the ranks land as they come
-  const worker=async()=>{ for(let n; (n=todo.shift())!==undefined; ){ const r=await loadVotes(n).catch(()=>null); if(my!==seq) return; if(r&&(!r.error||r.height||r.votes.length)) TALLY[n]=tallyOf(n,r.votes); paintRows(); } };   // a topic the explorer did not answer for, with nothing saved, stays "counting"
+  if(!ROWSB.length&&!batchVotes().length){ if(failed) $("tsats").textContent=$("tburns").textContent=$("ttopics").textContent="—"; else paintEmpty("zero"); return; }   // "no burns" only from a read that answered
+  const todo=[...new Set([...ROWSB,...batchVotes()].map(v=>v.scope))];            // each topic's standings, three at a time (cache first): the ranks land as they come
+  const worker=async()=>{ for(let n; (n=todo.shift())!==undefined; ){ const r=await loadVotes(n).catch(()=>null); if(my!==seq) return; if(r&&(!r.error||r.height||r.votes.length)){ VOTES[n]=r.votes; TALLY[n]=tallyOf(n,r.votes); } paintRows(); } };   // a topic the explorer did not answer for, with nothing saved, stays "counting"
   await Promise.all([worker(),worker(),worker()]);
 }
 addEventListener("hashchange",load); load();
+document.addEventListener("batchchange",()=>{ if(!ADDR||!validAddr(ADDR)) return; paintRows();   // the wallet's batch changed: its takes by topic follow; a topic new to this page gets its standings read
+  for(const n of new Set(batchVotes().map(v=>v.scope))) if(!VOTES[n]) loadVotes(n).then(r=>{ if(r){ VOTES[n]=r.votes; TALLY[n]=tallyOf(n,r.votes); paintRows(); } }).catch(()=>{}); });
+addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) document.dispatchEvent(new Event("batchchange")); });   // another tab's batch
 status.addEventListener("click",e=>{ if(e.target.closest("[data-retry]")){ chainReset(); load(); } });   // another try, when the reader asks
 $("bcopy").onclick=()=>copyText(ADDR,$("bcopy"));
 $("bgo").onclick=()=>{ const v=$("bq").value.trim(); if(v) location.hash=v; };

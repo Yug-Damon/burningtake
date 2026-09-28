@@ -1,13 +1,14 @@
 <meta charset="utf-8">
 <title>Run Your Own Node</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="brand/icon-32-light.png" sizes="32x32" media="(prefers-color-scheme: light)"><link rel="icon" href="brand/icon-32.png" sizes="32x32" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /*CSS*/
 </style>
 
 <nav><div class="wrap">
-  <a class="logo" href="index.html"><i></i>Burning Take</a>
+  <a class="logo" href="index.html"><i></i><span>Burning <b>Take</b></span></a>
   <div class="links"><a href="index.html">App</a><a href="verify.html">Verify</a><a href="spec.html">Spec</a><a href="node.html" class="on">Node</a></div>
 </div></nav>
 

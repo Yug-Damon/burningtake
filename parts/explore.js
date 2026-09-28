@@ -256,8 +256,6 @@ $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copy
 // effective registration amounts: burn checkbox off = no registration output, tip checkbox off = no tip output
 const regSats=()=>Math.max(REG_SATS, Math.round(+$("sqamt").value||REG_SATS));   // 330 registers; more is an initial sponsorship (the footer's Sponsor)
 const regTipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("listtip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
-let SQFIRST="", SQADDR=null;                                     // the first answer burned with the registration, and the new topic's address (derived when asked for)
-const sqFirstFits=()=>enc.encode($("listname").value.trim()+BALLOT_SEP+SQFIRST).length<=80;   // both statements in one OP_RETURN: 80 bytes, or it may not relay
 function updateList(){
   const n=$("listname").value.trim().toLowerCase();
   const data=enc.encode(n);
@@ -265,9 +263,7 @@ function updateList(){
   const t=regTipSats();
   $("listtipusd").textContent=t?usdOf(t):"";
   $("listtiprow").hidden=!t;
-  $("spay-outputs").hidden=!!(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits());   // two burns: the raw transaction below carries both
-  if(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits()) spay.set({entries:[{name:"", addr:$("rootaddr").textContent, statement:n, sats:regSats(), intent:"register"}, {name:n, addr:SQADDR.addr, statement:SQFIRST, sats:REG_SATS}], tipAddr:TIP_EFFECTIVE, tipSats:t});
-  else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:"register · root"});   // "…" until the root address is derived; labeled like the batch's root burns (the chips' and the callout's word)
+  spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:"register · root"});   // "…" until the root address is derived; labeled like the batch's root burns (the chips' and the callout's word)
 }
 const sqTipSave=()=>tipPrefSave($("listtip").value), sqTipDefault=tipPref;   // the tip every amount dialog shares: 1,000 until another is chosen
 const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }, {wallet:spay.wallet, noun:"tip", check:tipDust}); sqTip.reset(sqTipDefault());
@@ -312,13 +308,14 @@ function sqValid(n){
   if(n===3) return +$("sqamt").value>=REG_SATS&&!tipDust(regTipSats());   // the fee view: at least the registration, and a tip that relays (No tip, or 330 and up)
   return true;                                   // 4 Transaction: nothing to fill in
 }
+let SQTITLE="New topic";                                             // the dialog's title (New topic, Register topic); the rules view shows its own
 function sqGo(n){
-  sqStep=n;
+  sqStep=n; $("sqtitle").textContent= n===2 ? "Deadline & minimum" : SQTITLE;
   for(const k of [1,2,3,4]) $("sqstep-"+k).hidden=k!==n;
   sqPaint(); segThumbs();                                              // a seg inside the revealed step gets its thumb placed now
   $("scopedlg").querySelector(".dlg").scrollTop=0;
   const first=[...$("sqstep-"+n).querySelectorAll("input:not([type=hidden]):not(:disabled),textarea,select")].find(el=>!el.closest("[hidden]"));
-  (n===3 ? $("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt") : n===2 ? $("sqdl") : first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
+  (n===3 ? $("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt") : n===2 ? ($("sqdlchips").querySelector('[aria-pressed="true"]')||$("sqdlchips").querySelector("button")||$("sqdate")) : first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
 }
 // under the fields: what gets registered, as the topic page will name it, then the name itself with its byte budget, then why it can't register when it can't
 function sqRegLine(){
@@ -336,7 +333,7 @@ function sqPaint(){                              // the footer, idempotent, call
   $("sqback").hidden=sqStep!==4||sent;                           // the transaction only
   const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible; it changes in the edit view only (no ✕: removing it takes a step)
   $("sqprice").hidden=sqStep!==1&&sqStep!==3; dlgPrice($("sqprice"), REG_SATS, "registration"+(sqStep===1?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee(),
-    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
+    [more>0?`+${fmt(more)} sats sponsorship`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
   $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
   feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"), tipEnabled()?regTipSats():null);
   sqRegLine();
@@ -347,7 +344,7 @@ function sqPaint(){                              // the footer, idempotent, call
     show:()=>{ if(sqStep!==4){ updateList(); sqGo(4); } }, batch:sqBatch, tx: sqStep!==4 ? ()=>{ updateList(); sqGo(4); } : null, done:()=>$("scopedlg").close()});
 }
 // registered: the way to the new topic, and to its first burn, so it does not open empty
-function paintDone(){ const name=$("listname").value.trim(), k=kindKey(parseScope(name)), h=`<p>${topicName(name)} is registered · in the mempool · listed in Explore now, confirmed in ~10 min</p><div class="acts"><a class="btn sm primary" href="topic.html#${esc(name)}">Open topic</a><button type="button" class="btn sm" data-copyname="${esc(name)}">Copy link</button></div><p>${SQFIRST?`Its first answer, ${esc(SQFIRST)}, is in the same transaction.`:`<a class="linkbtn" href="topic.html#${esc(name)}">Burn the first ${k==="open"?"take":"answer"} so it doesn't open empty →</a>`}</p>`;
+function paintDone(){ const name=$("listname").value.trim(), k=kindKey(parseScope(name)), h=`<p>${topicName(name)} is registered · in the mempool · listed in Explore now, confirmed in ~10 min</p><div class="acts"><a class="btn sm primary" href="topic.html#${esc(name)}">Open topic</a><button type="button" class="btn sm" data-copyname="${esc(name)}">Copy link</button></div><p><a class="linkbtn" href="topic.html#${esc(name)}">Burn the first ${k==="open"?"take":"answer"} so it doesn't open empty →</a></p>`;
   if($("sqdone")._h!==h){ $("sqdone")._h=h; $("sqdone").innerHTML=h; } }
 $("sqdone").addEventListener("click",e=>{ const b=e.target.closest("[data-copyname]"); if(b) copyText(new URL("topic.html#"+b.dataset.copyname,location.href).href,b); });
 function sqBatch(){                                                 // registering = a burn to the root topic (name "") with the topic name as the statement
@@ -363,19 +360,22 @@ function sqRender(){
   $("sqduelf").hidden=sqk!=="duel"; $("sqpollf").hidden=sqk!=="poll"; $("sqnumf").hidden=sqk!=="number";
   $("sqdetect").innerHTML= sqAuto&&$("sqq").value.trim() ? `Detected from your question · <button type="button" class="linkbtn" data-kchange>change</button>` : "";
   $("sqtoolong").hidden=$("sqtoolong2").hidden=nb<=80; $("sqtoolong").textContent=$("sqtoolong2").textContent=`Name is ${nb} bytes; 80 is the most that can be registered. Shorten the question or options.`;
-  $("sqdlhint").textContent= p.deadline ? `≈ ${dlDate(blocksTo(p.deadline))}` : sqDL.kind==="date"&&!sqDL.at ? "pick a date" : sqDL.kind ? "waiting for the chain tip" : "never";
-  $("sqdatef").hidden=sqDL.kind!=="date"; $("sqdatenote").textContent= sqDL.kind==="date"&&p.deadline ? `≈ block ${fmt(p.deadline)} · blocks average about 10 minutes, so the close can land a day or more away from this date` : "";
+  const u=sqUnit.replace(/^-/,""), pre=u==="in-usd"?"$":u==="in-eur"?"€":"", post=pre?"":u==="percent"?"%":u?u.slice(3):"";   // a number's unit around its range inputs, as its answers will read
+  for(const id of ["sqlo","sqhi"]){ $(id+"pre").textContent=pre; $(id+"post").textContent=post; }
+  $("sqrangehint").textContent= p.range ? `${numU(p.range[0],p)} – ${numU(p.range[1],p)}` : "";
+  const dh=[...$("sqdl").options].map(o=>`<button type="button" data-dl="${esc(o.value)}" aria-pressed="${o.selected}"${o.dataset.auto?' class="auto"':""}>${esc(o.value==="0"?"No deadline":o.value==="date"?"Pick a date":o.textContent)}</button>`).join("");   // the deadline's choices as chips; the hidden select keeps the state (presets, a guessed or searched deadline, a date)
+  if($("sqdlchips")._h!==dh){ $("sqdlchips")._h=dh; $("sqdlchips").innerHTML=dh; }
+  const left=p.deadline?blocksTo(p.deadline):0, days=Math.round(left/144);
+  $("sqdatef").hidden=sqDL.kind!=="date";
+  $("sqdlsum").innerHTML= p.deadline ? `Closes <b>≈ ${dlDate(left)}</b> · block ${fmt(p.deadline)} · in ≈ ${days>=2?`${days} days`:untilText(left)}. Burns confirmed after that block don't count.${sqDL.kind==="date"?" Blocks come about every 10 minutes, so the close can land a day or so from the date.":""}`
+    : sqDL.kind==="date" ? "Pick the closing date." : sqDL.kind ? "Waiting for the chain tip to fix the block…" : "No deadline: every burn counts, whenever it confirms.";
+  $("sqminsum").textContent= p.min ? `Burns under ${fmt(p.min)} sats are listed but never counted: fewer, weightier takes.` : "Every burn counts, from 330 sats.";
+  $("sqrulesname").innerHTML= p.q ? `Name · <span class="mono">${esc(name).replace(/([@!]\d+)/g,"<b>$1</b>")}</span>` : "";   // the rules as they are written: in the topic's permanent name
   const exact=p.q&&DIRECTORY.find(d=>d.name===name), tw=p.q&&!exact?lookalike(name):null;   // the same topic, or the same question under other rules: said before paying (Explore's lookalike)
   $("sqtwin").hidden=!exact&&!tw;
   if(exact) $("sqtwin").innerHTML=`${topicName(name)} is already registered${exact.stats?` · ${fmt(exact.stats.sats)} sats`:""}. Registering again sponsors it. <a class="linkbtn" href="topic.html#${esc(name)}">Open it →</a>`;
   else if(tw) $("sqtwin").innerHTML=`${twinText(name,tw)} <a class="linkbtn" href="topic.html#${esc(tw.name)}">Open it →</a>`;
-  // the first answer: offered for topics with fixed answers, one of them picked, both statements in one OP_RETURN
-  const fixed=!!p.opts; $("sqfirstf").hidden=!fixed; if(!fixed){ $("sqfirst").checked=false; SQFIRST=""; }
-  $("sqfirstopts").hidden=!$("sqfirst").checked; if(!p.opts||!p.opts.includes(SQFIRST)) SQFIRST="";
-  if($("sqfirst").checked&&p.opts){ const h=p.opts.map(o=>`<button type="button" class="btn${SQFIRST===o?" primary":""}" data-first="${esc(o)}" aria-pressed="${SQFIRST===o}">${esc(sqk==="yes-no"?o.toUpperCase():o)}</button>`).join(""); if($("sqfirstopts")._h!==h){ $("sqfirstopts")._h=h; $("sqfirstopts").innerHTML=h; } $("sqfirstopts").className="choice "+(p.opts.length===2?"pair":"poll"); }
   $("listname").value=name;
-  const fits=!SQFIRST||sqFirstFits(); $("sqfirstnote").hidden=fits; if(!fits) $("sqfirstnote").textContent="The name and this answer don't fit one 80-byte OP_RETURN together: register first, then burn your answer.";
-  if(SQFIRST&&(!SQADDR||SQADDR.name!==name)) deriveScope(name).then(r=>{ if($("listname").value===name){ SQADDR={name, addr:r.addr}; updateList(); sqPaint(); } });
   updateList(); sqPaint();
 }
 let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; if(FUNDING==="spay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
@@ -389,8 +389,7 @@ function openScopeDialog(prefill, reg=false, kindHint=null){     // kindHint: a 
   sqDL={kind:null}; sqDLTouched=!!p.deadline; if(p.deadline) sqDLAuto({kind:"abs", abs:p.deadline}, `block ${fmt(p.deadline)}`);   // a searched name keeps its deadline
   sqMin.reset(p.min||0);
   sqTouched=!!(p.opts||p.range||kindHint); sqAuto=false; sqStem=null; if(!sqTouched) sqDetect();
-  $("sqfirst").checked=false; SQFIRST=""; SQADDR=null;
-  $("sqtitle").textContent=reg?"Register topic":"New topic"; $("sqbatchnote").hidden=true;
+  SQTITLE=reg?"Register topic":"New topic"; $("sqtitle").textContent=SQTITLE; $("sqbatchnote").hidden=true;
   sqTip.reset(sqTipDefault());
   sqAmt.reset(REG_SATS); sqSnap=null; $("sqfeeadv").open=false;   // every open: the plain 330 until its edit is asked for
   sqRender(); updateList();
@@ -442,8 +441,6 @@ function sqDLAuto(dl, text){
   o.value=dl.kind==="abs"?"abs":String(dl.blocks); o.dataset.abs=dl.abs||""; o.textContent=text; $("sqdl").value=o.value; sqDL=dl;
 }
 $("sqq").oninput=()=>{ sqDetect(); sqRender(); };
-$("sqfirst").onchange=()=>{ if(!$("sqfirst").checked) SQFIRST=""; sqRender(); };
-$("sqfirstopts").onclick=e=>{ const b=e.target.closest("[data-first]"); if(!b) return; SQFIRST=b.dataset.first; sqRender(); };
 const sqTouch=()=>{ if(sqAuto&&sqStem&&!$("sqq").value.includes(":")) $("sqq").value=sqStem; sqTouched=true; sqAuto=false; sqStem=null; };   // the guess becomes the reader's
 document.querySelectorAll("#sqkinds [data-k]").forEach(b=>b.onclick=()=>{ sqTouch(); sqk=b.dataset.k; if(sqk==="poll"&&!pollInputs().length) pollFields(); sqRender();
   ($(sqk==="duel"?"sqa":sqk==="number"?"sqlo":"sqq")||$("sqq")).focus({preventScroll:true}); if(sqk==="poll") pollInputs().find(i=>!i.value)?.focus(); });
@@ -459,6 +456,7 @@ $("sqdl").onchange=()=>{ const v=$("sqdl").value, o=$("sqdl").selectedOptions[0]
   sqDL= v==="date" ? {kind:"date", at:sqDateAt(), abs:null} : v==="abs" ? {kind:"abs", abs:+o.dataset.abs} : +v ? {kind:"rel", blocks:+v, abs:null} : {kind:null}; sqDLTouched=true;
   if(sqDL.kind&&!TIPLIVE) tipFresh().then(()=>{ if($("scopedlg").open) sqRender(); });
   sqRender(); if(v==="date") $("sqdate").focus(); };
+$("sqdlchips").onclick=e=>{ const b=e.target.closest("[data-dl]"); if(!b) return; $("sqdl").value=b.dataset.dl; $("sqdl").onchange(); if(b.dataset.dl!=="date") $("sqdlchips").querySelector(`[data-dl="${b.dataset.dl}"]`)?.focus(); };   // a chip picks the select's option: one state, the chips only show it
 $("sqdate").oninput=()=>{ sqDL={kind:"date", at:sqDateAt(), abs:null}; sqDLTouched=true; sqRender(); };
 $("sqrulesline").onclick=e=>{ if(e.target.closest("[data-editrules]")){ sqSnap=sqRulesSnap(); sqGo(2); } };   // the deadline and the minimum, in their own view
 // the rules and the fee views change the values live; Cancel puts back what the view started from, Apply keeps them
@@ -478,8 +476,7 @@ $("sqback").onclick=()=>sqGo(1);
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later
 const dirMine=vs=>{ dirAddPending(vs.map(cleanVote).filter(Boolean)); renderDir(); dirTopics({only:d=>!d.stats, onTopic:renderSoon}); };
-spay.wallet.onsent=({txid, from})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:from||(WALLET?WALLET.addr:""), vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]);
-  if(SQFIRST&&SQADDR&&SQADDR.name===v.t&&sqFirstFits()) DB.putPending(v.t,[{...v, t:SQFIRST, sats:REG_SATS, vout:1}]); };   // the first answer too: the topic opens with it, in the mempool
+spay.wallet.onsent=({txid, from})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:from||(WALLET?WALLET.addr:""), vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]); };
 globalThis.addPending=(name,vs)=>{                        // the batch (ballotui.js): root burns register or sponsor, the others are takes in a listed topic
   if(name===""){ dirMine(vs); return; }
   const d=DIRECTORY.find(x=>x.name===name); if(!d) return;

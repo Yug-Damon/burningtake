@@ -83,19 +83,20 @@ async function ledgerAccount(xpub, network="mainnet"){          // the account x
 async function ledgerAddress(xpub, network="mainnet", change=0, index=0){ return (await ledgerAccount(xpub, network))(change, index); }   // one address, local derivation from the account xpub
 const LEDGER_GAP=20;                                             // BIP-44 gap limit: a chain ends after 20 unused addresses in a row (used = any history, so an emptied address keeps the scan going)
 const LEDGER_CAP=2000;                                           // ponytail: 2,000 addresses per chain at most (0/0..0/1999, 1/0..1/1999). A chain still inside its gap there (an explorer that calls every address used) is a balance this page cannot read: null, never a partial one
-async function ledgerUtxos(xpub, network="mainnet"){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
+async function ledgerUtxos(xpub, network="mainnet", onsats=null){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
   try{                                                           // null, never a rejection: an xpub that does not parse or the libraries not loading (jsdelivr blocked) are a balance this page cannot read either
     const acct=await ledgerAccount(xpub, network);
     const stat=async a=>{ const j=await esploraGet(`/address/${a}`,network), s=[j&&j.chain_stats, j&&j.mempool_stats];   // Esplora /address: confirmed + mempool -> {used, sats} | null
       const n=k=>s.every(x=>x&&Number.isFinite(x[k])) ? s[0][k]+s[1][k] : NaN, tx=n("tx_count"), sats=n("funded_txo_sum")-n("spent_txo_sum");
       return Number.isNaN(tx+sats) ? null : {used:tx>0, sats}; };
-    const used=[], funded=[];                                    // funded: used addresses still holding sats, the only ones whose coins are asked for
+    const used=[], funded=[]; let run=0;                         // funded: used addresses still holding sats, the only ones whose coins are asked for; run: their sats so far (onsats: the balance growing while the scan reads)
     for(const chain of [0,1]) for(let next=0, last=-1; next<=last+LEDGER_GAP; ){   // receive, then change; last: the highest used index read
       if(next>=LEDGER_CAP) return null;
       const idx=[]; while(idx.length<5&&next<=last+LEDGER_GAP&&next<LEDGER_CAP) idx.push(next++);   // 5 in flight (the explorers rate-limit bursts), only indexes the scan reads whatever these answer
       const as=await Promise.all(idx.map(i=>acct(chain,i))), st=await Promise.all(as.map(a=>stat(a.address)));
       if(st.some(s=>!s)) return null;
-      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0) funded.push({chain, index:idx[k], address:as[k].address}); });
+      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0){ funded.push({chain, index:idx[k], address:as[k].address}); run+=s.sats; } });
+      if(onsats) try{ onsats(run); }catch{}
     }
     const coins=[];
     for(let i=0;i<funded.length;i+=5){ const rs=await Promise.all(funded.slice(i,i+5).map(a=>fetchUtxos(a.address,network))); if(rs.some(r=>!r)) return null;

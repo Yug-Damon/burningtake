@@ -190,14 +190,15 @@ function watchNews(w, votes, T){
 }
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
-const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length) ballotTipSet(null); };   // emptied (cleared, sent, last burn removed): the batch's own tip goes with it
+const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length&&!ballotTipOwn()) ballotTipSet(null); try{ globalThis.document?.dispatchEvent(new Event("batchchange")); }catch{} };   // no burn left and no tip of its own: the next batch follows the default tip again (a tip put in the batch stays: a tip-only batch)
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
 const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
 const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
-const ballotClear=()=>ballotSave([]);
+const ballotClear=()=>{ ballotTipSet(null); ballotSave([]); };   // everything: its burns and its own tip (Clear, a send)
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
 const ballotTip=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? tipPref() : Math.max(0,Math.round(+v)||0); };   // the batch's one tip output: set by the tip dialog's Add to batch (0: removed), else every dialog's tip (tipPref); a dust one never comes back
+const ballotTipOwn=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? 0 : Math.max(0,Math.round(+v)||0); };   // a tip put in the batch itself (the tip dialog's Add to batch): the batch holds it even with no burn
 const ballotTipSet=v=>{ try{ v==null||v==="" ? localStorage.removeItem(NETKEY("bv.ballot.tip")) : LS(NETKEY("bv.ballot.tip"),String(Math.max(0,Math.round(+v)||0))); }catch{} };   // null: the batch follows tipPref again
 const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
 
@@ -539,8 +540,9 @@ async function drawCard(label, paint, footRight=""){
   let g=x.createRadialGradient(1040,60,0,1040,60,720); g.addColorStop(0,"rgba(255,106,26,.30)"); g.addColorStop(1,"rgba(255,106,26,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
   g=x.createRadialGradient(120,640,0,120,640,520); g.addColorStop(0,"rgba(255,181,71,.14)"); g.addColorStop(1,"rgba(255,181,71,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
   rr(x,40,40,1120,550,30); x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=2; x.stroke();
-  g=x.createRadialGradient(92,98,2,96,102,20); g.addColorStop(0,"#ffb547"); g.addColorStop(.6,"#ff6a1a"); g.addColorStop(1,"#7a2200"); x.fillStyle=g; x.beginPath(); x.arc(96,102,18,0,6.29); x.fill();
-  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning Take",128,102);
+  const mk=new Image(); mk.src="brand/mark-dark-96.png"; try{ await mk.decode(); x.drawImage(mk,78,80,36,45); }catch{}   // the flame mark (no mark if it cannot load)
+  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning ",128,102);
+  g=x.createLinearGradient(0,91,0,113); g.addColorStop(0,"#fc9225"); g.addColorStop(1,"#f8761a"); x.fillStyle=g; x.fillText("Take",128+x.measureText("Burning ").width,102);   // "Take" in the flame's orange, top to foot
   x.fillStyle="#ffb547"; x.font=`500 18px ${CF.M}`; x.textAlign="right"; try{ x.letterSpacing="3px"; }catch{} x.fillText(`${label} · ${NET.toUpperCase()}`,1104,102); try{ x.letterSpacing="0px"; }catch{} x.textAlign="left"; x.textBaseline="alphabetic";
   paint(x);
   x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);

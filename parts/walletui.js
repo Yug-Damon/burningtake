@@ -15,13 +15,19 @@ async function walletLoadKey(pass=""){                    // derive the key from
   wKey.words=words; return wKey;
 }
 let WREADING=false, WREAD=null;                            // a balance read is running: "checking", not "unknown"; WREAD {w, p}: the latest read, shared by every caller that does not force a fresh one
+function countTo(el,to){ cancelAnimationFrame(el._raf); const from=el._v||0, t0=performance.now(), d=matchMedia("(prefers-reduced-motion: reduce)").matches||from===to?0:700, live=el.closest("[aria-live]");   // a balance counts up to its value; a new value mid-way picks up where it is
+  live?.setAttribute("aria-busy","true");                     // read out once, at the end: not every frame
+  const step=now=>{ const p=d?Math.min(1,(now-t0)/d):1, v=Math.round(from+(to-from)*(1-Math.pow(1-p,3))); el._v=v; el.textContent=fmt(v)+" sats"; if(p<1) el._raf=requestAnimationFrame(step); else live?.removeAttribute("aria-busy"); };
+  step(t0); }
+function walletEarly(w,sats){ if(WALLET!==w||walletUtxos||!$("walletdlg")?.open||$("w-ready").hidden) return; countTo($("w-bal"),sats); $("w-balhint").textContent="listing the coins…"; }   // the explorer's address totals (funded − spent), before the coins are listed: the balance shows at once
 async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page. Never rejects
   const w=WALLET; if(!w) return null;
   if(walletUtxos && !force) return walletUtxos;
   if(WREAD && WREAD.w===w && !force) return WREAD.p;       // page load, then the dialog opening: one read of the account, not two
   const me={w}; WREAD=me; WREADING=true;
   me.p=(async()=>{
-    let r=null; try{ r= w.kind==="ledger" ? await ledgerUtxos(w.xpub, NET) : await fetchUtxos(w.addr, NET); }catch{}
+    if(w.kind!=="ledger") esploraGet(`/address/${w.addr}`,NET).then(j=>{ const n=k=>(j?.chain_stats?.[k]||0)+(j?.mempool_stats?.[k]||0); if(j) walletEarly(w, n("funded_txo_sum")-n("spent_txo_sum")); }).catch(()=>{});   // one cheap read beside the coins': the balance before they are listed
+    let r=null; try{ r= w.kind==="ledger" ? await ledgerUtxos(w.xpub, NET, s=>walletEarly(w,s)) : await fetchUtxos(w.addr, NET); }catch{}
     if(WREAD!==me) return WREAD&&WREAD.w===w ? WREAD.p : WALLET===w ? walletUtxos : null;   // a newer read took over (forced, or another wallet's): its answer, never this older one
     WREAD=null; WREADING=false;
     if(WALLET!==w) return null;                            // forgotten or replaced while this read ran: these coins are not the new wallet's
@@ -53,12 +59,12 @@ async function walletPaint(connected=false){               // connected: the fir
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
     wFundNote();                                              // how much to send (the note and the QR), when a dialog asked for funds
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
-    $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
+    const wb=$("w-bal"); cancelAnimationFrame(wb._raf); wb._v=0; wb.textContent="…"; $("w-balhint").textContent="checking…";   // every read counts up from 0
     await walletBalance(); if(!WALLET) return;                // forgotten during the read: Forget has painted the Connect view
     const wt=walletUtxos&&walletUtxos!==WFUNDAT&&wWaiting(), f=wt&&wt.funds();   // coins the ask was not worked out with (just connected, refreshed, retried): what the waiting dialog still needs from them
     if(f){ WFUNDAT=walletUtxos; if(f.short) WFUND=f.topup; else if(connected){ FUNDING=null; WFUND=0; toast(`Wallet connected · your ${wt.noun||"burn"} is ready to sign`); } }   // enough already: said now, never as Funds arrived (a refresh leaves that to the dialog's panel)
     wFundNote();                                              // the balance known: what is missing
-    $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
+    if(walletUtxos) countTo(wb, walletSats()); else { cancelAnimationFrame(wb._raf); wb.textContent="—"; }
     $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer`;
   }
   walletPill();

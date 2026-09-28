@@ -186,6 +186,14 @@ async function test(name,fn){ n++; try{ await fn(); console.log(`ok ${n} - ${nam
     assert.strictEqual(e.log.length,73); assert.strictEqual(e.max,5,"5 requests in flight at most, and used");
     assert.strictEqual(r.coins.length,4); assert.deepStrictEqual(r.used,ACC_USED,"0/5 too: emptied, still one of the account's burners");
   });
+  await test("ledgerUtxos: onsats reports the balance growing while the scan reads (funded − spent of the used addresses so far), ending on the coins' sum before any coin is listed",async()=>{
+    const e=fakeExplorer(ACC), seen=[]; let utxoReadsAtLast=-1;
+    const r=await ledgerUtxos(XPUB,"mainnet",s=>{ seen.push(s); utxoReadsAtLast=e.log.filter(q=>q.startsWith("utxo")).length; });
+    assert.ok(seen.length>=2,"called per batch of address reads"); assert.ok(seen.every((v,i)=>!i||v>=seen[i-1]),"never decreasing: "+seen);
+    assert.strictEqual(seen[seen.length-1], r.coins.reduce((a,u)=>a+u.value,0)); assert.strictEqual(utxoReadsAtLast,0,"all of it known before the coins are asked for");
+    assert.strictEqual(seen[seen.length-1], 60000+25000+12000+7000);
+    fakeExplorer(ACC); assert.ok(await ledgerUtxos(XPUB,"mainnet",()=>{ throw new Error("a broken display"); }),"a throwing onsats never breaks the read");
+  });
   await test("ledgerUtxos: a used-then-emptied address keeps the scan going and gets no UTXO request; without its history 0/25 is past a 20-gap and never read",async()=>{
     const e=fakeExplorer(ACC); await ledgerUtxos(XPUB,"mainnet");
     assert.ok(e.log.includes("addr 0/5")&&!e.log.includes("utxo 0/5")); assert.ok(e.log.includes("addr 0/25"),"0/5's history reaches 0/25");
@@ -402,15 +410,15 @@ async function test(name,fn){ n++; try{ await fn(); console.log(`ok ${n} - ${nam
   function uiPage({wallet=null, libs=LIBS}={}){                  // wallet: the stored record; libs: what walletLibs hands out (a rejected promise: jsdelivr blocked)
     const els=new Map(), store={"bv.net":"mainnet"}; if(wallet) store["bv.wallet.mainnet"]=JSON.stringify(wallet);
     const d={querySelectorAll:()=>[], querySelector:()=>null, getElementById:id=>els.get(id)||els.set(id,stubEl(id)).get(id), createElement:()=>stubEl("new"), body:stubEl("body"), documentElement:stubEl("html"), fonts:null, addEventListener(){}};
-    const p=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch","setTimeout","__LIBS", uiSrc+`
+    const p=new Function("document","window","localStorage","matchMedia","navigator","addEventListener","fetch","setTimeout","requestAnimationFrame","cancelAnimationFrame","__LIBS", uiSrc+`
 return {walletBalance, walletPaint, walletTab, walletOwns, ledgerLibs, feeReady, PAY, $, outParts, capNoteHtml, TOASTS,
   get walletUtxos(){ return walletUtxos; }, set walletUtxos(v){ walletUtxos=v; }, get WALLET(){ return WALLET; }, set WALLET(w){ WALLET=w; }, get WREADING(){ return WREADING; },
   get FUNDING(){ return FUNDING; }, set FUNDING(v){ FUNDING=v; }, get WFUND(){ return WFUND; }, set WFUND(v){ WFUND=v; }};`)(
-      d, {}, {getItem:k=>store[k]??null, setItem(k,v){ store[k]=String(v); }, removeItem(k){ delete store[k]; }}, ()=>({matches:false, addEventListener(){}}), {hid:{}, onLine:true}, ()=>{}, (...a)=>fetchImpl(...a), fastTimeout, libs);
+      d, {}, {getItem:k=>store[k]??null, setItem(k,v){ store[k]=String(v); }, removeItem(k){ delete store[k]; }}, q=>({matches:/reduce/.test(q), addEventListener(){}}), {hid:{}, onLine:true}, ()=>{}, (...a)=>fetchImpl(...a), fastTimeout, cb=>fastTimeout(()=>cb(Date.now()),16), id=>clearTimeout(id), libs);   // reduced motion: a balance lands at once (countTo), no frames to wait for
     p.store=store; p.stored=()=>JSON.parse(store["bv.wallet.mainnet"]||"null"); return p;
   }
   const burnOuts=sats=>[{sats, scriptHex:toHex(OUTS[0].script), addr:BURN, label:"burn"},{sats:0, scriptHex:toHex(OUTS[1].script), addr:BURN, label:"statement"}];   // what payPanel hands walletTab.update
-  await test("walletui: walletBalance reads a Ledger's whole account (ledgerUtxos) and keeps its used addresses in the stored record, so walletOwns knows every burner of it on any page; a burner wallet reads its one address",async()=>{
+  await test("walletui: walletBalance reads a Ledger's whole account (ledgerUtxos) and keeps its used addresses in the stored record, so walletOwns knows every burner of it on any page; a burner wallet reads its one address (its totals, then its coins)",async()=>{
     const e=fakeExplorer(ACC), p=uiPage({wallet:WALLET_MAIN});
     const coins=await p.walletBalance();                          // shares the page-load read
     assert.deepStrictEqual(e.log,[...reads(0,0,45),...reads(1,0,23),"utxo 0/0","utxo 0/25","utxo 1/3"]); assert.strictEqual(coins,p.walletUtxos);
@@ -421,7 +429,7 @@ return {walletBalance, walletPaint, walletTab, walletOwns, ledgerLibs, feeReady,
     const p3=uiPage({wallet:WALLET_MAIN}); delete p3.store["bv.wallet.mainnet"];   // another tab forgets the wallet while this one reads
     await p3.walletBalance(); assert.strictEqual(p3.store["bv.wallet.mainnet"],undefined,"not brought back by this tab's read"); assert.ok(p3.walletOwns(addrAt(0,5)),"this tab still knows its account");
     const e2=fakeExplorer(ACC), b=uiPage({wallet:{net:"mainnet", enc:false, data:MN, addr:ADDR_MAIN}});
-    assert.strictEqual((await b.walletBalance()).length,2); assert.deepStrictEqual(e2.log,["utxo 0/0"]); assert.ok(b.walletOwns(ADDR_MAIN)&&!b.walletOwns(addrAt(0,5)));
+    assert.strictEqual((await b.walletBalance()).length,2); assert.deepStrictEqual(e2.log,["addr 0/0","utxo 0/0"]);   // its totals (the balance shown early) beside its coins assert.ok(b.walletOwns(ADDR_MAIN)&&!b.walletOwns(addrAt(0,5)));
   });
   await test("walletui: walletBalance never rejects: the wallet libraries not loading (jsdelivr blocked) or a coin list with null in it -> null, and the dialog offers retry instead of hanging on 'checking…'",async()=>{
     const dead=Promise.reject(new TypeError("Failed to fetch dynamically imported module: https://cdn.jsdelivr.net/npm/@scure/bip32@1.5.0/+esm")); dead.catch(()=>{});

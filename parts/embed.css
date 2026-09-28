@@ -63,7 +63,7 @@ h1{font-family:var(--font-d);font-weight:600;font-size:clamp(15px,3.4vw,19px);le
 .cta{display:inline-flex;align-items:center;border-radius:999px;padding:7px 14px;font-weight:600;font-size:12px;background:linear-gradient(135deg,var(--ember2),var(--ember));color:#1a0900;box-shadow:0 8px 24px -10px rgba(255,106,26,.7);white-space:nowrap}
 .cta:hover{filter:brightness(1.07)}
 .pw{display:block;max-width:100%;font-family:var(--font-m);font-size:10px;color:var(--ink3);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}   /* a block, so the ellipsis applies to the whole line */
-.pw i{display:inline-block;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--ember2),var(--ember) 60%,#7a2200);box-shadow:0 0 8px rgba(255,106,26,.55);vertical-align:-1px;margin-right:6px}
+.pw i{display:inline-block;width:10px;height:12px;background:url(brand/mark-dark-96.png) center/contain no-repeat;vertical-align:-2px;margin-right:6px}:root[data-theme="light"] .pw i{background-image:url(brand/mark-light-96.png)}   /* the flame mark, cut for each theme */
 .pw a{color:var(--ink2)}.pw a:hover{color:var(--ink)}
 .pw .st:not(:empty)::before{content:" · "}
 @media (max-width:380px){.num{grid-template-columns:1fr 1fr}.hist{grid-column:1/-1}.foot{flex-direction:column;align-items:stretch}.cta{justify-content:center}}

@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <title>Run Your Own Node</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="brand/icon-32-light.png" sizes="32x32" media="(prefers-color-scheme: light)"><link rel="icon" href="brand/icon-32.png" sizes="32x32" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{color-scheme:dark;--bg:#0b0a0e;--bg2:#121016;--panel:rgba(255,255,255,.035);--line:rgba(255,255,255,.09);--ink:#f3efe9;--ink2:#a89f95;--ink3:#6d665f;--ember:#ff6a1a;--ember2:#ffb547;--ok:#5fd39a;--font-d:"Unbounded",system-ui,sans-serif;--font-b:"Instrument Sans",system-ui,sans-serif;--font-m:"JetBrains Mono",ui-monospace,Menlo,monospace}
@@ -11,7 +12,7 @@ a{color:var(--ember2);text-decoration:none}a:hover{text-decoration:underline}
 nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(11,10,14,.75);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;align-items:center;gap:22px;height:64px;max-width:1120px}
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-d);font-weight:600;font-size:15px;color:var(--ink)}
-.logo i{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--ember2),var(--ember) 60%,#7a2200);box-shadow:0 0 18px rgba(255,106,26,.55)}
+.logo i{width:22px;height:28px;background:url(brand/mark-dark-96.png) center/contain no-repeat}.logo b{font-weight:inherit;background:linear-gradient(180deg,#fd9d2a,#f76b14);-webkit-background-clip:text;background-clip:text;color:transparent}
 nav .links{display:flex;gap:20px;margin-left:auto;font-size:14px}nav .links a{color:var(--ink2)}nav .links a:hover{color:var(--ink);text-decoration:none}nav .links a.on{color:var(--ember2)}
 h1,h2,h3{font-family:var(--font-d);text-wrap:balance;margin:0;line-height:1.15}
 h1{font-size:clamp(28px,4.5vw,44px);font-weight:800;letter-spacing:-.02em;margin-top:14px}
@@ -51,7 +52,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
 </style>
 
 <nav><div class="wrap">
-  <a class="logo" href="index.html"><i></i>Burning Take</a>
+  <a class="logo" href="index.html"><i></i><span>Burning <b>Take</b></span></a>
   <div class="links"><a href="index.html">App</a><a href="verify.html">Verify</a><a href="spec.html">Spec</a><a href="node.html" class="on">Node</a></div>
 </div></nav>
 

@@ -6,7 +6,7 @@
 <meta property="og:description" content="Put your sats where your take is. Every take is a Bitcoin burn, and anyone can count them.">
 <meta property="og:image" content="https://burningtake.com/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0b0a0e">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='40%25' cy='35%25' r='60%25'%3E%3Cstop offset='0' stop-color='%23ffb547'/%3E%3Cstop offset='.6' stop-color='%23ff6a1a'/%3E%3Cstop offset='1' stop-color='%237a2200'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='14' fill='url(%23g)'/%3E%3C/svg%3E">
+<link rel="icon" href="brand/icon-32-light.png" sizes="32x32" media="(prefers-color-scheme: light)"><link rel="icon" href="brand/icon-32.png" sizes="32x32" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
@@ -38,7 +38,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:rgba(11,10,14,.75);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;align-items:center;gap:12px;height:64px}   /* logo, then the network chip beside it; batch + wallet pushed right by .navchips */
 .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-d);font-weight:600;font-size:15px;letter-spacing:-.01em}
-.logo i{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--ember2),var(--ember) 60%,#7a2200);box-shadow:0 0 18px rgba(255,106,26,.55)}
+.logo i{width:22px;height:28px;background:url(brand/mark-dark-96.png) center/contain no-repeat}.logo b{font-weight:inherit;background:linear-gradient(180deg,#fd9d2a,#f76b14);-webkit-background-clip:text;background-clip:text;color:transparent}   /* the flame mark; "Take" in the flame's orange */
 nav .links{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--ink2)}
 nav .links a:hover{color:var(--ink)}
 .btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:10px 18px;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--panel);transition:.15s}
@@ -432,7 +432,7 @@ footer select,footer input{background:var(--bg);border:1px solid var(--line);bor
 .netmenu button:disabled{opacity:.6;cursor:default}.netmenu button:disabled:hover{background:none;color:var(--ink2)}   /* an item that cannot run yet, its reason still readable ("Add to batch · add a burn first") */
 .netmenu button[aria-disabled="true"]{opacity:.8;cursor:default}.netmenu button[aria-disabled="true"]:hover:not(:focus-visible){background:none;color:var(--ink2)}   /* the same, still focusable (signMenu's Add to batch): about 5:1, and the arrow keys reach it */
 nav .pill,.logo{white-space:nowrap}
-@media (max-width:480px){nav .wrap{gap:10px}.logo{font-size:14px}.logo i{width:22px;height:22px}nav .pill{padding:3px 8px;font-size:11px}.pill.net{padding:3px 7px}nav .pill{min-height:40px}.navchips{min-width:0;gap:6px}.pill.wallet{min-width:0}.pill.wallet::after{display:none}.pill.wallet .mono{min-width:0;overflow:hidden;text-overflow:ellipsis}.netmenu button{min-height:44px}}
+@media (max-width:480px){nav .wrap{gap:10px}.logo{font-size:14px}.logo i{width:19px;height:24px}nav .pill{padding:3px 8px;font-size:11px}.pill.net{padding:3px 7px}nav .pill{min-height:40px}.navchips{min-width:0;gap:6px}.pill.wallet{min-width:0}.pill.wallet::after{display:none}.pill.wallet .mono{min-width:0;overflow:hidden;text-overflow:ellipsis}.netmenu button{min-height:44px}}
 
 /* ===== topic header: kind, title, badges, actions; under it the deadline card (.dcard) and the result banner ===== */
 .thead{position:relative;padding:0;margin-bottom:18px;display:grid;gap:14px}   /* a header, not a card: no border, no fill */
@@ -848,6 +848,11 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 }
 #vregf,#sqfirstf .check{margin-top:12px;font-size:13px;color:var(--ink2)}#sqfirstopts{margin-top:10px}
 .st .tt.hid{color:var(--ink3);font-style:italic}.bent .tl2{font-family:var(--font-m);font-size:10.5px}
+/* the reader's batch, shown as if sent: dashed, never mistaken for burns on the chain (pending is solid ember) */
+.duel-bar div.a,.duel-bar div.b{position:relative}.batp{position:absolute;top:0;bottom:0;width:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 3px,transparent 3px 7px)}.duel-bar div.a .batp{right:0}.duel-bar div.b .batp{left:0}
+.st .bar.bbar{background:repeating-linear-gradient(-45deg,rgba(255,181,71,.32) 0 2px,transparent 2px 6px);box-shadow:inset 0 -2px 0 var(--ember2);transition:left .4s ease,width .4s ease}.st .bar.bbar[style*="width:0.0%"]{display:none}   /* the batch's part of a row: gold stripes, as the burn dialog draws a burn being built */
+.st .sats .was{font-family:var(--font-m);font-weight:400;font-size:12.5px;color:var(--ink3)}.st .sats:has(.was) small{display:block;margin:2px 0 0}.st .tt,.st .txt .mine{text-shadow:0 0 3px var(--bg),0 0 6px var(--bg)}   /* before → after; the take stays readable over the stripes */
+.batline{color:var(--ink)}
 /* ===== explore only: the Watching and Featured strips over the directory ===== */
 .strip{margin-bottom:16px}
 .striphead{display:flex;align-items:center;gap:12px;margin-bottom:8px}
@@ -927,10 +932,25 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
 .twinnote{color:var(--ember2)}.twinnote .linkbtn{font-size:12px}
 .sqdone{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}.sqdone p{margin:0;font-size:13px;color:var(--ink2)}.sqdone .acts{display:flex;gap:8px;flex-wrap:wrap}
 #squnitc{display:block;margin-top:8px;width:180px;max-width:100%}   /* the Custom unit: one word, written into the name */
+/* a number's range: the unit around each input, "to" between them */
+.numrange{display:flex;align-items:center;gap:10px}.numrange .to{font:12px var(--font-m);color:var(--ink3)}
+.numin{flex:1;min-width:0;display:flex;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 14px;transition:.15s}.numin:hover{border-color:rgba(255,255,255,.18)}.numin:focus-within{border-color:var(--ember2)}
+.field .numin input{flex:1;min-width:0;border:0;border-radius:0;background:transparent;padding:12px 0;outline:none}
+.numin .adorn{font:14px var(--font-m);color:var(--ink3);white-space:nowrap}.numin .adorn:empty{display:none}.numin .adorn:first-child{margin-right:6px}.numin .adorn:last-child{margin-left:6px}
+/* Deadline & minimum: the deadline as chips, each rule said in words, the name it writes */
+.dlchips{display:flex;flex-wrap:wrap;gap:8px}
+.dlchips button{border:1px solid var(--line);background:var(--bg);color:var(--ink2);border-radius:999px;padding:7px 14px;font-size:13px;line-height:1.2}
+.dlchips button:hover{border-color:rgba(255,255,255,.18);color:var(--ink)}
+.dlchips button[aria-pressed="true"]{border-color:rgba(255,181,71,.55);background:var(--ember-dim);color:var(--ember2)}
+.dlchips button.auto{border-style:dashed}   /* a deadline the question suggested, or a searched name's */
+.rulesum{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--ink2)}.rulesum b{color:var(--ink);font-weight:600}
+.rulesintro{margin:0 0 2px}#sqdatef input{margin-top:10px}
+.rulesname{margin:18px 0 0;font-size:12px;color:var(--ink3);overflow-wrap:anywhere}.rulesname .mono{font-family:var(--font-m)}.rulesname b{color:var(--ember2);font-weight:600}
+@media (max-width:480px){.dlchips button{min-height:40px}.numrange{gap:8px}.numin{padding:0 10px}}
 </style>
 
 <nav><div class="wrap">
-  <a class="logo" href="index.html"><i></i>Burning Take</a>
+  <a class="logo" href="index.html"><i></i><span>Burning <b>Take</b></span></a>
   <span class="netwrap"><button type="button" class="pill net" id="netpill" aria-haspopup="menu" aria-expanded="false" aria-controls="netmenu" title="Bitcoin network"><span class="mono" id="nettxt">mainnet</span></button><div class="netmenu" id="netmenu" role="menu" aria-label="Bitcoin network" hidden><button type="button" role="menuitemradio" data-net="mainnet" aria-checked="false">Mainnet</button><button type="button" role="menuitemradio" data-net="signet" aria-checked="false">Signet</button></div></span>
   <span class="navchips"><button type="button" class="pill ballot" id="ballotbtn" aria-haspopup="dialog" hidden><span class="mono" id="ballottxt">Batch · 0</span></button><button type="button" class="pill wallet" id="walletbtn" aria-haspopup="dialog"><span class="dot" id="walletdot"></span><span class="mono" id="wallettxt">Connect wallet</span></button></span>
 </div></nav>
@@ -1001,42 +1021,38 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
       <p class="note"><button type="button" class="linkbtn" id="sqaddopt">+ Add option</button> · Listed in this order until burns rank them. The same options in another order are another topic.</p>
     </div>
     <div id="sqnumf" hidden>
-      <div class="row">
-        <div class="field"><label for="sqlo"><span>Lowest</span></label><input id="sqlo" class="mono" type="number" step="any" placeholder="e.g. 50000"></div>
-        <div class="field"><label for="sqhi"><span>Highest</span></label><input id="sqhi" class="mono" type="number" step="any" placeholder="e.g. 500000"></div>
-      </div>
-      <div class="field"><label><span>Unit</span><span class="mono">in the name, so everyone reads the same number</span></label>
+      <div class="field"><label><span>Answers are in</span><span class="mono">part of the name</span></label>
         <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button><button type="button" data-u="custom" aria-pressed="false">Custom</button></div>
         <input id="squnitc" class="mono" placeholder="e.g. km" aria-label="Custom unit, one word" maxlength="16" autocomplete="off" spellcheck="false" hidden></div>
-      <p class="note">Answers outside the range are shown but not in the result: leave room.</p>
+      <div class="field"><label for="sqlo"><span>Answers that count</span><span class="mono" id="sqrangehint"></span></label>
+        <div class="numrange"><span class="numin"><span class="adorn" id="sqlopre" aria-hidden="true"></span><input id="sqlo" class="mono" type="number" step="any" inputmode="decimal" placeholder="e.g. 50000" aria-label="Lowest answer that counts"><span class="adorn" id="sqlopost" aria-hidden="true"></span></span><span class="to" aria-hidden="true">to</span><span class="numin"><span class="adorn" id="sqhipre" aria-hidden="true"></span><input id="sqhi" class="mono" type="number" step="any" inputmode="decimal" placeholder="e.g. 500000" aria-label="Highest answer that counts"><span class="adorn" id="sqhipost" aria-hidden="true"></span></span></div>
+        <p class="note">Answers outside the range are listed but left out of the result: leave room.</p></div>
     </div>
     <div class="note rulesline regline" id="sqrulesline" aria-live="polite"></div>
     <p class="note twinnote" id="sqtwin" hidden></p>
-    <div class="field firstans" id="sqfirstf" hidden>
-      <label class="check"><input type="checkbox" id="sqfirst"> <span>Burn your first answer in the same transaction · +330 sats</span></label>
-      <div class="choice" id="sqfirstopts" hidden></div>
-      <p class="note" id="sqfirstnote" hidden></p>
-    </div>
     <p class="note" id="sqtoolong2" hidden style="color:#ff8c5c"></p>
     <div class="fundshost" id="sqfunds" aria-live="polite" hidden></div>
   </section>
 
   <!-- 2 · Deadline & minimum (the rules' edit), Apply or Cancel -->
   <section class="wstep" id="sqstep-2" hidden>
+    <p class="note rulesintro">Both are optional. They are written into the topic's name, so they are as permanent as the topic.</p>
     <div class="field">
-      <label for="sqdl"><span>Closes</span><span class="mono" id="sqdlhint">never</span></label>
-      <select id="sqdl">
+      <label><span>Deadline</span></label>
+      <div class="dlchips" role="group" aria-label="Deadline" id="sqdlchips"></div>
+      <select id="sqdl" hidden tabindex="-1" aria-hidden="true">
         <option value="0">Never</option><option value="144">1 day</option><option value="1008">1 week</option><option value="4320">1 month</option><option value="12960">3 months</option><option value="52560">1 year</option><option value="date">On a date…</option>
       </select>
-      <div id="sqdatef" hidden><input id="sqdate" class="mono" type="date" aria-label="Closing date"><p class="note" id="sqdatenote"></p></div>
+      <div id="sqdatef" hidden><input id="sqdate" class="mono" type="date" aria-label="Closing date"></div>
+      <p class="rulesum" id="sqdlsum" aria-live="polite"></p>
     </div>
     <div class="field">
-      <label for="sqmin"><span>Minimum burn</span><span class="mono">smaller burns are listed, never counted</span></label>
+      <label for="sqmin"><span>Minimum burn</span></label>
       <div class="seg amtseg" role="group" aria-label="Minimum burn" id="sqminseg"><button type="button" data-sats="0" aria-pressed="true">None</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000</button><button type="button" data-sats="10000" aria-pressed="false">10,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
       <input id="sqmin" class="mono" type="number" min="0" step="1" value="0" aria-label="Minimum burn in sats" hidden>
-      <p class="note">Burns under the minimum are shown but don't count. Fewer, weightier takes.</p>
+      <p class="rulesum" id="sqminsum" aria-live="polite"></p>
     </div>
-    <p class="note">Rules become part of the name, so they are as permanent as the topic itself.</p>
+    <p class="rulesname" id="sqrulesname"></p>
   </section>
 
   <!-- 3 · Fee: the registration, the tip, the mining fee speed (the price's edit) -->
@@ -1178,11 +1194,6 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
   </section>
 
   <section id="w-ready" hidden>
-    <div class="wbalcard">
-      <div class="wbalrow"><span class="wlabel">Balance</span><button type="button" class="copy wicon" id="w-refresh" aria-label="Refresh balance" title="Refresh balance"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button></div>
-      <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span></div>
-      <a class="wburns" id="w-burns" href="burner.html">Your burns →</a>
-    </div>
     <div class="wrecv">
       <div class="qrwrap"><img id="w-qr" alt="Wallet address as QR" width="132" height="132"></div>
       <div class="wrecvtxt">
@@ -1193,6 +1204,11 @@ nav .netwrap .netmenu{left:0;right:auto}   /* the network chip sits by the logo:
         <p class="note" id="w-keysnote" hidden>Keys on your Ledger: every burn is confirmed on its screen, nothing secret is stored here.</p>
         <p class="note mono wpath"><span id="w-netlabel"></span> · <span id="w-path">m/84'/…/0/0</span></p>
       </div>
+    </div>
+    <div class="wbalcard">
+      <div class="wbalrow"><span class="wlabel">Balance</span><button type="button" class="copy wicon" id="w-refresh" aria-label="Refresh balance" title="Refresh balance"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button></div>
+      <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span></div>
+      <a class="wburns" id="w-burns" href="burner.html">Your burns →</a>
     </div>
     <div class="wbox" id="w-backupbox" hidden>
       <div class="words-head"><p class="note err" style="margin:0">These 12 words are the wallet: anyone who has them can spend its sats. Write them on paper; do not screenshot or paste them anywhere.</p><div class="qrow"><button type="button" class="copy" id="w-wordscopy" aria-label="Copy words">copy words</button><button type="button" class="copy" id="w-wordshide" aria-label="Hide words">hide words</button></div></div>
@@ -1464,14 +1480,15 @@ function watchNews(w, votes, T){
 }
 // ---------- ballot: several burns kept aside, paid in one transaction (per network) ----------
 const ballotGet=()=>{ try{ const a=JSON.parse(LS(NETKEY("bv.ballot"))||"[]"); return Array.isArray(a)?a.filter(e=>e&&typeof e.name==="string"&&typeof e.addr==="string"):[]; }catch{ return []; } };   // -> [{name, addr, statement, sats, intent}], intent on root burns only: "register" | "feature"
-const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length) ballotTipSet(null); };   // emptied (cleared, sent, last burn removed): the batch's own tip goes with it
+const ballotSave=a=>{ try{ LS(NETKEY("bv.ballot"),JSON.stringify(a)); }catch{} if(!a.length&&!ballotTipOwn()) ballotTipSet(null); try{ globalThis.document?.dispatchEvent(new Event("batchchange")); }catch{} };   // no burn left and no tip of its own: the next batch follows the default tip again (a tip put in the batch stays: a tip-only batch)
 const ballotAdd=({name,addr,statement="",sats,intent})=>{ const a=ballotGet(); a.push({name, addr, statement:String(statement||""), sats:Math.max(0,Math.round(+sats||0)), intent:name?undefined:intent==="feature"?"feature":"register"}); ballotSave(a); return a.length; };
 const ballotFind=addr=>ballotGet().findIndex(e=>e.addr===addr);   // one burn per address per transaction: a counter sums a topic's outputs under the first statement (spec §4)
 const ballotSet=(i,patch)=>{ const a=ballotGet(); if(a[i]){ a[i]={...a[i],...patch}; ballotSave(a); } return a.length; };
 const ballotRemove=i=>{ const a=ballotGet(); a.splice(i,1); ballotSave(a); return a.length; };
-const ballotClear=()=>ballotSave([]);
+const ballotClear=()=>{ ballotTipSet(null); ballotSave([]); };   // everything: its burns and its own tip (Clear, a send)
 const ballotSats=(entries=ballotGet())=>entries.reduce((a,e)=>a+(e.sats||0),0);
 const ballotTip=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? tipPref() : Math.max(0,Math.round(+v)||0); };   // the batch's one tip output: set by the tip dialog's Add to batch (0: removed), else every dialog's tip (tipPref); a dust one never comes back
+const ballotTipOwn=()=>{ const v=LS(NETKEY("bv.ballot.tip")); return v==null||v===""||tipDust(v) ? 0 : Math.max(0,Math.round(+v)||0); };   // a tip put in the batch itself (the tip dialog's Add to batch): the batch holds it even with no burn
 const ballotTipSet=v=>{ try{ v==null||v==="" ? localStorage.removeItem(NETKEY("bv.ballot.tip")) : LS(NETKEY("bv.ballot.tip"),String(Math.max(0,Math.round(+v)||0))); }catch{} };   // null: the batch follows tipPref again
 const BALLOT_SEP="\u001f";                                                                        // 0x1F between statements when several share one OP_RETURN (spec §4)
 
@@ -1813,8 +1830,9 @@ async function drawCard(label, paint, footRight=""){
   let g=x.createRadialGradient(1040,60,0,1040,60,720); g.addColorStop(0,"rgba(255,106,26,.30)"); g.addColorStop(1,"rgba(255,106,26,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
   g=x.createRadialGradient(120,640,0,120,640,520); g.addColorStop(0,"rgba(255,181,71,.14)"); g.addColorStop(1,"rgba(255,181,71,0)"); x.fillStyle=g; x.fillRect(0,0,1200,630);
   rr(x,40,40,1120,550,30); x.strokeStyle="rgba(255,255,255,.14)"; x.lineWidth=2; x.stroke();
-  g=x.createRadialGradient(92,98,2,96,102,20); g.addColorStop(0,"#ffb547"); g.addColorStop(.6,"#ff6a1a"); g.addColorStop(1,"#7a2200"); x.fillStyle=g; x.beginPath(); x.arc(96,102,18,0,6.29); x.fill();
-  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning Take",128,102);
+  const mk=new Image(); mk.src="brand/mark-dark-96.png"; try{ await mk.decode(); x.drawImage(mk,78,80,36,45); }catch{}   // the flame mark (no mark if it cannot load)
+  x.fillStyle="#f3efe9"; x.font=`600 24px ${CF.D}`; x.textBaseline="middle"; x.fillText("Burning ",128,102);
+  g=x.createLinearGradient(0,91,0,113); g.addColorStop(0,"#fc9225"); g.addColorStop(1,"#f8761a"); x.fillStyle=g; x.fillText("Take",128+x.measureText("Burning ").width,102);   // "Take" in the flame's orange, top to foot
   x.fillStyle="#ffb547"; x.font=`500 18px ${CF.M}`; x.textAlign="right"; try{ x.letterSpacing="3px"; }catch{} x.fillText(`${label} · ${NET.toUpperCase()}`,1104,102); try{ x.letterSpacing="0px"; }catch{} x.textAlign="left"; x.textBaseline="alphabetic";
   paint(x);
   x.beginPath(); x.moveTo(96,536); x.lineTo(1104,536); x.strokeStyle="rgba(255,255,255,.12)"; x.setLineDash([3,6]); x.stroke(); x.setLineDash([]);
@@ -2314,19 +2332,20 @@ async function ledgerAccount(xpub, network="mainnet"){          // the account x
 async function ledgerAddress(xpub, network="mainnet", change=0, index=0){ return (await ledgerAccount(xpub, network))(change, index); }   // one address, local derivation from the account xpub
 const LEDGER_GAP=20;                                             // BIP-44 gap limit: a chain ends after 20 unused addresses in a row (used = any history, so an emptied address keeps the scan going)
 const LEDGER_CAP=2000;                                           // ponytail: 2,000 addresses per chain at most (0/0..0/1999, 1/0..1/1999). A chain still inside its gap there (an explorer that calls every address used) is a balance this page cannot read: null, never a partial one
-async function ledgerUtxos(xpub, network="mainnet"){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
+async function ledgerUtxos(xpub, network="mainnet", onsats=null){             // -> {coins:[{txid, vout, value, confirmed, chain, index, address}] in spending order, used:[every address with history: the account's possible burners]} | null if any read fails
   try{                                                           // null, never a rejection: an xpub that does not parse or the libraries not loading (jsdelivr blocked) are a balance this page cannot read either
     const acct=await ledgerAccount(xpub, network);
     const stat=async a=>{ const j=await esploraGet(`/address/${a}`,network), s=[j&&j.chain_stats, j&&j.mempool_stats];   // Esplora /address: confirmed + mempool -> {used, sats} | null
       const n=k=>s.every(x=>x&&Number.isFinite(x[k])) ? s[0][k]+s[1][k] : NaN, tx=n("tx_count"), sats=n("funded_txo_sum")-n("spent_txo_sum");
       return Number.isNaN(tx+sats) ? null : {used:tx>0, sats}; };
-    const used=[], funded=[];                                    // funded: used addresses still holding sats, the only ones whose coins are asked for
+    const used=[], funded=[]; let run=0;                         // funded: used addresses still holding sats, the only ones whose coins are asked for; run: their sats so far (onsats: the balance growing while the scan reads)
     for(const chain of [0,1]) for(let next=0, last=-1; next<=last+LEDGER_GAP; ){   // receive, then change; last: the highest used index read
       if(next>=LEDGER_CAP) return null;
       const idx=[]; while(idx.length<5&&next<=last+LEDGER_GAP&&next<LEDGER_CAP) idx.push(next++);   // 5 in flight (the explorers rate-limit bursts), only indexes the scan reads whatever these answer
       const as=await Promise.all(idx.map(i=>acct(chain,i))), st=await Promise.all(as.map(a=>stat(a.address)));
       if(st.some(s=>!s)) return null;
-      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0) funded.push({chain, index:idx[k], address:as[k].address}); });
+      st.forEach((s,k)=>{ if(!s.used) return; last=idx[k]; used.push(as[k].address); if(s.sats>0){ funded.push({chain, index:idx[k], address:as[k].address}); run+=s.sats; } });
+      if(onsats) try{ onsats(run); }catch{}
     }
     const coins=[];
     for(let i=0;i<funded.length;i+=5){ const rs=await Promise.all(funded.slice(i,i+5).map(a=>fetchUtxos(a.address,network))); if(rs.some(r=>!r)) return null;
@@ -2430,13 +2449,19 @@ async function walletLoadKey(pass=""){                    // derive the key from
   wKey.words=words; return wKey;
 }
 let WREADING=false, WREAD=null;                            // a balance read is running: "checking", not "unknown"; WREAD {w, p}: the latest read, shared by every caller that does not force a fresh one
+function countTo(el,to){ cancelAnimationFrame(el._raf); const from=el._v||0, t0=performance.now(), d=matchMedia("(prefers-reduced-motion: reduce)").matches||from===to?0:700, live=el.closest("[aria-live]");   // a balance counts up to its value; a new value mid-way picks up where it is
+  live?.setAttribute("aria-busy","true");                     // read out once, at the end: not every frame
+  const step=now=>{ const p=d?Math.min(1,(now-t0)/d):1, v=Math.round(from+(to-from)*(1-Math.pow(1-p,3))); el._v=v; el.textContent=fmt(v)+" sats"; if(p<1) el._raf=requestAnimationFrame(step); else live?.removeAttribute("aria-busy"); };
+  step(t0); }
+function walletEarly(w,sats){ if(WALLET!==w||walletUtxos||!$("walletdlg")?.open||$("w-ready").hidden) return; countTo($("w-bal"),sats); $("w-balhint").textContent="listing the coins…"; }   // the explorer's address totals (funded − spent), before the coins are listed: the balance shows at once
 async function walletBalance(force=false){                // -> the explorer's coins, or null when it is unreachable from this page. Never rejects
   const w=WALLET; if(!w) return null;
   if(walletUtxos && !force) return walletUtxos;
   if(WREAD && WREAD.w===w && !force) return WREAD.p;       // page load, then the dialog opening: one read of the account, not two
   const me={w}; WREAD=me; WREADING=true;
   me.p=(async()=>{
-    let r=null; try{ r= w.kind==="ledger" ? await ledgerUtxos(w.xpub, NET) : await fetchUtxos(w.addr, NET); }catch{}
+    if(w.kind!=="ledger") esploraGet(`/address/${w.addr}`,NET).then(j=>{ const n=k=>(j?.chain_stats?.[k]||0)+(j?.mempool_stats?.[k]||0); if(j) walletEarly(w, n("funded_txo_sum")-n("spent_txo_sum")); }).catch(()=>{});   // one cheap read beside the coins': the balance before they are listed
+    let r=null; try{ r= w.kind==="ledger" ? await ledgerUtxos(w.xpub, NET, s=>walletEarly(w,s)) : await fetchUtxos(w.addr, NET); }catch{}
     if(WREAD!==me) return WREAD&&WREAD.w===w ? WREAD.p : WALLET===w ? walletUtxos : null;   // a newer read took over (forced, or another wallet's): its answer, never this older one
     WREAD=null; WREADING=false;
     if(WALLET!==w) return null;                            // forgotten or replaced while this read ran: these coins are not the new wallet's
@@ -2468,12 +2493,12 @@ async function walletPaint(connected=false){               // connected: the fir
     $("w-path").textContent= ledger ? `${ledgerPathString(NET)} · [${WALLET.fp}]` : "m/84'/…/0/0";   // the Ledger's first receive address; [fp] = the master fingerprint the PSBTs carry
     wFundNote();                                              // how much to send (the note and the QR), when a dialog asked for funds
     $("w-keysnote").hidden=!ledger; $("w-backup").hidden=ledger; $("w-qr").alt=(ledger?"Ledger":"Wallet")+" address as QR";
-    $("w-bal").textContent="…"; $("w-balhint").textContent="checking…";
+    const wb=$("w-bal"); cancelAnimationFrame(wb._raf); wb._v=0; wb.textContent="…"; $("w-balhint").textContent="checking…";   // every read counts up from 0
     await walletBalance(); if(!WALLET) return;                // forgotten during the read: Forget has painted the Connect view
     const wt=walletUtxos&&walletUtxos!==WFUNDAT&&wWaiting(), f=wt&&wt.funds();   // coins the ask was not worked out with (just connected, refreshed, retried): what the waiting dialog still needs from them
     if(f){ WFUNDAT=walletUtxos; if(f.short) WFUND=f.topup; else if(connected){ FUNDING=null; WFUND=0; toast(`Wallet connected · your ${wt.noun||"burn"} is ready to sign`); } }   // enough already: said now, never as Funds arrived (a refresh leaves that to the dialog's panel)
     wFundNote();                                              // the balance known: what is missing
-    $("w-bal").textContent=walletUtxos?fmt(walletSats())+" sats":"—";
+    if(walletUtxos) countTo(wb, walletSats()); else { cancelAnimationFrame(wb._raf); wb.textContent="—"; }
     $("w-balhint").innerHTML=walletUtxos?`${walletUtxos.length} coin${walletUtxos.length===1?"":"s"}<span class="more">${usdOf(walletSats())?" · "+usdOf(walletSats()):""}</span>`:`<button type="button" class="linkbtn" data-wretry>retry</button> · the explorer did not answer`;
   }
   walletPill();
@@ -2770,25 +2795,28 @@ bwt.noun="batch";                                            // what the wallet 
 $("bfeehost").innerHTML=feeSegHtml("bfeeseg",true); feeSegWire($("bfeeseg"));
 let bLast=null, bSent=null, bSentTip=0, bStep=1, bSnap=null;   // bStep: 1 · Burns (the list), 2 · Fees (edit), 3 · Transaction; bSnap: what the fees view started from                                  // bSent: the entries that went out with the last broadcast (bSentTip: its tip), shown until the dialog is reopened
 const bTipSats=()=>tipEnabled() ? Math.max(0,Math.round(Number($("b-tip").value||0))) : 0;   // "No tip" is 0
-function ballotPill(){ const n=ballotGet().length, b=$("ballotbtn"); if(!b) return; b.hidden=!n; $("ballottxt").textContent=NARROW.matches?String(n):"Batch · "+n; b.title=`Batch · ${n} burn${n===1?"":"s"} kept aside`; b.setAttribute("aria-label",`Batch, ${n} burn${n===1?"":"s"} kept aside`); }   // phone: the count alone next to the ember dot, the nav has no room for the word
+function ballotPill(){ const n=ballotGet().length, t=!n&&ballotTipOwn()>0, b=$("ballotbtn"); if(!b) return; b.hidden=!n&&!t; const what=t?"a tip kept aside":`${n} burn${n===1?"":"s"} kept aside`;   // t: a tip and no burn yet
+  $("ballottxt").textContent=NARROW.matches?(t?"tip":String(n)):"Batch · "+(t?"tip":n); b.title="Batch · "+what; b.setAttribute("aria-label","Batch, "+what); }   // phone: the count alone next to the ember dot, the nav has no room for the word
 addEventListener("resize",ballotPill);
+document.addEventListener("batchchange",()=>ballotPill());   // any change to the batch (shared.js ballotSave): the nav pill follows
 function bSync(){                                            // rebuild the payload from storage and hand it to the wallet block (clears a "sent" state)
   const e=ballotGet();
-  try{ bLast=e.length ? buildBallotPayload(e,{tipAddr:TIP_EFFECTIVE, tipSats:bTipSats()}) : null; }catch{ bLast=null; }
+  const own=ballotTipOwn();
+  try{ bLast=e.length ? buildBallotPayload(e,{tipAddr:TIP_EFFECTIVE, tipSats:bTipSats()}) : own&&TIP_EFFECTIVE ? buildPayload({burnAddr:TIP_EFFECTIVE, burnSats:own, burnLabel:"tip"}) : null; }catch{ bLast=null; }   // no burn yet: the tip alone
   bwt.update(bLast); bPaint();
 }
 function bPaint(){
-  const s=bwt.status(), sent=!!(s&&s.kind==="sent"), e=sent?(bSent||[]):ballotGet(), n=e.length;
-  if(!n && bStep!==1){ bStep=1; for(const k of [1,2,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
-  $("b-empty").hidden=!!n; $("b-body").hidden=!n;
-  $("bstepn").textContent = n ? " · "+n : "";
-  $("b-clear").hidden = bStep!==1 || !n || sent;
+  const s=bwt.status(), sent=!!(s&&s.kind==="sent"), e=sent?(bSent||[]):ballotGet(), n=e.length, t=!n&&(sent?bSentTip>0:ballotTipOwn()>0), any=n||t;   // t: a tip and no burn
+  if(!any && bStep!==1){ bStep=1; for(const k of [1,2,3]) $("bstep-"+k).hidden=k!==1; }   // emptied (last burn removed, another tab): back to the list
+  $("b-empty").hidden=!!any; $("b-body").hidden=!any;
+  $("bstepn").textContent = n ? " · "+n : t ? " · tip" : "";
+  $("b-clear").hidden = bStep!==1 || !any || sent;
   const editing=bStep===2, busy=!!(s&&s.kind==="busy");
-  $("bback").hidden = bStep!==3 || sent; $("bsend").hidden = !n || editing; $("bcancel").hidden = $("bapply").hidden = !editing;   // the primary signs from the list on; the fees view applies or cancels
+  $("bback").hidden = bStep!==3 || sent; $("bsend").hidden = !any || editing; $("bcancel").hidden = $("bapply").hidden = !editing;   // the primary signs from the list on; the fees view applies or cancels
   const dust=!!tipDust(bTipSats()); $("bapply").disabled=dust;   // a tip of 1–329 sats cannot relay: not applied, not signed (the note under the tip says why)
   ballotPill();
-  $("bprice").hidden=!n||sent;
-  if(!n) return;
+  $("bprice").hidden=!any||sent;
+  if(!any) return;
   const firstAt=new Map(); e.forEach(x=>{ if(!firstAt.has(x.addr)) firstAt.set(x.addr,x); });   // a second burn to one address in one transaction is summed under the first (spec §4)
   const tip=sent?bSentTip:bTipSats(), sentTag=`<span class="mono" style="font-size:11px;color:var(--ok)">sent</span>`;   // sent: the tip that went out with these burns
   $("b-list").innerHTML=e.map((x,i)=>`<div class="bent${sent?" sent":""}">
@@ -2799,10 +2827,11 @@ function bPaint(){
       ${sent?sentTag:`<button type="button" class="copy" data-brm="${i}" aria-label="Remove this burn">remove</button>`}
     </div>`).join("")
     +(tip?`<div class="bent tipr${sent?" sent":""}">${iconBadge("tip",ICONS.tip)}<span class="stmt">Tip the project</span><b class="mono">${fmt(tip)}<small> sats</small></b>${sent?sentTag:`<button type="button" class="copy" data-btip aria-label="Remove the tip">remove</button>`}</div>`:"");   // the batch's one tip output: its own row, after the burns
-  dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+(!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:""), bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]);
+  const edit=!editing&&!sent&&!busy?` <button type="button" class="linkbtn" data-editfee>edit</button>`:"";
+  if(n) dlgPrice($("bprice"), ballotSats(e), `${n} burn${n===1?"":"s"}`+edit, bwt.fee(), tip?[`+${fmt(tip)} sats tip`]:[]); else dlgPrice($("bprice"), tip, "tip"+edit, bwt.fee());   // no burn yet: the tip is the amount
   feeSegPaint($("bfeeseg"), !!(s&&s.kind!=="err"), $("bfeesum"), tipEnabled()?tip:null);
   $("b-tipf").hidden=!tipEnabled(); $("b-tipusd").textContent=tip?usdOf(tip):"";
-  $("b-shared").hidden=!bLast||bLast.shared;
+  $("b-shared").hidden=!bLast||!n||bLast.shared;
   $("bpay-tipnote").hidden=!(bLast&&bLast.tipOmitted);
   $("b-outs").innerHTML=bLast ? bLast.outputs.map((o,i)=>`<div class="kv"><span class="k">${i+1} · ${esc(o.label)}</span><code>${esc(o.addr==="OP_RETURN"?o.scriptHex:o.addr)}</code><span class="mono" style="font-size:11px;color:var(--ink3);white-space:nowrap">${fmt(o.sats)} sats</span></div>`).join("") : "";
   $("bpay-text").textContent=bLast?bLast.rawHex:"…"; $("bpay-copy").disabled=!bLast;
@@ -2835,7 +2864,7 @@ bwt.onsent=({txid, outputs, from:signer})=>{                // one transaction, 
   const e=ballotGet(), from=signer||(WALLET?WALLET.addr:""), short=txid.slice(0,6)+"…"+txid.slice(-4);   // from: the signed transaction's first input (a Ledger can spend from another address of its account), what the chain will say
   e.forEach((x,i)=>{ const v={txid, t:x.statement||"", sats:x.sats, h:null, from, tx:short, vout:i}; DB.putPending(x.name,[v]); globalThis.addPending?.(x.name,[v]); });
   bSent=e; bSentTip=outputs.filter(o=>o.label==="tip").reduce((a,o)=>a+o.sats,0); ballotClear(); ballotPill();   // cleared: the batch's own tip goes too (ballotSave)
-  toast(`Batch burned · ${e.length} burn${e.length===1?"":"s"} in one transaction`);
+  toast(e.length ? `Batch burned · ${e.length} burn${e.length===1?"":"s"} in one transaction` : "Tip sent · thank you");
 };
 const bFocusNext=i=>{ const l=!$("b-body").hidden&&$("b-list"), c=$("b-clear"); (l&&(l.querySelector(`[data-brm="${i}"]`)||i<Infinity&&l.querySelector("[data-btip]"))||!c.hidden&&c||$("ballotdlg").querySelector("[data-close]")).focus(); };   // a row removed (i: its index, Infinity for the tip): the next row's remove, else Clear (the close button once empty: the old rows stay, hidden), never <body>
 $("b-list").onclick=e=>{ if(e.target.closest("[data-btip]")){ ballotTipSet(0); bTip.reset(0); bSync(); toast("Tip removed"); bFocusNext(Infinity); return; }   // 0: this batch goes without, the other dialogs keep their tip
@@ -2858,7 +2887,7 @@ $("bcancel").onclick=()=>{ const s=bSnap; bSnap=null; if(s){ tipPrefSave(s.pref)
 function ballotOpen(){ bSent=null; bStep=1; bSnap=null; bTip.reset(ballotTip()); bSync(); $("ballotdlg").showModal(); bGo(1); }
 { const b=$("ballotbtn"); if(b) b.onclick=ballotOpen; }
 $("ballotdlg").addEventListener("close",()=>{ if(FUNDING==="bpay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
-function ballotTipAdd(sats){ const was=ballotTip(); ballotTipSet(sats); const now=ballotTip(); bTip.reset(now); bSync(); toast(was&&was!==now ? `Batch tip set to ${fmt(now)} sats (was ${fmt(was)})` : `Tip added to your batch · ${fmt(now)} sats`); }   // the tip dialog's Add to batch: this batch's one tip (a different one it held is replaced, and said), the saved tip of the other dialogs stays
+function ballotTipAdd(sats){ const was=ballotGet().length ? ballotTip() : ballotTipOwn(); ballotTipSet(sats); const now=ballotTip(); bTip.reset(now); bSync(); toast(was&&was!==now ? `Batch tip set to ${fmt(now)} sats (was ${fmt(was)})` : `Tip added to your batch · ${fmt(now)} sats`); }   // the tip dialog's Add to batch: this batch's one tip (a different one it held is replaced, and said), the saved tip of the other dialogs stays
 addEventListener("storage",e=>{ if(e.key!==NETKEY("bv.ballot")&&e.key!==NETKEY("bv.ballot.tip")) return;   // another tab changed the batch or its tip
   if(!bSnap) bTip.reset(ballotTip()); ballotPill(); if($("ballotdlg").open) bSync(); PAY.forEach(p=>p.paint()); });   // not while the fees view is being edited; PAY: the tip dialog's Add to batch follows the count
 ballotPill();
@@ -3219,8 +3248,6 @@ $("listtipaddr").textContent=TIP_EFFECTIVE || "not set yet · left out"; $("copy
 // effective registration amounts: burn checkbox off = no registration output, tip checkbox off = no tip output
 const regSats=()=>Math.max(REG_SATS, Math.round(+$("sqamt").value||REG_SATS));   // 330 registers; more is an initial sponsorship (the footer's Sponsor)
 const regTipSats=()=>TIP_EFFECTIVE ? Math.max(0,Math.round(Number($("listtip").value||0))) : 0;   // "No tip" is 0; no tip address on this network → never a tip output
-let SQFIRST="", SQADDR=null;                                     // the first answer burned with the registration, and the new topic's address (derived when asked for)
-const sqFirstFits=()=>enc.encode($("listname").value.trim()+BALLOT_SEP+SQFIRST).length<=80;   // both statements in one OP_RETURN: 80 bytes, or it may not relay
 function updateList(){
   const n=$("listname").value.trim().toLowerCase();
   const data=enc.encode(n);
@@ -3228,9 +3255,7 @@ function updateList(){
   const t=regTipSats();
   $("listtipusd").textContent=t?usdOf(t):"";
   $("listtiprow").hidden=!t;
-  $("spay-outputs").hidden=!!(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits());   // two burns: the raw transaction below carries both
-  if(SQFIRST&&SQADDR&&SQADDR.name===n&&sqFirstFits()) spay.set({entries:[{name:"", addr:$("rootaddr").textContent, statement:n, sats:regSats(), intent:"register"}, {name:n, addr:SQADDR.addr, statement:SQFIRST, sats:REG_SATS}], tipAddr:TIP_EFFECTIVE, tipSats:t});
-  else spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:"register · root"});   // "…" until the root address is derived; labeled like the batch's root burns (the chips' and the callout's word)
+  spay.set({burnAddr:$("rootaddr").textContent, burnSats:regSats(), statementBytes:data, tipAddr:TIP_EFFECTIVE, tipSats:t, burnLabel:"register · root"});   // "…" until the root address is derived; labeled like the batch's root burns (the chips' and the callout's word)
 }
 const sqTipSave=()=>tipPrefSave($("listtip").value), sqTipDefault=tipPref;   // the tip every amount dialog shares: 1,000 until another is chosen
 const sqTip=amountChips($("listtipseg"), $("listtip"), ()=>{ sqTipSave(); updateList(); sqPaint(); }, {wallet:spay.wallet, noun:"tip", check:tipDust}); sqTip.reset(sqTipDefault());
@@ -3275,13 +3300,14 @@ function sqValid(n){
   if(n===3) return +$("sqamt").value>=REG_SATS&&!tipDust(regTipSats());   // the fee view: at least the registration, and a tip that relays (No tip, or 330 and up)
   return true;                                   // 4 Transaction: nothing to fill in
 }
+let SQTITLE="New topic";                                             // the dialog's title (New topic, Register topic); the rules view shows its own
 function sqGo(n){
-  sqStep=n;
+  sqStep=n; $("sqtitle").textContent= n===2 ? "Deadline & minimum" : SQTITLE;
   for(const k of [1,2,3,4]) $("sqstep-"+k).hidden=k!==n;
   sqPaint(); segThumbs();                                              // a seg inside the revealed step gets its thumb placed now
   $("scopedlg").querySelector(".dlg").scrollTop=0;
   const first=[...$("sqstep-"+n).querySelectorAll("input:not([type=hidden]):not(:disabled),textarea,select")].find(el=>!el.closest("[hidden]"));
-  (n===3 ? $("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt") : n===2 ? $("sqdl") : first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
+  (n===3 ? $("sqamtseg").querySelector('[aria-pressed="true"]')||$("sqamt") : n===2 ? ($("sqdlchips").querySelector('[aria-pressed="true"]')||$("sqdlchips").querySelector("button")||$("sqdate")) : first||$("sqfoot").querySelector(".primary:not([hidden])")||$("sqback")).focus({preventScroll:true});
 }
 // under the fields: what gets registered, as the topic page will name it, then the name itself with its byte budget, then why it can't register when it can't
 function sqRegLine(){
@@ -3299,7 +3325,7 @@ function sqPaint(){                              // the footer, idempotent, call
   $("sqback").hidden=sqStep!==4||sent;                           // the transaction only
   const more=regSats()-REG_SATS, tip=regTipSats();               // 330 registers, more sponsors it at once; the tip, visible; it changes in the edit view only (no ✕: removing it takes a step)
   $("sqprice").hidden=sqStep!==1&&sqStep!==3; dlgPrice($("sqprice"), REG_SATS, "registration"+(sqStep===1?` <button type="button" class="linkbtn" data-regfee>edit</button>`:""), spay.wallet.fee(),
-    [more>0?`+${fmt(more)} sats sponsorship`:null, SQFIRST&&sqFirstFits()?`+${fmt(REG_SATS)} sats first answer`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
+    [more>0?`+${fmt(more)} sats sponsorship`:null, tip?`+${fmt(tip)} sats tip`:null].filter(Boolean));   // walletui.js; edit opens the fee view
   $("sqcancel").hidden=$("sqapply").hidden=!editing; $("sqapply").disabled=!sqValid(sqStep);
   feeSegPaint($("sqfeeseg"), !!(s&&s.kind!=="err"), $("sqfeesum"), tipEnabled()?regTipSats():null);
   sqRegLine();
@@ -3310,7 +3336,7 @@ function sqPaint(){                              // the footer, idempotent, call
     show:()=>{ if(sqStep!==4){ updateList(); sqGo(4); } }, batch:sqBatch, tx: sqStep!==4 ? ()=>{ updateList(); sqGo(4); } : null, done:()=>$("scopedlg").close()});
 }
 // registered: the way to the new topic, and to its first burn, so it does not open empty
-function paintDone(){ const name=$("listname").value.trim(), k=kindKey(parseScope(name)), h=`<p>${topicName(name)} is registered · in the mempool · listed in Explore now, confirmed in ~10 min</p><div class="acts"><a class="btn sm primary" href="topic.html#${esc(name)}">Open topic</a><button type="button" class="btn sm" data-copyname="${esc(name)}">Copy link</button></div><p>${SQFIRST?`Its first answer, ${esc(SQFIRST)}, is in the same transaction.`:`<a class="linkbtn" href="topic.html#${esc(name)}">Burn the first ${k==="open"?"take":"answer"} so it doesn't open empty →</a>`}</p>`;
+function paintDone(){ const name=$("listname").value.trim(), k=kindKey(parseScope(name)), h=`<p>${topicName(name)} is registered · in the mempool · listed in Explore now, confirmed in ~10 min</p><div class="acts"><a class="btn sm primary" href="topic.html#${esc(name)}">Open topic</a><button type="button" class="btn sm" data-copyname="${esc(name)}">Copy link</button></div><p><a class="linkbtn" href="topic.html#${esc(name)}">Burn the first ${k==="open"?"take":"answer"} so it doesn't open empty →</a></p>`;
   if($("sqdone")._h!==h){ $("sqdone")._h=h; $("sqdone").innerHTML=h; } }
 $("sqdone").addEventListener("click",e=>{ const b=e.target.closest("[data-copyname]"); if(b) copyText(new URL("topic.html#"+b.dataset.copyname,location.href).href,b); });
 function sqBatch(){                                                 // registering = a burn to the root topic (name "") with the topic name as the statement
@@ -3326,19 +3352,22 @@ function sqRender(){
   $("sqduelf").hidden=sqk!=="duel"; $("sqpollf").hidden=sqk!=="poll"; $("sqnumf").hidden=sqk!=="number";
   $("sqdetect").innerHTML= sqAuto&&$("sqq").value.trim() ? `Detected from your question · <button type="button" class="linkbtn" data-kchange>change</button>` : "";
   $("sqtoolong").hidden=$("sqtoolong2").hidden=nb<=80; $("sqtoolong").textContent=$("sqtoolong2").textContent=`Name is ${nb} bytes; 80 is the most that can be registered. Shorten the question or options.`;
-  $("sqdlhint").textContent= p.deadline ? `≈ ${dlDate(blocksTo(p.deadline))}` : sqDL.kind==="date"&&!sqDL.at ? "pick a date" : sqDL.kind ? "waiting for the chain tip" : "never";
-  $("sqdatef").hidden=sqDL.kind!=="date"; $("sqdatenote").textContent= sqDL.kind==="date"&&p.deadline ? `≈ block ${fmt(p.deadline)} · blocks average about 10 minutes, so the close can land a day or more away from this date` : "";
+  const u=sqUnit.replace(/^-/,""), pre=u==="in-usd"?"$":u==="in-eur"?"€":"", post=pre?"":u==="percent"?"%":u?u.slice(3):"";   // a number's unit around its range inputs, as its answers will read
+  for(const id of ["sqlo","sqhi"]){ $(id+"pre").textContent=pre; $(id+"post").textContent=post; }
+  $("sqrangehint").textContent= p.range ? `${numU(p.range[0],p)} – ${numU(p.range[1],p)}` : "";
+  const dh=[...$("sqdl").options].map(o=>`<button type="button" data-dl="${esc(o.value)}" aria-pressed="${o.selected}"${o.dataset.auto?' class="auto"':""}>${esc(o.value==="0"?"No deadline":o.value==="date"?"Pick a date":o.textContent)}</button>`).join("");   // the deadline's choices as chips; the hidden select keeps the state (presets, a guessed or searched deadline, a date)
+  if($("sqdlchips")._h!==dh){ $("sqdlchips")._h=dh; $("sqdlchips").innerHTML=dh; }
+  const left=p.deadline?blocksTo(p.deadline):0, days=Math.round(left/144);
+  $("sqdatef").hidden=sqDL.kind!=="date";
+  $("sqdlsum").innerHTML= p.deadline ? `Closes <b>≈ ${dlDate(left)}</b> · block ${fmt(p.deadline)} · in ≈ ${days>=2?`${days} days`:untilText(left)}. Burns confirmed after that block don't count.${sqDL.kind==="date"?" Blocks come about every 10 minutes, so the close can land a day or so from the date.":""}`
+    : sqDL.kind==="date" ? "Pick the closing date." : sqDL.kind ? "Waiting for the chain tip to fix the block…" : "No deadline: every burn counts, whenever it confirms.";
+  $("sqminsum").textContent= p.min ? `Burns under ${fmt(p.min)} sats are listed but never counted: fewer, weightier takes.` : "Every burn counts, from 330 sats.";
+  $("sqrulesname").innerHTML= p.q ? `Name · <span class="mono">${esc(name).replace(/([@!]\d+)/g,"<b>$1</b>")}</span>` : "";   // the rules as they are written: in the topic's permanent name
   const exact=p.q&&DIRECTORY.find(d=>d.name===name), tw=p.q&&!exact?lookalike(name):null;   // the same topic, or the same question under other rules: said before paying (Explore's lookalike)
   $("sqtwin").hidden=!exact&&!tw;
   if(exact) $("sqtwin").innerHTML=`${topicName(name)} is already registered${exact.stats?` · ${fmt(exact.stats.sats)} sats`:""}. Registering again sponsors it. <a class="linkbtn" href="topic.html#${esc(name)}">Open it →</a>`;
   else if(tw) $("sqtwin").innerHTML=`${twinText(name,tw)} <a class="linkbtn" href="topic.html#${esc(tw.name)}">Open it →</a>`;
-  // the first answer: offered for topics with fixed answers, one of them picked, both statements in one OP_RETURN
-  const fixed=!!p.opts; $("sqfirstf").hidden=!fixed; if(!fixed){ $("sqfirst").checked=false; SQFIRST=""; }
-  $("sqfirstopts").hidden=!$("sqfirst").checked; if(!p.opts||!p.opts.includes(SQFIRST)) SQFIRST="";
-  if($("sqfirst").checked&&p.opts){ const h=p.opts.map(o=>`<button type="button" class="btn${SQFIRST===o?" primary":""}" data-first="${esc(o)}" aria-pressed="${SQFIRST===o}">${esc(sqk==="yes-no"?o.toUpperCase():o)}</button>`).join(""); if($("sqfirstopts")._h!==h){ $("sqfirstopts")._h=h; $("sqfirstopts").innerHTML=h; } $("sqfirstopts").className="choice "+(p.opts.length===2?"pair":"poll"); }
   $("listname").value=name;
-  const fits=!SQFIRST||sqFirstFits(); $("sqfirstnote").hidden=fits; if(!fits) $("sqfirstnote").textContent="The name and this answer don't fit one 80-byte OP_RETURN together: register first, then burn your answer.";
-  if(SQFIRST&&(!SQADDR||SQADDR.name!==name)) deriveScope(name).then(r=>{ if($("listname").value===name){ SQADDR={name, addr:r.addr}; updateList(); sqPaint(); } });
   updateList(); sqPaint();
 }
 let sqOpener=null; $("scopedlg").addEventListener("close",()=>{ sqOpener?.focus?.({preventScroll:true}); sqOpener=null; if(FUNDING==="spay"){ FUNDING=null; WFUND=0; } });   // closed while the wallet was asked for: no amount waits for it any more (QR, fund note, Funds arrived)
@@ -3352,8 +3381,7 @@ function openScopeDialog(prefill, reg=false, kindHint=null){     // kindHint: a 
   sqDL={kind:null}; sqDLTouched=!!p.deadline; if(p.deadline) sqDLAuto({kind:"abs", abs:p.deadline}, `block ${fmt(p.deadline)}`);   // a searched name keeps its deadline
   sqMin.reset(p.min||0);
   sqTouched=!!(p.opts||p.range||kindHint); sqAuto=false; sqStem=null; if(!sqTouched) sqDetect();
-  $("sqfirst").checked=false; SQFIRST=""; SQADDR=null;
-  $("sqtitle").textContent=reg?"Register topic":"New topic"; $("sqbatchnote").hidden=true;
+  SQTITLE=reg?"Register topic":"New topic"; $("sqtitle").textContent=SQTITLE; $("sqbatchnote").hidden=true;
   sqTip.reset(sqTipDefault());
   sqAmt.reset(REG_SATS); sqSnap=null; $("sqfeeadv").open=false;   // every open: the plain 330 until its edit is asked for
   sqRender(); updateList();
@@ -3405,8 +3433,6 @@ function sqDLAuto(dl, text){
   o.value=dl.kind==="abs"?"abs":String(dl.blocks); o.dataset.abs=dl.abs||""; o.textContent=text; $("sqdl").value=o.value; sqDL=dl;
 }
 $("sqq").oninput=()=>{ sqDetect(); sqRender(); };
-$("sqfirst").onchange=()=>{ if(!$("sqfirst").checked) SQFIRST=""; sqRender(); };
-$("sqfirstopts").onclick=e=>{ const b=e.target.closest("[data-first]"); if(!b) return; SQFIRST=b.dataset.first; sqRender(); };
 const sqTouch=()=>{ if(sqAuto&&sqStem&&!$("sqq").value.includes(":")) $("sqq").value=sqStem; sqTouched=true; sqAuto=false; sqStem=null; };   // the guess becomes the reader's
 document.querySelectorAll("#sqkinds [data-k]").forEach(b=>b.onclick=()=>{ sqTouch(); sqk=b.dataset.k; if(sqk==="poll"&&!pollInputs().length) pollFields(); sqRender();
   ($(sqk==="duel"?"sqa":sqk==="number"?"sqlo":"sqq")||$("sqq")).focus({preventScroll:true}); if(sqk==="poll") pollInputs().find(i=>!i.value)?.focus(); });
@@ -3422,6 +3448,7 @@ $("sqdl").onchange=()=>{ const v=$("sqdl").value, o=$("sqdl").selectedOptions[0]
   sqDL= v==="date" ? {kind:"date", at:sqDateAt(), abs:null} : v==="abs" ? {kind:"abs", abs:+o.dataset.abs} : +v ? {kind:"rel", blocks:+v, abs:null} : {kind:null}; sqDLTouched=true;
   if(sqDL.kind&&!TIPLIVE) tipFresh().then(()=>{ if($("scopedlg").open) sqRender(); });
   sqRender(); if(v==="date") $("sqdate").focus(); };
+$("sqdlchips").onclick=e=>{ const b=e.target.closest("[data-dl]"); if(!b) return; $("sqdl").value=b.dataset.dl; $("sqdl").onchange(); if(b.dataset.dl!=="date") $("sqdlchips").querySelector(`[data-dl="${b.dataset.dl}"]`)?.focus(); };   // a chip picks the select's option: one state, the chips only show it
 $("sqdate").oninput=()=>{ sqDL={kind:"date", at:sqDateAt(), abs:null}; sqDLTouched=true; sqRender(); };
 $("sqrulesline").onclick=e=>{ if(e.target.closest("[data-editrules]")){ sqSnap=sqRulesSnap(); sqGo(2); } };   // the deadline and the minimum, in their own view
 // the rules and the fee views change the values live; Cancel puts back what the view started from, Apply keeps them
@@ -3441,8 +3468,7 @@ $("sqback").onclick=()=>sqGo(1);
 spay.onpaint=()=>sqPaint();   // the fee under the price follows the wallet
 // a topic just registered here shows at once, in the mempool: the directory takes the burn, the topic is counted, the explorer confirms it later
 const dirMine=vs=>{ dirAddPending(vs.map(cleanVote).filter(Boolean)); renderDir(); dirTopics({only:d=>!d.stats, onTopic:renderSoon}); };
-spay.wallet.onsent=({txid, from})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:from||(WALLET?WALLET.addr:""), vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]);
-  if(SQFIRST&&SQADDR&&SQADDR.name===v.t&&sqFirstFits()) DB.putPending(v.t,[{...v, t:SQFIRST, sats:REG_SATS, vout:1}]); };   // the first answer too: the topic opens with it, in the mempool
+spay.wallet.onsent=({txid, from})=>{ const v={txid, t:$("listname").value.trim(), sats:regSats(), h:null, from:from||(WALLET?WALLET.addr:""), vout:0, at:Date.now()}; DB.putPending("",[v]); dirMine([v]); };
 globalThis.addPending=(name,vs)=>{                        // the batch (ballotui.js): root burns register or sponsor, the others are takes in a listed topic
   if(name===""){ dirMine(vs); return; }
   const d=DIRECTORY.find(x=>x.name===name); if(!d) return;
@@ -3476,8 +3502,8 @@ if(tipEnabled()){
     dlgPrice($("tprice"), tipAmount(), "tip"+(!editing&&!(s&&(s.kind==="sent"||s.kind==="busy"))?` <button type="button" class="linkbtn" data-edittip>edit</button>`:""), tpay.wallet.fee());
     feeSegPaint($("tfeeseg"), !!(s&&s.kind!=="err"), $("tfeesum"));
     $("tcancel").hidden=$("tapply").hidden=!editing; $("tapply").disabled=!ok; $("tsendwrap").hidden=editing;
-    const was=ballotTip(), amt=Math.round(tipAmount());       // the batch's one tip: another amount there is replaced, not added to
-    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", noun:"tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, batch:tBatch, batchOff:ballotGet().length?"":"add a burn first", batchNote:was&&was!==amt?`replaces its ${fmt(was)} tip`:"", tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
+    const was=typeof ballotTipOwn!=="function" ? 0 : ballotGet().length ? ballotTip() : ballotTipOwn(), amt=Math.round(tipAmount());       // the batch's one tip: another amount there is replaced, not added to
+    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", noun:"tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, batch:tBatch, batchNote:was&&was!==amt?`replaces its ${fmt(was)} tip`:"", tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
   }
   tpay.onpaint=tPaint;
   $("tprice").onclick=e=>{ if(!e.target.closest("[data-edittip]")) return; tSnap={amt:$("tipdamt").value, fee:feeSpeed()}; tEdit=true; tGo(2); };

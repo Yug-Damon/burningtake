@@ -6,7 +6,9 @@ let S=[], agg={}, q="", seq=0, win=winGet(), sortBy=LS(NETKEY("bv.sort"))==="new
 let late={sats:0,votes:0}, dust={sats:0,votes:0}, none={sats:0,votes:0};
 let SEEN=[], BUCKET=new Map(), BURN={}, OUTWIN=new Set(), AGGW={};   // every burn seen this scan; txid -> "late"|"dust"|"window" (not counted) or "none" (no take: in the total only); burner -> {sats, votes} (counted, in the window); OUTWIN: burns out of the window that a result with fixed answers still counts; AGGW: that window's own count
 function addVote(v){ SEEN.push(v); countVote(v); }
-function recount(){ agg={}; AGGW={}; late={sats:0,votes:0}; dust={sats:0,votes:0}; none={sats:0,votes:0}; BUCKET=new Map(); OUTWIN=new Set(); BURN={}; SEEN.forEach(countVote); S=Object.values(agg); render(); }   // the window changed: count again from every burn seen
+function batchRows(){ if(!scope.name) return []; const first=new Map();   // the batch's burns to this topic as burns not sent yet (txid batch:i, never saved): counted by the board as if the batch were sent
+  return ballotGet().flatMap((e,i)=>{ if(e.name!==scope.name) return []; if(!first.has(e.addr)) first.set(e.addr,e); return [{txid:"batch:"+i, t:first.get(e.addr).statement, sats:e.sats, h:null, from:WALLET?WALLET.addr:null, batch:true}]; }); }   // a second burn to one address in one transaction counts under the first statement (spec §4)
+function recount(){ agg={}; AGGW={}; late={sats:0,votes:0}; dust={sats:0,votes:0}; none={sats:0,votes:0}; BUCKET=new Map(); OUTWIN=new Set(); BURN={}; SEEN.forEach(countVote); batchRows().forEach(countVote); S=Object.values(agg); render(); }   // the window changed: count again from every burn seen
 const fixedKind=()=>kind(scope.spec||{})!=="open";                 // duels, yes-no, polls, numbers: the result counts all time, like the embed and a shared link; an open wall follows the window
 function countVote(v){
   const p=scope.spec||{}, fixed=fixedKind(), inW=win==="all"||closedKnown()||v.h===null||v.h>=TIP-WIN[win];   // closed: the result is final, every burn before the deadline counts
@@ -18,9 +20,9 @@ function countVote(v){
   let k=norm(v.t), t=v.t;
   if (!k) { none.sats+=v.sats; none.votes++; BUCKET.set(v.txid,"none"); return; }   // no take: it backs the topic, never a row, a rank or a share
   if (p.range){ const x=numOf(v.t); if(Number.isFinite(x)&&x>=p.range[0]&&x<=p.range[1]){ k="n:"+x; t=String(x); } }   // number answers merge by value: "150k" and "150000" are one row
-  const a=agg[k]||(agg[k]={t, sats:0, votes:0, last:0, first:Infinity, pend:0, mine:0, from:new Set(), h0:Infinity, tx0:""});
+  const a=agg[k]||(agg[k]={t, sats:0, votes:0, last:0, first:Infinity, pend:0, bat:0, mine:0, from:new Set(), h0:Infinity, tx0:""});
   a.sats+=v.sats; a.votes++; a.last=Math.max(a.last, v.h??Infinity); a.first=Math.min(a.first, v.h??Infinity); spell(a,v,t);   // spell: the earliest burn's spelling (shared.js)
-  if (v.h===null) a.pend+=v.sats; if (v.from) a.from.add(v.from); if (walletOwns(v.from)) a.mine+=v.sats;
+  if (v.batch) a.bat+=v.sats; else if (v.h===null) a.pend+=v.sats; if (v.from) a.from.add(v.from); if (walletOwns(v.from)) a.mine+=v.sats;   // bat: in the reader's batch, not sent; pend: sent, not confirmed
   if (inW && fixed){ const w=AGGW[k]||(AGGW[k]={t, sats:0, votes:0}); w.sats+=v.sats; w.votes++; }
 }
 const onKey=k=>{ const p=scope.spec||{}; return p.range ? k.startsWith("n:") : p.opts ? p.opts.includes(k) : true; };   // in the result: an option, an in-range number, any take
@@ -52,16 +54,16 @@ const asOf=()=>synced||!SHOWN_H?"":`as of block ${fmt(SHOWN_H)} · `;
 const rankLabels=rows=>{ const m=new Map(); rows.forEach(s=>{ const j=rows.findIndex(x=>x.sats===s.sats); m.set(s, !s.sats?"·":String(j+1).padStart(2,"0")); }); return m; };
 const tag=(t,cls="")=>`<span class="tg${cls?" "+cls:""}">${t}</span>`;
 let REVEALED=new Set();                                     // hidden takes the reader chose to see on this page
-const rowHtml=(s,rank,cls="")=>{ const sh=shareOf(s), over=enc.encode(s.t).length>80, p=scope.spec||{}, by=hiddenBy(scope.name,s.t), fold=by&&!REVEALED.has(norm(s.t)), disp=fold?`${hiddenTxt(by)} · show`:s.disp??s.t, off=isClosed()||over||fold, unk=s.unknown;   // unknown: nothing saved and not read yet: "—", never 0; fold: a hidden take keeps its row and sats, its text one tap away
+const rowHtml=(s,rank,cls="")=>{ const sh=shareOf(s), bw=s.total&&s.bat?s.bat/s.total*100:0, over=enc.encode(s.t).length>80, p=scope.spec||{}, by=hiddenBy(scope.name,s.t), fold=by&&!REVEALED.has(norm(s.t)), disp=fold?`${hiddenTxt(by)} · show`:s.disp??s.t, off=isClosed()||over||fold, unk=s.unknown;   // unknown: nothing saved and not read yet: "—", never 0; fold: a hidden take keeps its row and sats, its text one tap away
   return `
     <div class="st ${cls}${/^=?01$/.test(rank)?" r1":""}" data-vote-row="${esc(s.t)}">
       <span class="rank">${rank}</span>
       <span class="txt"><span class="tt${fold?" hid":""}" title="${esc(disp)}"${fold?` data-reveal="${esc(norm(s.t))}"`:""}>${esc(disp)}</span>${s.tags||""}</span>
-      <span class="sats">${unk?"—":fmt(s.sats)}<small> sats${s.total&&s.sats&&!unk?` · ${pct(sh)}`:""}</small></span>
+      <span class="sats">${s.bat&&!unk?`<span class="was">${fmt(s.sats-s.bat)} → </span>`:""}<span class="num">${unk?"—":fmt(s.sats)}</span><small> sats${s.total&&s.sats&&!unk?` · ${pct(sh)}`:""}</small></span>
       <span class="votes">${unk?"—":s.votes?burnsTxt(s.votes):noBurns()}</span>
       <span class="act">${off?"":`<button class="btn sm" data-vote="${esc(s.t)}" aria-label="Burn for “${esc(disp)}”">${p.range&&Number.isFinite(numOf(s.t))?`Burn for ${esc(nfc(numOf(s.t)))}`:"Burn for it"}</button>`}</span>
       <span class="plus" aria-hidden="true">${off?"":"+"}</span>
-      <span class="bar" style="width:${sh.toFixed(1)}%"></span>
+      <span class="bar" style="width:${sh.toFixed(1)}%"></span><span class="bar bbar" style="left:${(sh-bw).toFixed(1)}%;width:${bw.toFixed(1)}%"></span>
     </div>`; };
 // ---- smooth updates: rows are keyed by norm(statement) and patched in place; numbers tween, bars transition, reorders FLIP ----
 const ROWS=new Map(); let DUEL=null;                    // persistent row elements (open/poll/number), the duel block
@@ -76,7 +78,7 @@ function tween(host,key,to,paint){                      // host[key] = target, h
   host[key+"_raf"]=requestAnimationFrame(step);
 }
 function rowEl(s,rank,cls=""){                          // s carries total (for the share); returns the row for this statement, created or patched
-  const k=norm(s.t), sh=shareOf(s), shape=[isClosed(), enc.encode(s.t).length>80, !!s.unknown, hiddenBy(scope.name,s.t)&&!REVEALED.has(k)].join();
+  const k=norm(s.t), sh=shareOf(s), bw=s.total&&s.bat?s.bat/s.total*100:0, shape=[isClosed(), enc.encode(s.t).length>80, !!s.unknown, hiddenBy(scope.name,s.t)&&!REVEALED.has(k), !!s.bat].join();   // batch sats in or out: built again
   let r=ROWS.get(k);
   if(!r||r._shape!==shape){ r=htmlEl(rowHtml(s,rank,cls)); r.dataset.key=k; r._shape=shape; r._sats=s.sats; r._disp=s.disp??s.t; r._tags=s.tags||""; ROWS.set(k,r); return r; }   // closed, too long to burn for, or unknown: built again
   r.className="st "+cls+(/^=?01$/.test(rank)?" r1":""); r.querySelector(".rank").textContent=rank;
@@ -85,8 +87,9 @@ function rowEl(s,rank,cls=""){                          // s carries total (for 
   if(r._tags!==(s.tags||"")){ r._tags=s.tags||""; r.querySelectorAll(".txt .tg").forEach(x=>x.remove()); tt.insertAdjacentHTML("afterend",r._tags); }
   r.querySelector(".votes").textContent=s.votes?burnsTxt(s.votes):noBurns();
   const sats=r.querySelector(".sats"); sats.lastChild.textContent=` sats${s.total&&s.sats?` · ${pct(sh)}`:""}`;
-  tween(r,"_sats",s.sats,v=>{ sats.firstChild.nodeValue=fmt(Math.round(v)); });
-  r._barW=sh.toFixed(1)+"%";                           // applied in commit(), after the DOM move, so the width transition runs
+  tween(r,"_sats",s.sats,v=>{ sats.querySelector(".num").textContent=fmt(Math.round(v)); });
+  const was=sats.querySelector(".was"); if(was) was.textContent=`${fmt(s.sats-s.bat)} → `;
+  r._barW=sh.toFixed(1)+"%"; r._batB=[(sh-bw).toFixed(1)+"%", bw.toFixed(1)+"%"];   // the batch's part: at the end of the share, applied with it                           // applied in commit(), after the DOM move, so the width transition runs
   return r;
 }
 const snapshot=()=> RM.matches ? null : new Map([...list.querySelectorAll(".st[data-key]")].map(r=>[r,r.getBoundingClientRect().top]));   // FLIP: first
@@ -96,7 +99,7 @@ function commit(order,before){                           // order: top-to-bottom
   const moved=[];
   if(before) for(const r of order){ const t=before.get(r); if(t===undefined) continue; const d=t-r.getBoundingClientRect().top; if(Math.abs(d)<1) continue; r.style.transition="none"; r.style.transform=`translateY(${d}px)`; moved.push(r); }
   void list.offsetHeight;                                // re-inserted nodes need a computed style before a change can transition
-  for(const r of ROWS.values()) if(r._barW){ r.querySelector(".bar").style.width=r._barW; r._barW=null; }
+  for(const r of ROWS.values()) if(r._barW){ r.querySelector(".bar").style.width=r._barW; r._barW=null; const b=r.querySelector(".bbar"); if(b&&r._batB){ b.style.left=r._batB[0]; b.style.width=r._batB[1]; } }
   if(DUEL&&DUEL._w){ const [a,b]=DUEL._w; DUEL.querySelector(".duel-bar div.a").style.width=a.toFixed(1)+"%"; DUEL.querySelector(".duel-bar div.b").style.width=b.toFixed(1)+"%"; DUEL._w=null; }
   for(const r of moved){ r.style.transition="transform .3s ease"; r.style.transform=""; }
   if(moved.length) setTimeout(()=>moved.forEach(r=>{ r.style.transition=""; r.style.transform=""; }),320);
@@ -128,7 +131,7 @@ function duelEl(A,B,yn){
     <div class="duel${tot?"":unk?" unknown":" blank"}${yn?" yesno":""}">
       ${yn?`<div class="fc"><b class="fcbig"></b><span class="fcmeta"></span></div>`:""}
       <div class="duel-head"><span class="a">${esc(L(A))}<b class="side pa">${nA?pct(pa):""}</b></span>${vs?`<i class="vs" aria-hidden="true">VS</i>`:""}<span class="b"><b class="side pb">${nB?pct(100-pa):""}</b>${esc(L(B))}</span></div>
-      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"></div><div class="b" style="width:${(100-pa).toFixed(1)}%"></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot||unk?"":`<span class="nocall">${yn?"No call":"No side"}${closed?"":" yet"}</span>`}</div>
+      <div class="duel-bar" role="img"><div class="a" style="width:${pa.toFixed(1)}%"><i class="batp"></i></div><div class="b" style="width:${(100-pa).toFixed(1)}%"><i class="batp"></i></div><span class="pct a">${tot&&!nA?pct(pa):""}</span><span class="pct b">${tot&&!nB?pct(100-pa):""}</span>${tot||unk?"":`<span class="nocall">${yn?"No call":"No side"}${closed?"":" yet"}</span>`}</div>
       ${figs?`<div class="duel-sides">${fig(A,"a")}${fig(B,"b")}</div>`:""}
       <p class="duel-verdict"></p>
       ${closed?"":`<div class="duel-acts">${[A,B].map((s,i)=>`<button type="button" class="btn dbtn d${"ab"[i]}" data-vote="${esc(s.key)}">Burn for ${esc(L(s))}</button>`).join("")}</div>`}
@@ -157,7 +160,9 @@ function duelEl(A,B,yn){
     const behind=tot&&!tie&&trail===s, amt=behind&&leadOk(gap)?wouldLead(gap):0, wait=behind&&!amt&&!synced&&gap<100000;   // the trailing side, duel or yes-no; wait: saved data before the sync keeps the row (hidden), so the amount's arrival moves nothing
     h.textContent=amt?`${fmt(amt)} sats would lead`:wait?"would lead":""; h.dataset.amt=amt||""; h.classList.toggle("wait",wait);   // a tap burns that amount (boardClick: data-amt)
     if(amt) h.setAttribute("aria-label",`Burn ${fmt(amt)} sats for ${L(s)}: would lead`); else h.removeAttribute("aria-label"); }
-  qs(".duel-x").innerHTML=[yn?forecastLine():"", concLine([A,B]), momentum([A,B],yn)].filter(Boolean).map(x=>`<span>${x}</span>`).join("");
+  for(const [s,c] of [[A,"a"],[B,"b"]]) qs(`.duel-bar div.${c} .batp`).style.width=(s.sats&&s.bat?s.bat/s.sats*100:0).toFixed(1)+"%";   // the batch's part of each side, hatched at its inner edge
+  const bl=[A,B].filter(s=>s.bat).map(s=>`+${fmt(s.bat)} for ${esc(L(s))}`).join(", ");
+  qs(".duel-x").innerHTML=[bl?`<span class="batline">Includes your batch · ${bl} · not sent yet</span>`:"", yn?forecastLine():"", concLine([A,B]), momentum([A,B],yn)].filter(Boolean).map(x=>`<span>${x}</span>`).join("");
   return DUEL;
 }
 // how a yes-no's forecast moved: its yes share after each block with counted burns, drawn as a step line (5 burns over 2 blocks at least)
@@ -165,7 +170,7 @@ function forecastLine(){ const vs=SEEN.filter(v=>!BUCKET.has(v.txid)&&onKey(keyO
   const pts=[]; let y=0, t=0; for(const v of vs){ t+=v.sats; if(norm(v.t)==="yes") y+=v.sats; const h=v.h??Infinity, s=y/t*100; if(pts.length&&pts[pts.length-1].h===h) pts[pts.length-1].s=s; else pts.push({h,s}); }
   const W=160, H=28, X=i=>(i/(pts.length-1)*W).toFixed(1), Y=v=>(H-2-v/100*(H-4)).toFixed(1), d=`M0 ${Y(pts[0].s)}`+pts.slice(1).map((p,i)=>` H${X(i+1)} V${Y(p.s)}`).join("");
   return `<span class="spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>Yes: ${pct(pts[0].s)} after the first burn, ${pct(pts[pts.length-1].s)} now</span>`; }
-const sideMeta=s=>s.votes?`<span>${burnsTxt(s.votes)}</span>${s.from.size?`<span class="dsep"> · </span><span>${fmt(s.from.size)} burner${s.from.size===1?"":"s"}</span>`:""}`:`<span>${noBurns()}</span>`;   // a side's counts under its sats: numbers and fixed words only, no esc(); a real " · " between them (copy-paste reads it), hidden on phones where they stack
+const sideMeta=s=>(s.votes?`<span>${burnsTxt(s.votes)}</span>${s.from.size?`<span class="dsep"> · </span><span>${fmt(s.from.size)} burner${s.from.size===1?"":"s"}</span>`:""}`:`<span>${noBurns()}</span>`);   // a side's counts under its sats: numbers and fixed words only, no esc(); a real " · " between them (copy-paste reads it), hidden on phones where they stack
 // ---- a take's details: who burned it first and when, how many burns and burners, the other spellings, its burns with receipts, a link to it ----
 let OPEN_TAKE=null;                                          // the take whose details are open (its norm)
 function withDetail(row,s){ if(norm(s.t)!==OPEN_TAKE) return [row]; const p=scope.spec||{}, key=keyOfRow(s), vs=SEEN.filter(v=>keyOfRow(v)===key).sort((a,b)=>(a.h??Infinity)-(b.h??Infinity)||String(a.txid).localeCompare(b.txid));
@@ -178,6 +183,8 @@ function withDetail(row,s){ if(norm(s.t)!==OPEN_TAKE) return [row]; const p=scop
     <p><button type="button" class="linkbtn" data-copytake="${esc(link.href)}">Copy link to this take</button> · <button type="button" class="linkbtn" data-hidetake="${esc(s.t)}">Hide this take</button></p></div>`);
   return [row, el]; }
 function render(){ renderList(); renderStand(); renderBurners(); paintOpts(); if($("votedlg").open) vPaint(); }
+document.addEventListener("batchchange",()=>{ if(SEEN.length||synced) recount(); });   // the batch on this topic, drawn as if sent (its part of a row's bar gold-striped, "before → after" sats): added, removed, cleared or sent, the board follows
+addEventListener("storage",e=>{ if(e.key===NETKEY("bv.ballot")) document.dispatchEvent(new Event("batchchange")); });   // another tab's batch
 let synced=false, boardN=0, OPEN=new Set();                // synced: the first full load of this topic is done; boardN: rows shown past the first page; OPEN: the lines under the board the reader opened
 const capBoard=rows=>{ const cap=(PHONE.matches?5:10)+boardN;   // 10 rows on desktop, 5 on phone, then 20 more per click
   if(q || rows.length<=(PHONE.matches?5:10)) return [rows,""];
@@ -563,7 +570,7 @@ function vPaint(){
 function offListText(){ const p=scope.spec||{}; return p.range ? `Outside ${numU(p.range[0],p)} – ${numU(p.range[1],p)}: this burn shows under Other answers and is not in the result.`
   : p.opts&&p.opts.length===2 ? `Not ${p.opts[0]} or ${p.opts[1]}: this burn shows under Other answers and is not in the result.` : `Not one of the ${p.opts.length} options: this burn shows under Other answers and is not in the result.`; }
 function lateRisk(){ const p=scope.spec||{}; if(!p.deadline||!TIP||closedKnown()) return false; const left=blocksTo(p.deadline); return left<3||left<FEE_SPEEDS.find(f=>f[0]===feeSpeed())[2]; }   // hoisted: update() runs at load
-function effectBase(){ const fixed=fixedKind(); return SEEN.filter(v=>fixed||BUCKET.get(v.txid)!=="window"); }   // what the result counts: all time for fixed answers, the window on an open wall
+function effectBase(){ const fixed=fixedKind(); return [...SEEN.filter(v=>fixed||BUCKET.get(v.txid)!=="window"), ...batchRows()]; }   // the batch shown on the board counts here too: this burn on top of it   // what the result counts: all time for fixed answers, the window on an open wall
 function leadAmt(){                                           // the exact amount that would put this take or answer first (5.0 d), or null
   const p=scope.spec||{}, t=stmt.value.trim(); if(featureMode||!t||!synced||isClosed()) return null; const key=keyOfRow({t}); if(!onKey(key)) return null;
   const T=tallyOf(scope.name, effectBase()), r=T.answers.find(x=>x.key===key), lead=T.answers.find(x=>x.key!==key); if(!lead) return null;

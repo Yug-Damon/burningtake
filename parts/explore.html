@@ -70,42 +70,38 @@
       <p class="note"><button type="button" class="linkbtn" id="sqaddopt">+ Add option</button> · Listed in this order until burns rank them. The same options in another order are another topic.</p>
     </div>
     <div id="sqnumf" hidden>
-      <div class="row">
-        <div class="field"><label for="sqlo"><span>Lowest</span></label><input id="sqlo" class="mono" type="number" step="any" placeholder="e.g. 50000"></div>
-        <div class="field"><label for="sqhi"><span>Highest</span></label><input id="sqhi" class="mono" type="number" step="any" placeholder="e.g. 500000"></div>
-      </div>
-      <div class="field"><label><span>Unit</span><span class="mono">in the name, so everyone reads the same number</span></label>
+      <div class="field"><label><span>Answers are in</span><span class="mono">part of the name</span></label>
         <div class="seg" role="group" aria-label="Unit" id="squnit"><button type="button" data-u="" aria-pressed="true">None</button><button type="button" data-u="-in-usd" aria-pressed="false">$</button><button type="button" data-u="-in-eur" aria-pressed="false">€</button><button type="button" data-u="-in-sats" aria-pressed="false">sats</button><button type="button" data-u="-percent" aria-pressed="false">%</button><button type="button" data-u="custom" aria-pressed="false">Custom</button></div>
         <input id="squnitc" class="mono" placeholder="e.g. km" aria-label="Custom unit, one word" maxlength="16" autocomplete="off" spellcheck="false" hidden></div>
-      <p class="note">Answers outside the range are shown but not in the result: leave room.</p>
+      <div class="field"><label for="sqlo"><span>Answers that count</span><span class="mono" id="sqrangehint"></span></label>
+        <div class="numrange"><span class="numin"><span class="adorn" id="sqlopre" aria-hidden="true"></span><input id="sqlo" class="mono" type="number" step="any" inputmode="decimal" placeholder="e.g. 50000" aria-label="Lowest answer that counts"><span class="adorn" id="sqlopost" aria-hidden="true"></span></span><span class="to" aria-hidden="true">to</span><span class="numin"><span class="adorn" id="sqhipre" aria-hidden="true"></span><input id="sqhi" class="mono" type="number" step="any" inputmode="decimal" placeholder="e.g. 500000" aria-label="Highest answer that counts"><span class="adorn" id="sqhipost" aria-hidden="true"></span></span></div>
+        <p class="note">Answers outside the range are listed but left out of the result: leave room.</p></div>
     </div>
     <div class="note rulesline regline" id="sqrulesline" aria-live="polite"></div>
     <p class="note twinnote" id="sqtwin" hidden></p>
-    <div class="field firstans" id="sqfirstf" hidden>
-      <label class="check"><input type="checkbox" id="sqfirst"> <span>Burn your first answer in the same transaction · +330 sats</span></label>
-      <div class="choice" id="sqfirstopts" hidden></div>
-      <p class="note" id="sqfirstnote" hidden></p>
-    </div>
     <p class="note" id="sqtoolong2" hidden style="color:#ff8c5c"></p>
     <div class="fundshost" id="sqfunds" aria-live="polite" hidden></div>
   </section>
 
   <!-- 2 · Deadline & minimum (the rules' edit), Apply or Cancel -->
   <section class="wstep" id="sqstep-2" hidden>
+    <p class="note rulesintro">Both are optional. They are written into the topic's name, so they are as permanent as the topic.</p>
     <div class="field">
-      <label for="sqdl"><span>Closes</span><span class="mono" id="sqdlhint">never</span></label>
-      <select id="sqdl">
+      <label><span>Deadline</span></label>
+      <div class="dlchips" role="group" aria-label="Deadline" id="sqdlchips"></div>
+      <select id="sqdl" hidden tabindex="-1" aria-hidden="true">
         <option value="0">Never</option><option value="144">1 day</option><option value="1008">1 week</option><option value="4320">1 month</option><option value="12960">3 months</option><option value="52560">1 year</option><option value="date">On a date…</option>
       </select>
-      <div id="sqdatef" hidden><input id="sqdate" class="mono" type="date" aria-label="Closing date"><p class="note" id="sqdatenote"></p></div>
+      <div id="sqdatef" hidden><input id="sqdate" class="mono" type="date" aria-label="Closing date"></div>
+      <p class="rulesum" id="sqdlsum" aria-live="polite"></p>
     </div>
     <div class="field">
-      <label for="sqmin"><span>Minimum burn</span><span class="mono">smaller burns are listed, never counted</span></label>
+      <label for="sqmin"><span>Minimum burn</span></label>
       <div class="seg amtseg" role="group" aria-label="Minimum burn" id="sqminseg"><button type="button" data-sats="0" aria-pressed="true">None</button><button type="button" data-sats="1000" aria-pressed="false">1,000</button><button type="button" data-sats="5000" aria-pressed="false">5,000</button><button type="button" data-sats="10000" aria-pressed="false">10,000<span class="more"> sats</span></button><button type="button" data-sats="custom" aria-pressed="false">Custom</button></div>
       <input id="sqmin" class="mono" type="number" min="0" step="1" value="0" aria-label="Minimum burn in sats" hidden>
-      <p class="note">Burns under the minimum are shown but don't count. Fewer, weightier takes.</p>
+      <p class="rulesum" id="sqminsum" aria-live="polite"></p>
     </div>
-    <p class="note">Rules become part of the name, so they are as permanent as the topic itself.</p>
+    <p class="rulesname" id="sqrulesname"></p>
   </section>
 
   <!-- 3 · Fee: the registration, the tip, the mining fee speed (the price's edit) -->

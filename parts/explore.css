@@ -77,3 +77,18 @@
 .twinnote{color:var(--ember2)}.twinnote .linkbtn{font-size:12px}
 .sqdone{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}.sqdone p{margin:0;font-size:13px;color:var(--ink2)}.sqdone .acts{display:flex;gap:8px;flex-wrap:wrap}
 #squnitc{display:block;margin-top:8px;width:180px;max-width:100%}   /* the Custom unit: one word, written into the name */
+/* a number's range: the unit around each input, "to" between them */
+.numrange{display:flex;align-items:center;gap:10px}.numrange .to{font:12px var(--font-m);color:var(--ink3)}
+.numin{flex:1;min-width:0;display:flex;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0 14px;transition:.15s}.numin:hover{border-color:rgba(255,255,255,.18)}.numin:focus-within{border-color:var(--ember2)}
+.field .numin input{flex:1;min-width:0;border:0;border-radius:0;background:transparent;padding:12px 0;outline:none}
+.numin .adorn{font:14px var(--font-m);color:var(--ink3);white-space:nowrap}.numin .adorn:empty{display:none}.numin .adorn:first-child{margin-right:6px}.numin .adorn:last-child{margin-left:6px}
+/* Deadline & minimum: the deadline as chips, each rule said in words, the name it writes */
+.dlchips{display:flex;flex-wrap:wrap;gap:8px}
+.dlchips button{border:1px solid var(--line);background:var(--bg);color:var(--ink2);border-radius:999px;padding:7px 14px;font-size:13px;line-height:1.2}
+.dlchips button:hover{border-color:rgba(255,255,255,.18);color:var(--ink)}
+.dlchips button[aria-pressed="true"]{border-color:rgba(255,181,71,.55);background:var(--ember-dim);color:var(--ember2)}
+.dlchips button.auto{border-style:dashed}   /* a deadline the question suggested, or a searched name's */
+.rulesum{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--ink2)}.rulesum b{color:var(--ink);font-weight:600}
+.rulesintro{margin:0 0 2px}#sqdatef input{margin-top:10px}
+.rulesname{margin:18px 0 0;font-size:12px;color:var(--ink3);overflow-wrap:anywhere}.rulesname .mono{font-family:var(--font-m)}.rulesname b{color:var(--ember2);font-weight:600}
+@media (max-width:480px){.dlchips button{min-height:40px}.numrange{gap:8px}.numin{padding:0 10px}}

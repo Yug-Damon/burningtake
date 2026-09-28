@@ -34,11 +34,6 @@
   </section>
 
   <section id="w-ready" hidden>
-    <div class="wbalcard">
-      <div class="wbalrow"><span class="wlabel">Balance</span><button type="button" class="copy wicon" id="w-refresh" aria-label="Refresh balance" title="Refresh balance"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button></div>
-      <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span></div>
-      <a class="wburns" id="w-burns" href="burner.html">Your burns →</a>
-    </div>
     <div class="wrecv">
       <div class="qrwrap"><img id="w-qr" alt="Wallet address as QR" width="132" height="132"></div>
       <div class="wrecvtxt">
@@ -49,6 +44,11 @@
         <p class="note" id="w-keysnote" hidden>Keys on your Ledger: every burn is confirmed on its screen, nothing secret is stored here.</p>
         <p class="note mono wpath"><span id="w-netlabel"></span> · <span id="w-path">m/84'/…/0/0</span></p>
       </div>
+    </div>
+    <div class="wbalcard">
+      <div class="wbalrow"><span class="wlabel">Balance</span><button type="button" class="copy wicon" id="w-refresh" aria-label="Refresh balance" title="Refresh balance"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg></button></div>
+      <div class="wbal" aria-live="polite" aria-atomic="true"><b id="w-bal">…</b><span class="mono" id="w-balhint">checking…</span></div>
+      <a class="wburns" id="w-burns" href="burner.html">Your burns →</a>
     </div>
     <div class="wbox" id="w-backupbox" hidden>
       <div class="words-head"><p class="note err" style="margin:0">These 12 words are the wallet: anyone who has them can spend its sats. Write them on paper; do not screenshot or paste them anywhere.</p><div class="qrow"><button type="button" class="copy" id="w-wordscopy" aria-label="Copy words">copy words</button><button type="button" class="copy" id="w-wordshide" aria-label="Hide words">hide words</button></div></div>

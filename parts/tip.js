@@ -22,8 +22,8 @@ if(tipEnabled()){
     dlgPrice($("tprice"), tipAmount(), "tip"+(!editing&&!(s&&(s.kind==="sent"||s.kind==="busy"))?` <button type="button" class="linkbtn" data-edittip>edit</button>`:""), tpay.wallet.fee());
     feeSegPaint($("tfeeseg"), !!(s&&s.kind!=="err"), $("tfeesum"));
     $("tcancel").hidden=$("tapply").hidden=!editing; $("tapply").disabled=!ok; $("tsendwrap").hidden=editing;
-    const was=ballotTip(), amt=Math.round(tipAmount());       // the batch's one tip: another amount there is replaced, not added to
-    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", noun:"tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, batch:tBatch, batchOff:ballotGet().length?"":"add a burn first", batchNote:was&&was!==amt?`replaces its ${fmt(was)} tip`:"", tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
+    const was=typeof ballotTipOwn!=="function" ? 0 : ballotGet().length ? ballotTip() : ballotTipOwn(), amt=Math.round(tipAmount());       // the batch's one tip: another amount there is replaced, not added to
+    signMenu($("tsend"), $("tsendmenu"), tpay.wallet, {label:"Validate tip", noun:"tip", ok, show:()=>{ if(tStep!==4) tGo(4); }, batch:tBatch, batchNote:was&&was!==amt?`replaces its ${fmt(was)} tip`:"", tx: tStep!==4 ? ()=>tGo(4) : null, done:()=>$("tipdlg").close()});
   }
   tpay.onpaint=tPaint;
   $("tprice").onclick=e=>{ if(!e.target.closest("[data-edittip]")) return; tSnap={amt:$("tipdamt").value, fee:feeSpeed()}; tEdit=true; tGo(2); };
